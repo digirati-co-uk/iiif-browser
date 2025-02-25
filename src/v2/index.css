@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/** Grids **/
+.grid-lg {
+  --grid-column-count: 8;
+  --grid-item--min-width: 330px;
+  --total-gap-width: 1.5rem;
+}
+
+.grid-md {
+  --grid-column-count: 8;
+  --grid-item--min-width: 200px;
+  --total-gap-width: 1.5rem;
+}
+
+.grid-sm {
+  --grid-column-count: 8;
+  --grid-item--min-width: 120px;
+  --total-gap-width: 1.5rem;
+}
+
+.grid-lg,
+.grid-md,
+.grid-sm {
+  /**
+   * Calculated values.
+   */
+  --gap-count: calc(var(--grid-column-count) - 1);
+  --grid-item--max-width: calc(
+    (100% - var(--total-gap-width)) /
+    var(--grid-column-count)
+  );
+
+  grid-template-columns: repeat(
+      auto-fill,
+      minmax(max(var(--grid-item--min-width), var(--grid-item--max-width)), 1fr)
+    );
+}
+
+.atlas-container {
+  min-width: 0;
+  min-height: 0;
+  --atlas-container-flex: 1 1 0px;
+  --atlas-background: rgb(248 250 252);
+}

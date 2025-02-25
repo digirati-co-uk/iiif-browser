@@ -1,0 +1,305 @@
+import { type Vault, getValue } from "@iiif/helpers";
+import type { CollectionNormalized } from "@iiif/presentation-3-normalized";
+import type { History } from "history";
+import MiniSearch, { type SearchResult } from "minisearch";
+import type { ReactNode } from "react";
+import type { WithMiniSearchProps } from "react-minisearch";
+import { createStore } from "zustand/vanilla";
+import { useLastUrl } from "../context";
+import type { BrowserEmitter } from "../events";
+import { fixedRoutes } from "../routes";
+import type { HistoryItem } from "../store";
+
+export interface OmnisearchStore {
+  isEnabled: boolean;
+  isIndexing: boolean;
+  currentCollectionId: string | null;
+  query: string;
+  results: SearchIndexItem[] | null;
+  rawResults: SearchResult[] | null;
+  route: HistoryItem;
+
+  enable(): void;
+  disable(): void;
+  updateQuery: (query: string) => void;
+  setRoute: (item: HistoryItem) => void;
+
+  setDynamicItems: (items: SearchIndexItem[]) => void;
+
+  getResult(id: string): SearchIndexItem | undefined;
+}
+
+interface OmnisearchStoreOptions {
+  vault: Vault;
+  emitter: BrowserEmitter;
+  initialRoute: HistoryItem;
+  history: History;
+  staticItems: SearchIndexItem[];
+  numberOfResults?: number;
+  initialHistory: HistoryItem[];
+}
+
+type BaseAction = {
+  id: string;
+  label: string;
+  subLabel?: string;
+  icon?: ReactNode;
+  actionLabel?: string;
+  keywords?: string[];
+  showWhenEmpty?: boolean;
+};
+
+type SearchAction = BaseAction & {
+  type: "action";
+  action: () => void;
+};
+
+type ResourceAction = BaseAction & {
+  type: "resource";
+  resource: { id: string; type: string };
+};
+
+type PageAction = BaseAction & {
+  type: "page";
+  /* e.g. https://example.org/manifest.json */
+  url: string;
+  /* e.g. /manifest?id=https://example.org/manifest.json */
+  route: string;
+};
+
+export type SearchIndexItem = SearchAction | ResourceAction | PageAction;
+
+const miniSearchOptions: WithMiniSearchProps["options"] = {
+  fields: [
+    "label",
+    "type",
+    "subLabel",
+    "actionLabel",
+    "keywords",
+    "url",
+    "route",
+  ],
+  storeFields: ["id"],
+  autoSuggestOptions: {
+    prefix: true,
+    fields: [
+      "label",
+      "type",
+      "subLabel",
+      "actionLabel",
+      "keywords",
+      "url",
+      "route",
+    ],
+    boost: { label: 2, url: 1.5 },
+    fuzzy: 0.2,
+  },
+};
+
+export function createOmnisearchStore(options: OmnisearchStoreOptions) {
+  const emitter = options.emitter;
+  const numberOfResults = options.numberOfResults || 10;
+  const store = createStore<OmnisearchStore>((set, get) => {
+    const $search = new MiniSearch<SearchIndexItem>(miniSearchOptions);
+    const documentsById = new Map<string, SearchIndexItem>();
+    let dynamicItems: SearchIndexItem[] = [];
+    const historyItems: HistoryItem[] = options.initialHistory;
+    const emptyItems = options.staticItems.filter((t) => t.showWhenEmpty);
+    const collectionCache = new Map<string, SearchIndexItem[]>();
+
+    const indexStaticRoutes = () => {
+      for (const item of options.staticItems) {
+        $search.add(item);
+        documentsById.set(item.id, item);
+      }
+    };
+
+    const indexHistoryItem = (item: HistoryItem) => {
+      if (item.resource) {
+        const resource = options.vault.get<CollectionNormalized>(item.resource);
+        if (resource) {
+          const searchIndexItem: SearchIndexItem = {
+            type: "resource",
+            id: item.url,
+            label: getValue(resource.label),
+            resource: { id: resource.id, type: resource.type },
+          };
+          if (!$search.has(searchIndexItem.id)) {
+            $search.add(searchIndexItem);
+          }
+          if (!documentsById.has(searchIndexItem.id)) {
+            documentsById.set(searchIndexItem.id, searchIndexItem);
+          }
+        }
+      }
+    };
+
+    const reindex = () => {
+      documentsById.clear();
+      $search.removeAll();
+      indexStaticRoutes();
+      set({ isIndexing: true });
+      emitter.emit("search.index-start");
+      for (const item of dynamicItems) {
+        documentsById.set(item.id, item);
+      }
+      for (const item of documentsById.values()) {
+        try {
+          if (!$search.has(item.id)) {
+            $search.add(item);
+          }
+        } catch (e) {
+          // ignore.
+        }
+      }
+      for (const item of historyItems) {
+        try {
+          indexHistoryItem(item);
+        } catch (e) {
+          // ignore.
+        }
+      }
+      emitter.emit("search.index-complete");
+    };
+
+    const makeSearch = (query: string) => {
+      if (!query || query === get().currentCollectionId) {
+        const results: SearchIndexItem[] = [];
+
+        if (query) {
+          results.push(
+            ...dynamicItems.slice(0, numberOfResults - emptyItems.length),
+          );
+        }
+
+        const showHistoryItems = historyItems
+          .map((h) => documentsById.get(h.url)!)
+          .filter(Boolean)
+          .filter((a) => !results.find((b) => b.id === a.id));
+
+        results.push(...showHistoryItems);
+
+        const showEmptyItems = emptyItems.filter(
+          (a) => !results.find((b) => b.id === a.id),
+        );
+
+        results.push(...showEmptyItems);
+
+        set({
+          query,
+          rawResults: [],
+          results,
+        });
+        return;
+      }
+
+      if (query.startsWith("https://")) {
+        // Handle external links
+        set({
+          query,
+          rawResults: [],
+          results: [
+            {
+              id: query,
+              resource: { id: query, type: "unknown" },
+              label: `Open ${query}`,
+              type: "resource",
+            },
+          ],
+        });
+        return;
+      }
+
+      const results = $search.search(
+        query,
+        miniSearchOptions.autoSuggestOptions,
+      );
+
+      set({
+        query,
+        rawResults: results,
+        results: results
+          .slice(0, numberOfResults)
+          .map((result) => documentsById.get(result.id)!),
+      });
+    };
+
+    // Initialize the store with static routes
+    indexStaticRoutes();
+
+    emitter.on("history.page", (route) => {
+      set({ currentCollectionId: null });
+      dynamicItems = [];
+      reindex();
+    });
+
+    emitter.on("history.change", (route) => {
+      if (!historyItems.find((t) => t.url === route.url)) {
+        historyItems.push(route);
+      }
+      indexHistoryItem(route);
+      set({ route, query: route.url });
+    });
+
+    emitter.on("collection.change", (collectionRef) => {
+      if (!collectionRef) {
+        dynamicItems = [];
+        reindex();
+        return;
+      }
+      // Update the search index with the new collection
+      const fullCollection = options.vault.get(collectionRef);
+      if (fullCollection) {
+        const items = options.vault.get(fullCollection.items || []);
+        const collectionToResults: SearchIndexItem[] =
+          collectionCache.get(fullCollection.id) || [];
+        if (collectionToResults.length === 0) {
+          for (const item of items) {
+            collectionToResults.push({
+              id: item.id,
+              label: getValue(item.label),
+              resource: { id: item.id, type: item.type },
+              type: "resource",
+              keywords: [],
+            });
+          }
+        }
+        dynamicItems = collectionToResults;
+        reindex();
+        set({ currentCollectionId: fullCollection.id });
+      }
+    });
+
+    return {
+      isEnabled: false,
+      isIndexing: false,
+      query: "",
+      results: null,
+      rawResults: null,
+      currentCollectionId: null,
+      route: options.initialRoute,
+
+      enable(): void {
+        set({ isEnabled: true });
+      },
+      disable(): void {
+        set({ isEnabled: false });
+      },
+      updateQuery: (query: string) => {
+        makeSearch(query);
+      },
+      setRoute: (item: HistoryItem) => {
+        set({ route: item });
+      },
+      setDynamicItems: (items: SearchIndexItem[]) => {
+        dynamicItems = items;
+        reindex();
+      },
+      getResult(id: string): SearchIndexItem | undefined {
+        return documentsById.get(id);
+      },
+    };
+  });
+
+  return store;
+}
