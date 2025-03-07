@@ -10,14 +10,15 @@ import {
 import { OmnisearchBox } from "../components/OmisearchBox";
 import { useResolve, useSearchResults, useSearchState } from "../context";
 import { usePaginateArray } from "../hooks/use-paginate-array";
-import { CollectionSnippet } from "./CollectionSnippet";
-import { ManifestSnippet } from "./ManifestSnippet";
+import { CollectionGridSnippet } from "./CollectionGridSnippet";
+import { CollectionListSnippet } from "./CollectionListSnippet";
+import { ManifestGridSnippet } from "./ManifestGridSnippet";
+import { ManifestListSnippet } from "./ManifestListSnippet";
 
 export function CollectionItemList({ id }: { id: string }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
-  const vault = useVault();
   const collection = useCollection({ id });
-  const open = useResolve();
+  const [isListView, setIsListView] = useState(true);
   const [items, actions] = usePaginateArray(collection?.items || [], 48);
 
   const setRef = useCallback((node: HTMLDivElement | null) => {
@@ -55,17 +56,36 @@ export function CollectionItemList({ id }: { id: string }) {
         </div>
       ) : null}
 
-      <div className="grid grid-sm gap-2">
-        {items.map((item) =>
-          item.type === "Collection" ? (
-            <CollectionSnippet key={item.id} id={item.id} />
-          ) : (
-            <ManifestContext key={item.id} manifest={item.id}>
-              <ManifestSnippet />
-            </ManifestContext>
-          ),
-        )}
+      <div>
+        <Button onPress={() => setIsListView(false)}>Grid view</Button>
+        <Button onPress={() => setIsListView(true)}>List view</Button>
       </div>
+
+      {isListView ? (
+        <div>
+          {items.map((item) =>
+            item.type === "Collection" ? (
+              <CollectionListSnippet key={item.id} id={item.id} />
+            ) : (
+              <ManifestContext key={item.id} manifest={item.id}>
+                <ManifestListSnippet />
+              </ManifestContext>
+            ),
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-sm gap-2">
+          {items.map((item) =>
+            item.type === "Collection" ? (
+              <CollectionGridSnippet key={item.id} id={item.id} />
+            ) : (
+              <ManifestContext key={item.id} manifest={item.id}>
+                <ManifestGridSnippet />
+              </ManifestContext>
+            ),
+          )}
+        </div>
+      )}
     </div>
   );
 }

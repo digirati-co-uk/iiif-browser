@@ -233,7 +233,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
       reindex();
     });
 
-    emitter.on("history.change", (route) => {
+    emitter.on("history.change", ({ item: route }) => {
       if (!historyItems.find((t) => t.url === route.url)) {
         historyItems.push(route);
       }

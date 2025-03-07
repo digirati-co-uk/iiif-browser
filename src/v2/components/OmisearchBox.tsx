@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   ComboBox,
@@ -18,6 +11,7 @@ import {
   ListBoxItem,
   Popover,
 } from "react-aria-components";
+import { useBrowserContainer } from "../browser/BrowserContainer";
 import {
   useGetSearchResult,
   useIsPageLoading,
@@ -26,9 +20,20 @@ import {
   useSearchResults,
   useSearchState,
 } from "../context";
-import { SearchIcon } from "../routes/Homepage";
+import { SearchIcon } from "../icons/SearchIcon";
+import type { SearchIndexItem } from "../stores/omnisearch-store";
 
-export function OmnisearchBox({ container }: { container: Element }) {
+export interface OmnisearchBoxConfig {
+  defaultSources: {
+    history: boolean;
+    bookmarks: boolean;
+    currentCollection: boolean;
+  };
+  staticPages: Array<SearchIndexItem>;
+}
+
+export function OmnisearchBox() {
+  const container = useBrowserContainer();
   const [search, setSearch] = useSearchState();
   const lastUrl = useLastUrl();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,12 +53,12 @@ export function OmnisearchBox({ container }: { container: Element }) {
     return lastUrlWithoutHttps;
   }, [loading, search, lastUrlWithoutHttps]);
 
-  const setIsModalOpen = (open: boolean) => {
+  const setIsModalOpen = useCallback((open: boolean) => {
     _setIsModalOpen(open);
     if (!open) {
       wasLastOpen.current = true;
     }
-  };
+  }, []);
 
   const onSelectionChange = useCallback(
     (key: Key | null) => {
@@ -74,7 +79,7 @@ export function OmnisearchBox({ container }: { container: Element }) {
         }
       }
     },
-    [open],
+    [open, getSearchResult, setIsModalOpen, setSearch],
   );
 
   useEffect(() => {
@@ -87,7 +92,7 @@ export function OmnisearchBox({ container }: { container: Element }) {
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [isModalOpen]);
+  }, [isModalOpen, setIsModalOpen]);
 
   const onBlur = useCallback(() => {
     if (!isModalOpen) {
@@ -101,7 +106,7 @@ export function OmnisearchBox({ container }: { container: Element }) {
     } else {
       wasLastOpen.current = true;
     }
-  }, [isModalOpen, lastUrl]);
+  }, [isModalOpen, lastUrl, setSearch]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -112,10 +117,9 @@ export function OmnisearchBox({ container }: { container: Element }) {
     }
   }, [isModalOpen]);
 
-  console.log(results);
-
   return (
     <DialogTrigger isOpen={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* What is visible when the modal is closed */}
       <div>
         <Label className="sr-only">Search</Label>
         <Button
@@ -132,13 +136,16 @@ export function OmnisearchBox({ container }: { container: Element }) {
           </span>
         </Button>
       </div>
+
+      {/* What is visible when the modal is open */}
       <Popover
         className="bg-white inset-0"
-        UNSTABLE_portalContainer={container}
+        UNSTABLE_portalContainer={container || undefined}
         shouldUpdatePosition={false}
       >
         <Dialog className="focus:outline-none">
           <ComboBox onSelectionChange={onSelectionChange} menuTrigger="focus">
+            {/* The header / search box itself. */}
             <div className="flex h-14 border-b shadow bg-gray-50">
               <div className="w-11 ml-0.5 text-xl flex items-center justify-center text-slate-500">
                 <SearchIcon />
@@ -174,6 +181,8 @@ export function OmnisearchBox({ container }: { container: Element }) {
                 />
               </div>
             </div>
+
+            {/* The search results. */}
             <ListBox selectionMode="single" items={results || undefined}>
               {({ id }) => {
                 const item = getSearchResult(id);

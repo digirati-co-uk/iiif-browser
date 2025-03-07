@@ -4,7 +4,7 @@ import { LocaleString, useCollection } from "react-iiif-vault";
 import { FolderIcon } from "../../components/FolderIcon";
 import { useResolve } from "../context";
 
-export function CollectionSnippet({ id }: { id: string }) {
+export function CollectionGridSnippet({ id }: { id: string }) {
   const collection = useCollection({ id });
   const open = useResolve();
   const { pressProps } = usePress({

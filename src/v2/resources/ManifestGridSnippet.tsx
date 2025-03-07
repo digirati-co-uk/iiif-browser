@@ -1,11 +1,10 @@
 import { usePress } from "react-aria";
-import { Button } from "react-aria-components";
 import { LocaleString, useManifest } from "react-iiif-vault";
 import { ManifestThumbnailImage } from "../../components/ManifestThumbnailImage";
 import { CDNManifestThumbnail } from "../components/CDNManifestThumbnail";
 import { useResolve } from "../context";
 
-export function ManifestSnippet() {
+export function ManifestGridSnippet() {
   const manifest = useManifest();
   const open = useResolve();
   const label = manifest?.label || "Untitled Manifest";

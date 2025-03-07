@@ -5,4 +5,13 @@ export default {
   component: IIIFBrowser,
 };
 
-export const Default = () => <IIIFBrowser />;
+export const Default = () => (
+  <>
+    <div className="max-w-2xl">
+      <IIIFBrowser />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+    </div>
+  </>
+);
