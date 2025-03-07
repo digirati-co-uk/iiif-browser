@@ -1,9 +1,13 @@
-import { ImageCandidateRequest } from "@atlas-viewer/iiif-image-api";
-import { Vault } from "@iiif/helpers/vault";
-import { Reference } from "@iiif/presentation-3";
-import { SupportedSelector } from "@iiif/helpers";
+import type { ImageCandidateRequest } from "@atlas-viewer/iiif-image-api";
+import type { Vault } from "@iiif/helpers/vault";
+import type { Reference } from "@iiif/presentation-3";
+import type { SupportedSelector } from "@iiif/helpers";
 
-export type HistoryItem = Reference & { selector?: SupportedSelector; parent?: HistoryItem; listing?: HistoryItem[] };
+export type HistoryItem = Reference & {
+  selector?: SupportedSelector;
+  parent?: HistoryItem;
+  listing?: HistoryItem[];
+};
 
 export interface ExplorerAction<Type extends OutputTarget["type"]> {
   label: string;
@@ -12,14 +16,18 @@ export interface ExplorerAction<Type extends OutputTarget["type"]> {
     data: any,
     resource: HistoryItem,
     options: GetOutputTarget<Type>,
-    vault: Vault
+    vault: Vault,
   ) => Promise<any | void> | any | void;
 }
 
 export interface ExplorerFormat<Type extends OutputFormat["type"]> {
   label: string;
   supportedTypes: OutputType[];
-  format: (resource: any, options: GetOutputFormat<Type>, vault: Vault) => Promise<any> | any;
+  format: (
+    resource: any | any[],
+    options: GetOutputFormat<Type>,
+    vault: Vault,
+  ) => Promise<any> | any;
 }
 
 export type OutputType =
@@ -34,12 +42,27 @@ export type OutputType =
 export type OutputFormat =
   | { type: "content-state"; encoded?: boolean }
   | { type: "json"; pretty?: boolean }
-  | { type: "custom"; format: (resource: HistoryItem, parent: HistoryItem | null, vault: Vault) => any }
+  | {
+      type: "custom";
+      format: (
+        resource: HistoryItem,
+        parent: HistoryItem | null,
+        vault: Vault,
+      ) => any;
+    }
   | { type: "thumbnail"; options?: ImageCandidateRequest }
   | { type: "url"; resolvable?: boolean }
-  | { type: "image-service"; allowImageFallback?: boolean; skipCanonical?: boolean };
+  | {
+      type: "image-service";
+      allowImageFallback?: boolean;
+      skipCanonical?: boolean;
+    };
 
-export type OutputTarget = { label?: string; format?: OutputFormat; supportedTypes?: OutputType[] } & OutputTargetTypes;
+export type OutputTarget = {
+  label?: string;
+  format?: OutputFormat;
+  supportedTypes?: OutputType[];
+} & OutputTargetTypes;
 
 export type OutputTargetTypes =
   | { type: "callback"; cb: (resource: any) => void }
@@ -57,8 +80,14 @@ export type OutputTargetTypes =
       cb?: (resource: any, window: Window | null) => void;
     };
 
-export type GetOutputFormat<Type extends OutputFormat["type"]> = InferFromType<OutputFormat, Type>;
-export type GetOutputTarget<Type extends OutputTarget["type"]> = InferFromType<OutputTarget, Type>;
+export type GetOutputFormat<Type extends OutputFormat["type"]> = InferFromType<
+  OutputFormat,
+  Type
+>;
+export type GetOutputTarget<Type extends OutputTarget["type"]> = InferFromType<
+  OutputTarget,
+  Type
+>;
 
 export type InferFromType<
   Input extends { type: string },

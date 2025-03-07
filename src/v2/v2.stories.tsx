@@ -12,6 +12,7 @@ export const Default = () => (
     </div>
     <div className="flex">
       <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
     </div>
   </>
 );

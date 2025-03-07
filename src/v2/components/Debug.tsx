@@ -2,31 +2,79 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { Button } from "react-aria-components";
 import { createPortal } from "react-dom";
 import {
+  useAllOutputs,
+  useAvailableOutputs,
   useBrowserEmitter,
   useClearHistory,
   useHistory,
   useHistoryIndex,
   useHistoryList,
+  useSelectedItems,
 } from "../context";
+import { PortalResourceIcon } from "../icons/PortalResourceIcon";
+
+function useDebugElement(id: string) {
+  const [element, setElement] = useState<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const debugHistoryElement = document.getElementById(id);
+    if (!debugHistoryElement) return;
+    setElement(debugHistoryElement as HTMLDivElement);
+  }, [id]);
+
+  return element;
+}
 
 export function Debug() {
-  const [debugHistoryElement, setDebugHistoryElement] =
-    useState<HTMLDivElement | null>(null);
-
-  // iiif-browser__debug-history
-  useLayoutEffect(() => {
-    const debugHistoryElement = document.getElementById(
-      "iiif-browser__debug-history",
-    );
-    if (!debugHistoryElement) return;
-    setDebugHistoryElement(debugHistoryElement as HTMLDivElement);
-  }, []);
+  const debugHistoryElement = useDebugElement("iiif-browser__debug-history");
+  const debugSelectedElement = useDebugElement("iiif-browser__debug-selected");
 
   return (
     <>
       {debugHistoryElement &&
         createPortal(<DebugHistory />, debugHistoryElement)}
+      {debugSelectedElement &&
+        createPortal(<DebugSelected />, debugSelectedElement)}
     </>
+  );
+}
+
+function DebugSelected() {
+  const selectedItems = useSelectedItems();
+  const availableOutputs = useAvailableOutputs();
+  const allOutputs = useAllOutputs();
+
+  return (
+    <div className="w-full min-w-96 max-w-lg bg-white rounded-xl p-2 drop-shadow-lg m-4">
+      <div className="flex gap-4 p-2">
+        <div className="flex flex-col gap-2">
+          <div className="text-lg font-bold">Debug selected items</div>
+        </div>
+      </div>
+      <div className="mb-8 p-2">
+        {selectedItems.map((item) => {
+          const { id, type } = item;
+          return (
+            <div key={id} className="flex gap-2">
+              <PortalResourceIcon type={type} />
+              <div className="text-sm text-gray-500">{type}</div>
+              <div className="text-sm text-gray-500">{id}</div>
+            </div>
+          );
+        })}
+        {selectedItems.length === 0 && (
+          <div className="text-sm text-gray-500">No selected items</div>
+        )}
+      </div>
+      <h3 className="text-md font-bold">Debug available outputs</h3>
+      <pre className="text-sm text-gray-500">
+        {JSON.stringify(availableOutputs, null, 2)}
+      </pre>
+      <h3 className="text-md font-bold">Debug all outputs</h3>
+      <pre className="text-sm text-gray-500">
+        {JSON.stringify(allOutputs, null, 2)}
+      </pre>
+    </div>
   );
 }
 
@@ -45,7 +93,7 @@ function DebugHistory() {
   }, [emitter]);
 
   return (
-    <div className="max-w-lg w-full bg-white rounded-xl p-2 drop-shadow-lg">
+    <div className="w-full min-w-96 max-w-lg bg-white rounded-xl p-2 drop-shadow-lg m-4">
       <div className="flex gap-4 p-2">
         <div className="flex flex-col gap-2">
           <div className="text-lg font-bold">Debug History</div>

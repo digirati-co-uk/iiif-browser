@@ -2,6 +2,8 @@ import type { Vault } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/presentation-3";
 import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
+import { formats } from "../../formats";
+import { targets } from "../../targets";
 import type { BrowserLinkConfig } from "../browser/BrowserLink";
 import type { BrowserEvents } from "../events";
 
@@ -29,16 +31,18 @@ export interface OutputStore {
   defaultSelectedItem: SelectedItem | null;
   selectedItems: Array<SelectedItem>;
   wasManuallySelected: boolean;
+  allOutputs: Array<OutputTarget>;
   availableOutputs: Array<OutputTarget>;
   replaceSelectedItems(items: Array<SelectedItem>): void;
   selectItem(item: SelectedItem): void;
   toggleItemSelection(item: SelectedItem, single?: boolean): void;
   deselectItem(item: SelectedItem): void;
   resetSelection(): void;
-  handleClickOutput(target: OutputTarget): void;
+  runTargetAction(target: OutputTarget): void;
 }
 
 export type OutputType =
+  | "All"
   | "Collection"
   | "Manifest"
   | "Canvas"
@@ -97,33 +101,80 @@ interface OutputStoreOptions {
 }
 
 type OutputStoreEvents = {
-  "output:replace-selected-items": Array<SelectedItem>;
-  "output:select-item": SelectedItem;
-  "output:deselect-item": SelectedItem;
-  "output:deselect-all-items": undefined;
-  "output:reset-selection": undefined;
+  "output.replace-selected-items": Array<SelectedItem>;
+  "output.select-item": SelectedItem;
+  "output.deselect-item": SelectedItem;
+  "output.deselect-all-items": undefined;
+  "output.reset-selection": undefined;
+  "output.selection-change": undefined;
 };
 
 export function createOutputStore(options: OutputStoreOptions) {
-  const { output, emitter } = options;
+  const { output, emitter, linkConfig, vault } = options;
+
+  function canSelect(item: SelectedItem) {
+    if (item.type === "Canvas" && !linkConfig.canSelectCanvas) {
+      return false;
+    }
+    if (item.type === "Manifest" && !linkConfig.canSelectManifest) {
+      return false;
+    }
+    if (item.type === "Collection" && !linkConfig.canSelectCollection) {
+      return false;
+    }
+    return true;
+  }
+
   const store = createStore<OutputStore>((set, get) => ({
     defaultSelectedItem: null,
     selectedItems: [],
     wasManuallySelected: false,
+    allOutputs: output,
     availableOutputs: output,
+
+    async runTargetAction(output: OutputTarget) {
+      const resources = get().selectedItems;
+      const format = output.format;
+      const chosenFormat = formats[format.type];
+      const template = targets[output.type];
+
+      const resource = resources.length === 1 ? resources[0] : resources;
+
+      if (!resources.length) {
+        return;
+      }
+
+      if (!chosenFormat || !template) {
+        throw new Error(`Unsupported output: ${format.type} / ${output.type}`);
+      }
+
+      const formatted = await chosenFormat.format(
+        resource,
+        format as never,
+        vault,
+      );
+      await template.action(formatted, resource as any, output as any, vault);
+    },
     replaceSelectedItems(items: Array<SelectedItem>): void {
+      const selectedItems = items.filter(canSelect);
       set({
-        selectedItems: items,
+        selectedItems,
         wasManuallySelected: true,
       });
-      emitter.emit("output:replace-selected-items", items);
+      emitter.emit("output.replace-selected-items", selectedItems);
+      emitter.emit("output.selection-change");
     },
     selectItem(item: SelectedItem): void {
+      const wasManuallySelected = get().wasManuallySelected;
+      if (!canSelect(item)) return;
       set({
-        selectedItems: [...get().selectedItems, item],
+        selectedItems: wasManuallySelected
+          ? [...get().selectedItems, item]
+          : [item],
         wasManuallySelected: true,
       });
-      emitter.emit("output:select-item", item);
+      emitter.emit("output.select-item", item);
+      emitter.emit("output.selection-change");
     },
     deselectItem(item: SelectedItem): void {
       const index = get().selectedItems.findIndex((i) => i.id === item.id);
@@ -135,7 +186,8 @@ export function createOutputStore(options: OutputStoreOptions) {
         ],
         wasManuallySelected: true,
       });
-      emitter.emit("output:deselect-item", item);
+      emitter.emit("output.deselect-item", item);
+      emitter.emit("output.selection-change");
 
       if (get().selectedItems.length === 0) {
         get().resetSelection();
@@ -145,10 +197,14 @@ export function createOutputStore(options: OutputStoreOptions) {
     resetSelection(): void {
       const defaultSelectedItem = get().defaultSelectedItem;
       set({
-        selectedItems: defaultSelectedItem ? [defaultSelectedItem] : [],
+        selectedItems:
+          defaultSelectedItem && canSelect(defaultSelectedItem)
+            ? [defaultSelectedItem]
+            : [],
         wasManuallySelected: false,
       });
-      emitter.emit("output:reset-selection");
+      emitter.emit("output.reset-selection");
+      emitter.emit("output.selection-change");
     },
 
     toggleItemSelection(item: SelectedItem, single?: boolean): void {
@@ -163,15 +219,60 @@ export function createOutputStore(options: OutputStoreOptions) {
         get().deselectItem(item);
       }
     },
-
-    handleClickOutput(target: OutputTarget): void {
-      // @todo.
-      console.log("handleClickOutput", {
-        target,
-        selectedItems: get().selectedItems,
-      });
-    },
   }));
+
+  emitter.on("output.selection-change", () => {
+    // @todo availableOutputs
+    const { selectedItems } = store.getState();
+
+    if (selectedItems.length === 0) {
+      store.setState({ availableOutputs: [] });
+      return;
+    }
+
+    console.log("changing available outputs", {
+      output,
+      selectedItems,
+    });
+
+    const availableOutputs = output.filter((output) => {
+      if (selectedItems.length === 1) {
+        const item = selectedItems[0]!;
+        // Handle cases for single items.
+        if (!output.supportedTypes.includes(item.type as any)) {
+          return false;
+        }
+
+        return true;
+      }
+
+      const uniqueTypes: string[] = [];
+      for (const item of selectedItems) {
+        if (uniqueTypes.includes(item.type)) {
+          continue;
+        }
+        uniqueTypes.push(item.type);
+      }
+
+      // Option 1: check for `${type}List`
+      if (uniqueTypes.length === 1) {
+        const uniqueType = uniqueTypes[0]!;
+        const typeList = `${uniqueType}List`;
+        if (!output.supportedTypes.includes(typeList as any)) {
+          return false;
+        }
+      }
+
+      // At the moment no way to support this. Maybe an "All" type, useful for callbacks.
+      if (output.supportedTypes.includes("All")) {
+        return true;
+      }
+
+      return true;
+    });
+
+    store.setState({ availableOutputs });
+  });
 
   emitter.on("resource.change", (resource) => {
     if (!resource) {
@@ -180,7 +281,7 @@ export function createOutputStore(options: OutputStoreOptions) {
         selectedItems: [],
         wasManuallySelected: false,
       });
-      emitter.emit("output:deselect-all-items");
+      emitter.emit("output.deselect-all-items");
       return;
     }
 
@@ -191,11 +292,14 @@ export function createOutputStore(options: OutputStoreOptions) {
     };
     store.setState({
       defaultSelectedItem: item,
-      selectedItems: [item],
+      selectedItems: canSelect(item) ? [item] : [],
       wasManuallySelected: false,
     });
-    emitter.emit("output:select-item", item);
+    emitter.emit("output.select-item", item);
+    emitter.emit("output.selection-change");
   });
+
+  emitter.emit("output.selection-change");
 
   return store;
 }

@@ -1,5 +1,11 @@
-import { OutputFormat, OutputTarget, OutputType } from "../../IIIFBrowser.types";
+import type {
+  OutputFormat,
+  OutputTarget,
+  OutputType,
+} from "../../IIIFBrowser.types";
 import { BrowserOutput } from "../components/BrowserOutput";
+import { BrowserOutputActions } from "./BrowserOuputActions";
+import { BrowserOutputPreview } from "./BrowserOutputPreview";
 
 interface BrowserFooterProps {
   /**
@@ -16,18 +22,17 @@ interface BrowserFooterProps {
   onSelect?: () => void;
 }
 
-export function BrowserFooter({ types, targets, format, output, onSelect }: BrowserFooterProps) {
+export function BrowserFooter({
+  types,
+  targets,
+  format,
+  output,
+  onSelect,
+}: BrowserFooterProps) {
   return (
-
-      <div className="p-3 border-t bg-gray-100">
-        <BrowserOutput
-          onSelect={onSelect}
-          targets={targets}
-          types={types as any}
-          format={format}
-          output={output}
-        />
-      </div>
-
+    <div className="p-3 border-t bg-gray-100 flex gap-2 justify-between">
+      <BrowserOutputPreview />
+      <BrowserOutputActions />
+    </div>
   );
 }

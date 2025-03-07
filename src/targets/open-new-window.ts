@@ -1,9 +1,15 @@
-import type { ExplorerAction } from "../IIIFBrowser.types";
 import type { ManifestNormalized } from "@iiif/presentation-3-normalized";
+import type { ExplorerAction } from "../IIIFBrowser.types";
 
 export const openNewWindowTarget: ExplorerAction<"open-new-window"> = {
   label: "Open",
   action: (data, ref, options, vault) => {
+    console.log("open window", {
+      data,
+      ref,
+      options,
+    });
+
     const urlPattern = options.urlPattern || "{RESULT}";
     const resource = vault.get(ref, { skipSelfReturn: false });
     const parent = ref.parent;
@@ -41,6 +47,9 @@ export const openNewWindowTarget: ExplorerAction<"open-new-window"> = {
 
     let targetUrl = urlPattern.replace(/{RESULT}/, data);
 
+    if (resource.type === "Collection") {
+      targetUrl = targetUrl.replace(/{COLLECTION}/, resource.id || "");
+    }
     targetUrl = targetUrl.replace(/{MANIFEST}/, manifest || "");
     targetUrl = targetUrl.replace(/{CANVAS}/, canvas || "");
     targetUrl = targetUrl.replace(/{CANVAS_INDEX}/, canvasIndex || "");

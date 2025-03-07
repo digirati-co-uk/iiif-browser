@@ -141,8 +141,16 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   }, [canResolve, resource]);
 
   const canSelect = useMemo(() => {
-    // @todo figure out what the rules are.
-    return true;
+    if (config.canSelectCanvas && resource.type === "Canvas") {
+      return true;
+    }
+    if (config.canSelectManifest && resource.type === "Manifest") {
+      return true;
+    }
+    if (config.canSelectCollection && resource.type === "Collection") {
+      return true;
+    }
+    return false;
   }, []);
 
   // @todo - get the selected item handling (list, add, remove)
@@ -160,9 +168,9 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     isMarked,
     doubleClickToNavigate: config.doubleClickToNavigate,
     renderCheckbox: () => {
-      if (!canSelect) return null;
       return (
         <Checkbox
+          isDisabled={!canSelect}
           isSelected={isSelected}
           onChange={() =>
             selectedActions.toggleItemSelection(resource, !config.multiSelect)

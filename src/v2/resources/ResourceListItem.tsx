@@ -39,7 +39,11 @@ export function ResourceListItem({
           {canSelect ? (
             <div
               aria-selected={isSelected}
-              className="w-6 group-hover:opacity-100 opacity-10 aria-selected:opacity-100"
+              className={
+                // biome-ignore lint/style/useTemplate: <explanation>
+                "w-8 aria-selected:opacity-100 flex-shrink-0 flex " +
+                `${doubleClickToNavigate ? "group-hover:opacity-100 opacity-10" : "opacity-50 hover:opacity-100"}`
+              }
             >
               {renderCheckbox()}
             </div>

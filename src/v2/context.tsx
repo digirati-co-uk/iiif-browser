@@ -22,6 +22,8 @@ import {
 import {
   type OutputConfig,
   type OutputStore,
+  type OutputTarget,
+  OutputType,
   createOutputStore,
 } from "./stores/output-store";
 
@@ -247,6 +249,16 @@ export function useOutputStore() {
   return context;
 }
 
+export function useAvailableOutputs() {
+  const store = useOutputStore();
+  return useStore(store, (state) => state.availableOutputs);
+}
+
+export function useAllOutputs() {
+  const store = useOutputStore();
+  return useStore(store, (state) => state.allOutputs);
+}
+
 export function useSelectedItems() {
   const store = useOutputStore();
   return useStore(store, (state) => state.selectedItems);
@@ -261,7 +273,7 @@ export function useSelectedActions() {
       replaceSelectedItems: state.replaceSelectedItems,
       deselectItem: state.deselectItem,
       resetSelection: state.resetSelection,
-      handleClickOutput: state.handleClickOutput,
+      runTargetAction: state.runTargetAction,
     };
   });
 }
@@ -328,6 +340,26 @@ export function BrowserProvider({
 
   const outputConfigValue: OutputConfig = useMemo(() => {
     if (!outputConfig || !outputConfig?.length) {
+      if (true as boolean) {
+        // testing more optinos.
+        return [
+          {
+            label: "Open Manifest in Theseus",
+            type: "open-new-window",
+            urlPattern: "https://theseusviewer.org/?iiif-content={MANIFEST}",
+            format: { type: "url", resolvable: true },
+            supportedTypes: ["Manifest"],
+          },
+          {
+            label: "Open Collection in Theseus",
+            type: "open-new-window",
+            urlPattern: "https://theseusviewer.org/?iiif-content={COLLECTION}",
+            format: { type: "url", resolvable: false },
+            supportedTypes: ["Collection"],
+          },
+        ] as OutputTarget[];
+      }
+
       return [
         {
           label: "Open",
@@ -362,9 +394,11 @@ export function BrowserProvider({
           multiSelect: false,
 
           // Testing
+          // multiSelect: true,
           // clickToSelect: true,
           // clickToNavigate: false,
           // doubleClickToNavigate: true,
+          // canSelectCollection: false,
         } as BrowserLinkConfig,
         linkConfig,
       ),

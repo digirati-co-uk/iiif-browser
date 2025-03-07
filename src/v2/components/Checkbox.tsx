@@ -9,7 +9,7 @@ export function Checkbox({ children, ...props }: CheckboxProps) {
       {({ isIndeterminate, isSelected }) => (
         <>
           <div
-            className={`text-2xl ${isSelected ? "text-blue-600" : "text-gray-500"}`}
+            className={`text-2xl p-1 ${isSelected ? "text-blue-600" : "text-gray-500"}`}
           >
             <svg
               width="1em"
