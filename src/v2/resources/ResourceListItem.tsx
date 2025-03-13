@@ -24,6 +24,7 @@ export function ResourceListItem({
         isNavigating,
         isSelected,
         doubleClickToNavigate,
+        showNavigationArrow,
         navigate,
         renderCheckbox,
         renderDotsMenu,
@@ -54,7 +55,7 @@ export function ResourceListItem({
           <div className="overflow-hidden text-md truncate flex-1">
             <LocaleString>{resource.label}</LocaleString>
           </div>
-          {doubleClickToNavigate ? (
+          {showNavigationArrow ? (
             <Button onPress={navigate} className="ml-auto bg-gray-500/10 p-2">
               <ArrowForwardIcon />
             </Button>

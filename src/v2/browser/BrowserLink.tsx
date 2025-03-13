@@ -8,15 +8,18 @@ import {
   useSelectedActions,
   useSelectedItems,
 } from "../context";
-import { MenuIcon } from "../icons/MenuIcon";
+import { Vault } from "@iiif/helpers";
+import { useVault } from "react-iiif-vault";
 
 export type BrowserLinkConfig = {
   allowNavigationToBuiltInPages: boolean;
   onlyAllowedDomains: boolean;
+  canSelectOnlyAllowedDomains: boolean;
   allowedDomains: string[];
   disallowedResources: string[];
   markedResources: string[];
   multiSelect: boolean;
+  alwaysShowNavigationArrow: boolean;
 
   clickToSelect: boolean;
   doubleClickToNavigate: boolean;
@@ -29,6 +32,9 @@ export type BrowserLinkConfig = {
   canSelectCollection: boolean;
   canSelectManifest: boolean;
   canSelectCanvas: boolean;
+
+  customCanNavigate: null | ((resource: any, vault: Vault) => boolean);
+  customCanSelect: null | ((resource: any, vault: Vault) => boolean);
 };
 
 type BrowserLinkRenderProps = {
@@ -38,6 +44,7 @@ type BrowserLinkRenderProps = {
   isMarked: boolean;
   canSelect: boolean;
   canNavigate: boolean;
+  showNavigationArrow: boolean;
   renderCheckbox: () => React.ReactElement | null;
   renderDotsMenu: () => React.ReactElement | null;
   navigate: () => void;
@@ -63,6 +70,21 @@ type BrowserLinkProps<ET extends React.ElementType = "span"> = {
     "href" | "children" | "onClick" | "resource"
   >;
 
+export function isDomainAllowed(link: string, allowedDomains: string[]) {
+  let allowed = false;
+  for (const domain of allowedDomains || []) {
+    const normalisedDomain = domain
+      .replace("https://", "")
+      .replace("http://", "");
+    const normalisedId = link.replace("https://", "").replace("http://", "");
+    if (normalisedId.startsWith(normalisedDomain)) {
+      return true;
+    }
+  }
+
+  return allowed;
+}
+
 export function BrowserLink<ET extends React.ElementType = "span">({
   children,
   resource,
@@ -74,6 +96,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   manualLink,
   ...elementProps
 }: BrowserLinkProps<ET>) {
+  const vault = useVault();
   const config = useLinkConfig();
   const resolve = useResolve();
   const canResolve = useCanResolve();
@@ -96,7 +119,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
           return;
         }
         if (isShift) {
-          selectedActions.selectItem(resource);
+          selectedActions.toggleItemSelection(resource);
         } else if (isCtrl || isMeta) {
           selectedActions.toggleItemSelection(resource);
         } else {
@@ -141,6 +164,24 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   }, [canResolve, resource]);
 
   const canSelect = useMemo(() => {
+    if (config.customCanSelect) {
+      try {
+        const customSelect = config.customCanSelect(resource, vault);
+        if (typeof customSelect === "boolean") {
+          return customSelect;
+        }
+      } catch (error) {
+        console.error("Error in customCanSelect:", error);
+      }
+    }
+
+    if (
+      config.canSelectOnlyAllowedDomains &&
+      !isDomainAllowed(resource.id, config.allowedDomains)
+    ) {
+      return false;
+    }
+
     if (config.canSelectCanvas && resource.type === "Canvas") {
       return true;
     }
@@ -166,6 +207,8 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     canSelect,
     canNavigate,
     isMarked,
+    showNavigationArrow:
+      config.alwaysShowNavigationArrow || config.doubleClickToNavigate,
     doubleClickToNavigate: config.doubleClickToNavigate,
     renderCheckbox: () => {
       return (

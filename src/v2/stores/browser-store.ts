@@ -8,6 +8,7 @@ import { Action, type History, createMemoryHistory } from "history";
 import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
+import { Collection, Manifest } from "@iiif/presentation-3";
 
 // Things the store needs to do:
 // - Handle conversion of URLs to Routes
@@ -79,7 +80,6 @@ export type BrowserState = "IDLE" | "LOADING" | "LOADED" | "ERROR" | "RETRYING";
 export type CreateBrowserStoreOptions = {
   emitter: BrowserEmitter;
   vault?: Vault;
-  initialEntries?: string[];
 } & BrowserStoreConfig;
 
 export type BrowserStoreConfig = {
@@ -90,6 +90,9 @@ export type BrowserStoreConfig = {
   restoreFromLocalStorage: boolean;
   saveToLocalStorage: boolean;
   localStorageKey: string;
+
+  preprocessManifest?: (manifest: Manifest) => Promise<Manifest>;
+  preprocessCollection?: (collection: Collection) => Promise<Collection>;
 };
 
 export function getLocalStorageLinearHistory(defaultHistory: HistoryItem[]) {
@@ -115,12 +118,17 @@ function setLocalStorageLinearHistory(allHistory: HistoryItem[], limit = 100) {
   }
 }
 
-function getLocalStorageHistory(defaultHistory: HistoryItem[]): {
+function getLocalStorageHistory(
+  defaultHistory: HistoryItem[],
+  options: { key?: string } = {},
+): {
   history: HistoryItem[];
   cursor: number;
 } {
+  const { key = "@v1/iiif-browser-history" } = options;
+
   try {
-    const history = localStorage.getItem("@v1/iiif-browser-history") || "[]";
+    const history = localStorage.getItem(key) || "[]";
     const foundHistory = JSON.parse(history) as {
       history: HistoryItem[];
       cursor: number;
@@ -146,12 +154,14 @@ function setLocalStorageHistory(
     history: HistoryItem[];
     cursor: number;
   },
-  limit = 100,
+  options: { key?: string; limit?: number } = {},
 ) {
+  const { key = "@v1/iiif-browser-history", limit = 100 } = options;
+
   const historyItems = allHistory.history.slice(0, limit);
   try {
     localStorage.setItem(
-      "@v1/iiif-browser-history",
+      key,
       JSON.stringify({
         history: historyItems,
         cursor: allHistory.cursor,
@@ -162,44 +172,94 @@ function setLocalStorageHistory(
   }
 }
 
-export function createBrowserStore({
-  vault = new Vault(),
-  requestInitOptions = {},
-  emitter,
-}: CreateBrowserStoreOptions) {
-  const { history: savedHistory, cursor: initialIndex } =
-    getLocalStorageHistory([
+function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
+  History,
+  {
+    savedHistory: HistoryItem[];
+    initialIndex: number;
+    initialPage: HistoryItem;
+    linearHistory: HistoryItem[];
+  },
+] {
+  const {
+    historyLimit,
+    initialHistory,
+    initialHistoryCursor,
+    localStorageKey,
+    restoreFromLocalStorage,
+  } = options;
+
+  const nonEmptyInitialHistory =
+    initialHistory.length === 0
+      ? [
+          {
+            resource: null,
+            route: "/",
+            url: "iiif://home",
+          },
+        ]
+      : initialHistory;
+
+  if (!restoreFromLocalStorage) {
+    const history = createMemoryHistory({
+      initialEntries: nonEmptyInitialHistory.map((item) => item.route),
+      initialIndex: initialHistoryCursor,
+    });
+    return [
+      history,
       {
-        resource: null,
-        route: "/",
-        url: "iiif://home",
+        savedHistory: [],
+        initialIndex: initialHistoryCursor,
+        initialPage: nonEmptyInitialHistory[initialHistoryCursor]!,
+        linearHistory: [],
       },
-    ]);
-  const linearHistory = getLocalStorageLinearHistory([
-    {
-      resource: null,
-      route: "/",
-      url: "iiif://home",
-    },
-  ]);
+    ];
+  }
+
+  const {
+    //
+    history: savedHistory,
+    cursor: initialIndex,
+  } = getLocalStorageHistory(nonEmptyInitialHistory, { key: localStorageKey });
+  const linearHistory = getLocalStorageLinearHistory(nonEmptyInitialHistory);
   const initialPage = savedHistory[0]!;
   const initialEntries = savedHistory.map((item) => item.route);
 
-  // @todo replace this with custom implementation:
-  // - get index()
-  // - get action()
-  // - get location()
-  // - createHref(to) (uses createPath)
-  // - createURL(to)
-  // - encodeLocation(to)
-  // - push(to, state)
-  // - replace(to, state)
-  // - go(delta)
-  // - listen(fn: Listener) -> () => void
   const history = createMemoryHistory({
     initialEntries,
     initialIndex,
   });
+
+  return [
+    history,
+    {
+      savedHistory,
+      initialIndex,
+      initialPage,
+      linearHistory,
+    },
+  ];
+}
+
+export function createBrowserStore(options: CreateBrowserStoreOptions) {
+  const {
+    vault = new Vault(),
+    requestInitOptions = {},
+    emitter,
+    preprocessManifest,
+    preprocessCollection,
+  } = options;
+
+  const [
+    history,
+    {
+      //
+      initialIndex,
+      initialPage,
+      linearHistory,
+      savedHistory,
+    },
+  ] = getInitialHistory(options);
 
   let requestAbortController: AbortController | undefined;
 
@@ -350,9 +410,16 @@ export function createBrowserStore({
         }
 
         // Now what is it. We will try to upgrade it using the @iiif/parser.
-        const result = upgrade(json);
+        let result = upgrade(json);
         if (!result.id || !result.type) {
           return browserResourceError(url, `Unsupported Resource type`, true);
+        }
+
+        if (result.type === "Manifest" && preprocessManifest) {
+          result = await preprocessManifest(result);
+        }
+        if (result.type === "Collection" && preprocessCollection) {
+          result = await preprocessCollection(result);
         }
 
         const route = resourceRoutes.find(

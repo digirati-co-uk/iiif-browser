@@ -3,11 +3,12 @@ import {
   VaultProvider,
   useCollection,
   useExistingVault,
+  useVault,
 } from "react-iiif-vault";
 import { Router, useSearchParams } from "react-router-dom";
 import { type StoreApi, useStore } from "zustand";
 import type { DeepPartial, IIIFBrowserConfig } from "./IIIFBrowser";
-import type { BrowserLinkConfig } from "./browser/BrowserLink";
+import { isDomainAllowed, type BrowserLinkConfig } from "./browser/BrowserLink";
 import { type BrowserEmitter, createEmitter } from "./events";
 import {
   type BrowserStore,
@@ -26,6 +27,7 @@ import {
   OutputType,
   createOutputStore,
 } from "./stores/output-store";
+import { getValue } from "@iiif/helpers";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
@@ -116,6 +118,7 @@ export function useHistory() {
 }
 
 export function useCanResolve() {
+  const vault = useVault();
   const config = useLinkConfig();
 
   return useCallback(
@@ -123,6 +126,17 @@ export function useCanResolve() {
       let input = _input;
       if (typeof input === "string") {
         input = { id: input, type: "unknown" };
+      }
+
+      if (config.customCanNavigate) {
+        try {
+          const customNav = config.customCanNavigate(input, vault);
+          if (typeof customNav === "boolean") {
+            return customNav;
+          }
+        } catch (error) {
+          console.error("Error in customCanSelect:", error);
+        }
       }
 
       if (
@@ -148,18 +162,7 @@ export function useCanResolve() {
 
       let allowed = true;
       if (config.onlyAllowedDomains) {
-        allowed = false;
-        for (const domain of config.allowedDomains || []) {
-          const normalisedDomain = domain
-            .replace("https://", "")
-            .replace("http://", "");
-          const normalisedId = input.id
-            .replace("https://", "")
-            .replace("http://", "");
-          if (normalisedId.startsWith(normalisedDomain)) {
-            allowed = true;
-          }
-        }
+        allowed = isDomainAllowed(input.id, config.allowedDomains);
       }
 
       return allowed;
@@ -324,7 +327,7 @@ export function BrowserProvider({
       saveToLocalStorage: true,
       restoreFromLocalStorage: true,
       requestInitOptions: {},
-      localStorageKey: "iiif-browser",
+      localStorageKey: "@v1/iiif-browser-history",
       initialHistoryCursor: 0,
       initialHistory: [
         {
@@ -334,6 +337,8 @@ export function BrowserProvider({
         },
       ],
       historyLimit: 100,
+      preprocessCollection: undefined,
+      preprocessManifest: undefined,
       ...(browserConfig || {}),
     };
   }, [browserConfig]);
@@ -379,6 +384,7 @@ export function BrowserProvider({
         {
           allowNavigationToBuiltInPages: true,
           onlyAllowedDomains: false,
+          canSelectOnlyAllowedDomains: false,
           allowedDomains: [],
           markedResources: [],
           disallowedResources: [],
@@ -392,13 +398,20 @@ export function BrowserProvider({
           canSelectManifest: true,
           canSelectCanvas: true,
           multiSelect: false,
+          alwaysShowNavigationArrow: true,
 
+          customCanSelect: null,
+          customCanNavigate: null,
           // Testing
           // multiSelect: true,
           // clickToSelect: true,
           // clickToNavigate: false,
           // doubleClickToNavigate: true,
           // canSelectCollection: false,
+          // onlyAllowedDomains: true,
+          // canSelectOnlyAllowedDomains: true,
+          // allowedDomains: ["https://presentation-api.dlcs.digirati.io"],
+          // customCanSelect: (m, v) => getValue(v.get(m).label).startsWith("A"),
         } as BrowserLinkConfig,
         linkConfig,
       ),
@@ -485,7 +498,10 @@ export function BrowserProvider({
 function CustomRouter({
   basename,
   children,
-}: { basename: string; children: React.ReactNode }) {
+}: {
+  basename: string;
+  children: React.ReactNode;
+}) {
   const history = useHistory();
   const { action, location } = useHistoryRouter();
 
