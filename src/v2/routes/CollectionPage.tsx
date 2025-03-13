@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useVault, useCollection } from "react-iiif-vault";
+import { useCollection, useVault } from "react-iiif-vault";
 import { useSearchParams } from "react-router-dom";
 import { useHistory } from "../context";
 import { CollectionItemList } from "../resources/CollectionItemList";
@@ -14,11 +14,9 @@ export function CollectionPage() {
 
   useEffect(() => {
     if (!collection) {
-      history.replace(
-        `/loading?id=${encodeURIComponent(collectionId)}&view-source=${viewSource}`,
-      );
+      history.replace(`/loading?${searchParams.toString()}`);
     }
-  }, [collection]);
+  }, [searchParams, history.replace, collection]);
 
   const source = useMemo(() => {
     if (!viewSource || !collection) return null;

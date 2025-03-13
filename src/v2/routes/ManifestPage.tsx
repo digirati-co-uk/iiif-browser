@@ -1,5 +1,5 @@
-import { useMemo, useEffect } from "react";
-import { useVault, useManifest, ManifestContext, SimpleViewerProvider } from "react-iiif-vault";
+import { useEffect, useMemo } from "react";
+import { ManifestContext, SimpleViewerProvider, useManifest, useVault } from "react-iiif-vault";
 import { useSearchParams } from "react-router-dom";
 import { useHistory } from "../context";
 import { ManifestCanvasViewer } from "../resources/ManifestCanvasViewer";
@@ -18,11 +18,12 @@ export function ManifestPage() {
     return vault.toPresentation3(manifest as any);
   }, [vault, manifest, viewSource]);
 
+
   useEffect(() => {
     if (!manifest) {
-      history.replace(`/loading?id=${encodeURIComponent(id)}`);
+      history.replace(`/loading?${searchParams.toString()}`);
     }
-  }, [manifest]);
+  }, [searchParams, history.replace, manifest]);
 
   if (!manifest) return null;
 

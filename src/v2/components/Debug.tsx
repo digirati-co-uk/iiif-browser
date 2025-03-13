@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from "react";
-import { Button } from "react-aria-components";
+import { Button, Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { createPortal } from "react-dom";
+import { LocaleString } from "react-iiif-vault";
 import {
   useAllOutputs,
   useAvailableOutputs,
@@ -9,6 +10,9 @@ import {
   useHistory,
   useHistoryIndex,
   useHistoryList,
+  useLastUrl,
+  useLinearHistory,
+  useResolve,
   useSelectedItems,
 } from "../context";
 import { PortalResourceIcon } from "../icons/PortalResourceIcon";
@@ -45,7 +49,7 @@ function DebugSelected() {
   const allOutputs = useAllOutputs();
 
   return (
-    <div className="w-full min-w-96 max-w-lg bg-white rounded-xl p-2 drop-shadow-lg m-4">
+    <div className="w-full min-w-96 max-w-lg bg-white rounded-xl p-2 drop-shadow-lg m-4 overflow-hidden">
       <div className="flex gap-4 p-2">
         <div className="flex flex-col gap-2">
           <div className="text-lg font-bold">Debug selected items</div>
@@ -79,9 +83,12 @@ function DebugSelected() {
 }
 
 function DebugHistory() {
+  const lastUrl = useLastUrl();
+  const linearHistory = useLinearHistory();
   const historyList = useHistoryList();
   const historyIndex = useHistoryIndex();
   const history = useHistory();
+  const resolve = useResolve();
   const clearHistory = useClearHistory();
   const emitter = useBrowserEmitter();
   const [events, setEvents] = useState<any[]>([]);
@@ -98,6 +105,7 @@ function DebugHistory() {
         <div className="flex flex-col gap-2">
           <div className="text-lg font-bold">Debug History</div>
           <div className="text-xs text-gray-500">Index: {historyIndex}</div>
+          <div className="text-xs text-gray-500">Last URL: {lastUrl}</div>
           <div className="flex gap-1">
             <Button
               onPress={() => history.go(-1)}
@@ -120,39 +128,82 @@ function DebugHistory() {
           </div>
         </div>
       </div>
-      {historyList.map((item, index) => (
-        <Button
-          // This doesn't work 100% of the time :(
-          onPress={() => history.go(index - historyIndex)}
-          key={index}
-          className={`flex gap-4 w-full rounded p-2 ${index === historyIndex ? "bg-gray-300" : ""}`}
-        >
-          <div className="truncate overflow-ellipsis" title={item.route}>
-            {item.url}
+      <Tabs>
+        <TabList>
+          <Tab id="history">History</Tab>
+          <Tab id="linear-history">Linear History</Tab>
+        </TabList>
+        <TabPanel id="history">
+          {historyList.map((item, index) => (
+            <Button
+              // This doesn't work 100% of the time :(
+              onPress={() => history.go(index - historyIndex)}
+              key={index}
+              className={`flex gap-4 w-full rounded text-start p-2 ${index === historyIndex ? "bg-gray-300" : ""}`}
+            >
+              <div className="truncate overflow-ellipsis" title={item.route}>
+                {item.metadata?.label ? (
+                  <>
+                    <LocaleString className="font-semibold text-sm">
+                      {item.metadata?.label}
+                    </LocaleString>
+                    <br />
+                  </>
+                ) : null}{" "}
+                {item.url}
+              </div>
+              {item.parent && (
+                <span className="truncate overflow-ellipsis">
+                  {item.parent.id} ({item.parent.type})
+                </span>
+              )}
+              <span className="text-gray-500 flex-shrink-0 ml-auto">
+                Index: {index} / go({index - historyIndex})
+              </span>
+            </Button>
+          ))}
+          <div className="whitespace-pre-wrap text-xs overflow-auto">
+            <Button
+              onPress={() => setEvents([])}
+              className="bg-blue-500 px-2 py-1 rounded text-white"
+            >
+              Clear
+            </Button>
+            {events.map((event, index) => (
+              <pre key={events.length - index} className="whitespace-pre-wrap">
+                {event.type}/{event.data.source} - {JSON.stringify(event.data)}
+              </pre>
+            ))}
           </div>
-          {item.parent && (
-            <span className="truncate overflow-ellipsis">
-              {item.parent.id} ({item.parent.type})
-            </span>
-          )}
-          <span className="text-gray-500 flex-shrink-0 ml-auto">
-            Index: {index} / go({index - historyIndex})
-          </span>
-        </Button>
-      ))}
-      <div className="whitespace-pre-wrap text-xs overflow-auto">
-        <Button
-          onPress={() => setEvents([])}
-          className="bg-blue-500 px-2 py-1 rounded text-white"
-        >
-          Clear
-        </Button>
-        {events.map((event, index) => (
-          <pre key={events.length - index}>
-            {event.type}/{event.data.source} - {JSON.stringify(event.data)}
-          </pre>
-        ))}
-      </div>
+        </TabPanel>
+        <TabPanel id="linear-history">
+          {linearHistory.map((item, index) => (
+            <Button
+              // This doesn't work 100% of the time :(
+              key={index}
+              onPress={() => resolve(item.url)}
+              className={`flex gap-4 flex-col text-start hover:bg-blue-100 justify-start w-full rounded p-2`}
+            >
+              <div className="truncate overflow-ellipsis" title={item.route}>
+                {item.metadata?.label ? (
+                  <>
+                    <LocaleString className="font-semibold text-sm">
+                      {item.metadata?.label}
+                    </LocaleString>
+                    <br />
+                  </>
+                ) : null}{" "}
+                {item.url}
+              </div>
+              {item.parent && (
+                <span className="truncate overflow-ellipsis">
+                  {item.parent.id} ({item.parent.type})
+                </span>
+              )}
+            </Button>
+          ))}
+        </TabPanel>
+      </Tabs>
     </div>
   );
 }

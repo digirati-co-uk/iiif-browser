@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { LocaleString, useVault, useVaultSelector } from "react-iiif-vault";
+import { useSearchParams } from "react-router-dom";
 import invariant from "tiny-invariant";
 import { useStore } from "zustand";
 import type {
@@ -66,6 +67,8 @@ export function BrowserOutput(props: ExplorerOutputProps) {
   //   - Add list of buttons + callbacks to pass to action bar
   //   - formats..
   const vault = useVault();
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
   const selectedFormat = formats[props.format.type];
 
   const validFormats = useMemo(() => {
@@ -132,6 +135,10 @@ export function BrowserOutput(props: ExplorerOutputProps) {
   );
 
   invariant(selectedFormat, "Invalid format selected");
+
+  if (!id) {
+    return null;
+  }
 
   return (
     <div className="flex gap-4 items-center">

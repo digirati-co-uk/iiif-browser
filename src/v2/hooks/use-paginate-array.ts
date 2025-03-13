@@ -16,7 +16,11 @@ export function usePaginateArray<T>(array: T[], pageSize: number) {
           prev.set("page", page.toString());
           return prev;
         });
-        topRef.current?.scrollIntoView({ behavior: "instant" });
+        topRef.current?.scrollIntoView({
+          behavior: "instant",
+          inline: "start",
+          block: "nearest",
+        });
       }
     },
     [setSearchParams, totalPages],

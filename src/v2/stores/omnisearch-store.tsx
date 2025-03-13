@@ -1,18 +1,23 @@
 import { type Vault, getValue } from "@iiif/helpers";
-import type { CollectionNormalized } from "@iiif/presentation-3-normalized";
+import type {
+  CollectionNormalized,
+  ManifestNormalized,
+} from "@iiif/presentation-3-normalized";
 import type { History } from "history";
 import MiniSearch, { type SearchResult } from "minisearch";
 import type { ReactNode } from "react";
 import type { WithMiniSearchProps } from "react-minisearch";
 import { createStore } from "zustand/vanilla";
-import { useLastUrl } from "../context";
 import type { BrowserEmitter } from "../events";
-import { fixedRoutes } from "../routes";
-import type { HistoryItem } from "../store";
+import type { HistoryItem } from "../stores/browser-store";
 
 export interface OmnisearchStore {
   isEnabled: boolean;
   isIndexing: boolean;
+  isOpen: boolean;
+
+  sourceFilter: string | null;
+
   currentCollectionId: string | null;
   query: string;
   results: SearchIndexItem[] | null;
@@ -27,6 +32,10 @@ export interface OmnisearchStore {
   setDynamicItems: (items: SearchIndexItem[]) => void;
 
   getResult(id: string): SearchIndexItem | undefined;
+
+  openWithFilter(query: string, filter: BaseAction["source"]): void;
+  open(query: string): void;
+  close(): void;
 }
 
 interface OmnisearchStoreOptions {
@@ -47,6 +56,7 @@ type BaseAction = {
   actionLabel?: string;
   keywords?: string[];
   showWhenEmpty?: boolean;
+  source: "dynamic" | "history" | "static" | "custom" | "collection";
 };
 
 type SearchAction = BaseAction & {
@@ -98,12 +108,12 @@ const miniSearchOptions: WithMiniSearchProps["options"] = {
 
 export function createOmnisearchStore(options: OmnisearchStoreOptions) {
   const emitter = options.emitter;
-  const numberOfResults = options.numberOfResults || 10;
+  const numberOfResults = options.numberOfResults || 30;
   const store = createStore<OmnisearchStore>((set, get) => {
     const $search = new MiniSearch<SearchIndexItem>(miniSearchOptions);
     const documentsById = new Map<string, SearchIndexItem>();
     let dynamicItems: SearchIndexItem[] = [];
-    const historyItems: HistoryItem[] = options.initialHistory;
+    let historyItems: HistoryItem[] = options.initialHistory;
     const emptyItems = options.staticItems.filter((t) => t.showWhenEmpty);
     const collectionCache = new Map<string, SearchIndexItem[]>();
 
@@ -116,14 +126,24 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
 
     const indexHistoryItem = (item: HistoryItem) => {
       if (item.resource) {
-        const resource = options.vault.get<CollectionNormalized>(item.resource);
-        if (resource) {
+        const resource = options.vault.get<
+          CollectionNormalized | ManifestNormalized
+        >(item.resource);
+
+        const label = item.metadata?.label || resource?.label;
+        if (label) {
           const searchIndexItem: SearchIndexItem = {
             type: "resource",
             id: item.url,
-            label: getValue(resource.label),
-            resource: { id: resource.id, type: resource.type },
+            label: getValue(label),
+            resource: {
+              id: item.resource,
+              type: item.metadata?.type || resource?.type,
+            },
+            source: "history",
+            keywords: [],
           };
+
           if (!$search.has(searchIndexItem.id)) {
             $search.add(searchIndexItem);
           }
@@ -163,32 +183,47 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
     };
 
     const makeSearch = (query: string) => {
-      if (!query || query === get().currentCollectionId) {
+      const sourceFilter = get().sourceFilter;
+
+      if ((!query && !sourceFilter) || query === get().currentCollectionId) {
         const results: SearchIndexItem[] = [];
+        const ids: string[] = [];
 
         if (query) {
-          results.push(
-            ...dynamicItems.slice(0, numberOfResults - emptyItems.length),
-          );
+          for (const dynamicItem of dynamicItems.slice(
+            0,
+            numberOfResults - emptyItems.length,
+          )) {
+            if (!ids.includes(dynamicItem.id)) {
+              ids.push(dynamicItem.id);
+              results.push(dynamicItem);
+            }
+          }
         }
 
-        const showHistoryItems = historyItems
-          .map((h) => documentsById.get(h.url)!)
-          .filter(Boolean)
-          .filter((a) => !results.find((b) => b.id === a.id));
+        for (const historyItem of historyItems) {
+          const history = documentsById.get(historyItem.url)!;
+          if (history && !ids.includes(history.id)) {
+            ids.push(history.id);
+            results.push(history);
+          }
+        }
 
-        results.push(...showHistoryItems);
-
-        const showEmptyItems = emptyItems.filter(
-          (a) => !results.find((b) => b.id === a.id),
-        );
-
-        results.push(...showEmptyItems);
+        for (const emptyItem of emptyItems) {
+          if (!ids.includes(emptyItem.id)) {
+            ids.push(emptyItem.id);
+            results.push(emptyItem);
+          }
+        }
 
         set({
           query,
           rawResults: [],
-          results,
+          results: sourceFilter
+            ? results.filter((result) => {
+                return result.source === sourceFilter;
+              })
+            : results,
         });
         return;
       }
@@ -204,8 +239,22 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
               resource: { id: query, type: "unknown" },
               label: `Open ${query}`,
               type: "resource",
+              source: "dynamic",
             },
           ],
+        });
+        return;
+      }
+
+      if (!query.trim() && sourceFilter) {
+        const allResults = dynamicItems.filter(
+          (item) => item.source === sourceFilter,
+        );
+
+        set({
+          query,
+          rawResults: [],
+          results: allResults.slice(0, numberOfResults),
         });
         return;
       }
@@ -215,21 +264,38 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
         miniSearchOptions.autoSuggestOptions,
       );
 
+      console.log("here?", { query, results });
+
       set({
         query,
         rawResults: results,
         results: results
           .slice(0, numberOfResults)
-          .map((result) => documentsById.get(result.id)!),
+          .map((result) => documentsById.get(result.id)!)
+          .filter((result) => {
+            if (sourceFilter) {
+              return result.source === sourceFilter;
+            }
+            return true;
+          }),
       });
     };
 
     // Initialize the store with static routes
     indexStaticRoutes();
 
+    emitter.on("search.index-complete", () => {
+      makeSearch(get().query);
+    });
+
     emitter.on("history.page", (route) => {
       set({ currentCollectionId: null });
       dynamicItems = [];
+      reindex();
+    });
+
+    emitter.on("history.clear", () => {
+      historyItems = [];
       reindex();
     });
 
@@ -261,6 +327,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
               resource: { id: item.id, type: item.type },
               type: "resource",
               keywords: [],
+              source: "collection",
             });
           }
         }
@@ -270,13 +337,19 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
       }
     });
 
+    for (const item of historyItems) {
+      indexHistoryItem(item);
+    }
+
     return {
       isEnabled: false,
+      isOpen: false,
       isIndexing: false,
       query: "",
       results: null,
       rawResults: null,
       currentCollectionId: null,
+      sourceFilter: null,
       route: options.initialRoute,
 
       enable(): void {
@@ -297,6 +370,17 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
       },
       getResult(id: string): SearchIndexItem | undefined {
         return documentsById.get(id);
+      },
+      open(query) {
+        set({ query, isOpen: true });
+        makeSearch(query);
+      },
+      openWithFilter(query, filter) {
+        set({ query, sourceFilter: filter, isOpen: true });
+        makeSearch(query);
+      },
+      close() {
+        set({ isOpen: false, sourceFilter: null });
       },
     };
   });

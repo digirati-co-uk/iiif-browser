@@ -6,34 +6,53 @@ interface TypeIconProps {
     | "folder"
     | "manifest"
     | "collection";
+  isFolder?: boolean;
   external?: boolean;
+  noFill?: boolean;
+  className?: string;
 }
 
-export const PortalResourceIcon = ({ type, external }: TypeIconProps) => {
+export const PortalResourceIcon = ({
+  type,
+  isFolder,
+  external,
+  noFill,
+  className,
+}: TypeIconProps) => {
   const muted = external ? "#a1a1a1" : "";
+
+  if (isFolder) {
+    type = "folder";
+  }
 
   switch (type.toLowerCase()) {
     case "folder":
       return (
-        <FolderIcon fill={muted || "#FFD075"} className={"shrink-0 text-2xl"} />
+        <FolderIcon
+          fill={noFill ? "currentColor" : muted || "#FFD075"}
+          className={`${className} shrink-0 text-2xl`}
+        />
       );
     case "manifest":
       return (
         <ManifestIcon
-          fill={muted || "#C63E75"}
-          className={"shrink-0 text-2xl"}
+          fill={noFill ? "currentColor" : muted || "#C63E75"}
+          className={`${className} shrink-0 text-2xl`}
         />
       );
     case "collection":
       return (
         <CollectionIcon
-          fill={muted || "#31539F"}
-          className={"shrink-0 text-2xl"}
+          fill={noFill ? "currentColor" : muted || "#31539F"}
+          className={`${className} shrink-0 text-2xl`}
         />
       );
     default:
       return (
-        <CanvasIcon fill={muted || "#F58962"} className={"shrink-0 text-2xl"} />
+        <CanvasIcon
+          fill={noFill ? "currentColor" : muted || "#F58962"}
+          className={`${className} shrink-0 text-2xl`}
+        />
       );
   }
 };

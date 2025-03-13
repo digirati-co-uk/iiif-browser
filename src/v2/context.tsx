@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { getValue } from "@iiif/helpers";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import {
   VaultProvider,
   useCollection,
@@ -8,7 +15,7 @@ import {
 import { Router, useSearchParams } from "react-router-dom";
 import { type StoreApi, useStore } from "zustand";
 import type { DeepPartial, IIIFBrowserConfig } from "./IIIFBrowser";
-import { isDomainAllowed, type BrowserLinkConfig } from "./browser/BrowserLink";
+import { type BrowserLinkConfig, isDomainAllowed } from "./browser/BrowserLink";
 import { type BrowserEmitter, createEmitter } from "./events";
 import {
   type BrowserStore,
@@ -27,7 +34,6 @@ import {
   OutputType,
   createOutputStore,
 } from "./stores/output-store";
-import { getValue } from "@iiif/helpers";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
@@ -73,6 +79,13 @@ export function useLinkConfig() {
     );
   }
   return context;
+}
+
+export function useLinearHistory() {
+  const store = useBrowserStoreContext();
+  return useStore(store, (state) => {
+    return state.linearHistory;
+  });
 }
 
 export function useHistoryList() {
@@ -167,7 +180,7 @@ export function useCanResolve() {
 
       return allowed;
     },
-    [config],
+    [config, vault],
   );
 }
 
@@ -206,6 +219,29 @@ export function useCurrentRoute() {
   return useStore(store, (state) => state.historyList[0]!);
 }
 
+export function useLoadingPage() {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id") as string;
+  const viewSource = searchParams.get("view-source") === "true";
+  const loadResource = useLoadResource();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    if (id) {
+      loadResource(id, { viewSource, abortController, searchParams });
+    }
+    return () => {
+      abortController.abort();
+    };
+  }, [id, loadResource, viewSource, searchParams]);
+
+  return {
+    id,
+    viewSource,
+    searchParams,
+  };
+}
+
 export function useLoadResource() {
   const store = useBrowserStoreContext();
   return useStore(store, (state) => state.loadResource);
@@ -217,6 +253,23 @@ export function useOmnisearchStore() {
     throw new Error("useOmnisearchStore must be used within a StoreProvider");
   }
   return context;
+}
+
+export function useSearchIndex() {
+  const store = useOmnisearchStore();
+  return useStore(store, (state) => ({
+    isIndexing: state.isIndexing,
+  }));
+}
+
+export function useSearchBoxState() {
+  const store = useOmnisearchStore();
+  return useStore(store, (state) => ({
+    isOpen: state.isOpen,
+    open: state.open,
+    close: state.close,
+    openWithFilter: state.openWithFilter,
+  }));
 }
 
 export function useSearchState() {
@@ -295,7 +348,9 @@ export function BrowserProvider({
   children: React.ReactNode;
 }) {
   const vault = useExistingVault();
-  const emitter = useMemo(() => createEmitter(), []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const emitter = useMemo(() => createEmitter(), [browserConfig]);
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
     const { defaultPages, ...rest } = uiConfig || {};
@@ -311,12 +366,13 @@ export function BrowserProvider({
       reloadButton: false,
       menuButton: true,
       backButton: true,
-      homeButton: false,
+      homeButton: true,
       forwardButton: true,
-      bookmarkButton: true,
+      bookmarkButton: false,
       collectionPaginationSize: 25,
       manifestPaginationSize: 25,
       paginationNavigationType: "replace",
+      homeLink: "iiif://home",
       portalIcons: true,
       ...rest,
     } as IIIFBrowserConfig;
@@ -337,8 +393,32 @@ export function BrowserProvider({
         },
       ],
       historyLimit: 100,
-      preprocessCollection: undefined,
+      collectionUrlMappingParams: {},
+      collectionUrlMapping: {},
       preprocessManifest: undefined,
+      preprocessCollection: undefined,
+
+      seedCollections: [],
+
+      // collectionUrlMapping: {
+      //   "presentation-api.dlcs.digirati.io/:customer/:type/:id":
+      //     "portal.iiifcs.digirati.io/api/iiif/c/:type/:id",
+      // },
+      // seedCollections: [
+      //   {
+      //     "@context": "http://iiif.io/api/presentation/3/context.json",
+      //     id: "https://example.org/my-seed",
+      //     type: "Collection",
+      //     items: [
+      //       {
+      //         id: "https://iiif.io/api/cookbook/recipe/0001-mvm-image/manifest.json",
+      //         type: "Manifest",
+      //         label: { en: ["An example manifest"] },
+      //       },
+      //     ],
+      //   },
+      // ],
+
       ...(browserConfig || {}),
     };
   }, [browserConfig]);
@@ -346,7 +426,7 @@ export function BrowserProvider({
   const outputConfigValue: OutputConfig = useMemo(() => {
     if (!outputConfig || !outputConfig?.length) {
       if (true as boolean) {
-        // testing more optinos.
+        // Good defaults?.
         return [
           {
             label: "Open Manifest in Theseus",
@@ -441,37 +521,44 @@ export function BrowserProvider({
         emitter,
         initialRoute: store.getState().historyList[0]!,
         history: store.getState().history,
-        initialHistory: [],
+        initialHistory: store.getState().linearHistory,
         staticItems: [
-          {
-            id: "iiif://home",
-            type: "page",
-            label: "Homepage",
-            url: "iiif://home",
-            route: "/",
-            showWhenEmpty: true,
-          },
-          {
-            id: "iiif://about",
-            type: "page",
-            label: "About IIIF Browser",
-            url: "iiif://about",
-            route: "/about",
-            showWhenEmpty: true,
-          },
-          {
-            id: "https://view.nls.uk/collections/top.json",
-            type: "resource",
-            resource: {
-              id: "https://view.nls.uk/collections/top.json",
-              type: "Collection",
-            },
-            label: "National Library of Scotland",
-            showWhenEmpty: true,
-          },
-        ],
+          uiConfigValue.defaultPages.homepage
+            ? {
+                id: "iiif://home",
+                type: "page",
+                label: "Homepage",
+                url: "iiif://home",
+                route: "/",
+                showWhenEmpty: true,
+                source: "static",
+              }
+            : null,
+          uiConfigValue.defaultPages.about
+            ? {
+                id: "iiif://about",
+                type: "page",
+                label: "About IIIF Browser",
+                url: "iiif://about",
+                route: "/about",
+                showWhenEmpty: true,
+                source: "static",
+              }
+            : null,
+          uiConfigValue.defaultPages.history
+            ? {
+                id: "iiif://history",
+                type: "page",
+                label: "History",
+                url: "iiif://history",
+                route: "/history",
+                showWhenEmpty: true,
+                source: "static",
+              }
+            : null,
+        ].filter(Boolean) as any[],
       }),
-    [emitter, vault, store],
+    [emitter, vault, store, uiConfigValue],
   );
 
   return (

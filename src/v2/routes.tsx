@@ -32,6 +32,12 @@ export const fixedRoutes: FixedRouteDefinition[] = [
   },
   {
     type: "fixed",
+    url: "/history",
+    router: "iiif://history",
+    title: "History",
+  },
+  {
+    type: "fixed",
     url: "/not-found",
     router: "iiif://not-found",
     title: "Not Found",

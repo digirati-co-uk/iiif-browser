@@ -1,4 +1,5 @@
 import "./index.css";
+import { type ReactNode, useMemo } from "react";
 import { Route, Routes } from "react-router-dom";
 import { BrowserContainer } from "./browser/BrowserContainer";
 import { BrowserFooter } from "./browser/BrowserFooter";
@@ -10,6 +11,7 @@ import { BrowserProvider } from "./context";
 import { NotFoundPage } from "./routes/404";
 import AboutPage from "./routes/AboutPage";
 import { CollectionPage } from "./routes/CollectionPage";
+import { HistoryPage } from "./routes/HistoryPage";
 import { Homepage } from "./routes/Homepage";
 import { LoadingPage } from "./routes/LoadingPage";
 import { ManifestPage } from "./routes/ManifestPage";
@@ -36,6 +38,7 @@ export interface IIIFBrowserConfig {
   manifestPaginationSize: number;
   paginationNavigationType: "replace" | "push";
   portalIcons: boolean;
+  homeLink: string;
 }
 
 export type DeepPartial<T> = {
@@ -45,25 +48,49 @@ export type DeepPartial<T> = {
 interface IIIFBrowserProps {
   ui?: DeepPartial<IIIFBrowserConfig>;
   history?: Partial<BrowserStoreConfig>;
-  navigation?: DeepPartial<BrowserLinkConfig>;
+  navigation?: Partial<BrowserLinkConfig>;
   output?: OutputTarget[]; // format is specified in each target now.
+
+  customPages?: {
+    [key: string]: ReactNode;
+  };
 }
 
-export function IIIFBrowser() {
+export function IIIFBrowser({
+  ui,
+  history,
+  navigation,
+  output,
+  customPages,
+}: IIIFBrowserProps) {
+  const allCustomPages = useMemo(() => {
+    return Object.entries({
+      "/": <Homepage />,
+      "/about": <AboutPage />,
+      "/collection": <CollectionPage />,
+      "/manifest": <ManifestPage />,
+      "/history": <HistoryPage />,
+      "/not-found": <NotFoundPage />,
+      "/loading": <LoadingPage />,
+      ...(customPages || {}),
+    });
+  }, [customPages]);
+
   return (
-    <BrowserProvider>
+    <BrowserProvider
+      outputConfig={output}
+      uiConfig={ui}
+      browserConfig={history}
+      linkConfig={navigation}
+    >
       <BrowserContainer>
         <BrowserHeader />
 
         <BrowserWindow>
           <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/not-found" element={<NotFoundPage />} />
-            <Route path="/loading" element={<LoadingPage />} />
-
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/collection" element={<CollectionPage />} />
-            <Route path="/manifest" element={<ManifestPage />} />
+            {allCustomPages.map(([path, element]) => (
+              <Route key={path} path={path} element={element} />
+            ))}
           </Routes>
         </BrowserWindow>
         <BrowserFooter

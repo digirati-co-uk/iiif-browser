@@ -1,5 +1,7 @@
+import type { Vault } from "@iiif/helpers";
 import { useMemo } from "react";
 import { useHover, usePress } from "react-aria";
+import { useVault } from "react-iiif-vault";
 import { Checkbox } from "../components/Checkbox";
 import {
   useCanResolve,
@@ -8,8 +10,6 @@ import {
   useSelectedActions,
   useSelectedItems,
 } from "../context";
-import { Vault } from "@iiif/helpers";
-import { useVault } from "react-iiif-vault";
 
 export type BrowserLinkConfig = {
   allowNavigationToBuiltInPages: boolean;
@@ -56,7 +56,10 @@ type BrowserLinkInternalProps = {
   manualLink?: boolean;
   manualSelect?: boolean;
   disablePreloadOnHover?: boolean;
-  children: (props: BrowserLinkRenderProps) => React.ReactElement;
+  children:
+    | string
+    | React.ReactElement
+    | ((props: BrowserLinkRenderProps) => React.ReactElement);
   resource: { id: string; type: string };
   parent?: { id: string; type: string };
   withoutContext?: boolean;
@@ -71,7 +74,7 @@ type BrowserLinkProps<ET extends React.ElementType = "span"> = {
   >;
 
 export function isDomainAllowed(link: string, allowedDomains: string[]) {
-  let allowed = false;
+  const allowed = false;
   for (const domain of allowedDomains || []) {
     const normalisedDomain = domain
       .replace("https://", "")
@@ -240,7 +243,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
       {...hoverProps}
       {...doubleClickProps}
     >
-      {children(renderProps)}
+      {typeof children === "function" ? children(renderProps) : children}
     </Wrapper>
   );
 }

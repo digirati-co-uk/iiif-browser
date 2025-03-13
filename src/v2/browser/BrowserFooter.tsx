@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import type {
   OutputFormat,
   OutputTarget,
@@ -29,6 +30,10 @@ export function BrowserFooter({
   output,
   onSelect,
 }: BrowserFooterProps) {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  if (!id) return null;
+
   return (
     <div className="p-3 border-t bg-gray-100 flex gap-2 justify-between">
       <BrowserOutputPreview />

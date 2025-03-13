@@ -1,5 +1,10 @@
-import { Vault } from "@iiif/helpers";
+import { Vault, getValue } from "@iiif/helpers";
 import { upgrade } from "@iiif/parser/upgrader";
+import type {
+  Collection,
+  InternationalString,
+  Manifest,
+} from "@iiif/presentation-3";
 import type {
   CollectionNormalized,
   ManifestNormalized,
@@ -8,7 +13,7 @@ import { Action, type History, createMemoryHistory } from "history";
 import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
-import { Collection, Manifest } from "@iiif/presentation-3";
+import { applyIdMapping } from "../utilities/apply-id-mapping";
 
 // Things the store needs to do:
 // - Handle conversion of URLs to Routes
@@ -24,32 +29,27 @@ export type BrowserStore = {
 
   historyIndex: number;
   historyList: HistoryItem[];
+  linearHistory: HistoryItem[];
 
   lastUrl: string;
   browserState: BrowserState;
 
-  loaded: Record<
-    string,
-    {
-      resource: null | {
-        id: string;
-        type: string;
-      };
-      url: string;
-      error: string | null;
-      retries: number;
-    }
-  >;
+  loaded: Record<string, LoadedResource>;
 
   // Actions.
   resolve(
     url: string,
-    options?: { force?: boolean; parent?: { id: string; type: string } },
+    options?: {
+      force?: boolean;
+      parent?: { id: string; type: string };
+      searchParams?: URLSearchParams;
+    },
   ): Promise<void>;
   loadResource(
     url: string,
     options?: {
       parent?: { id: string; type: string };
+      searchParams?: URLSearchParams;
       viewSource?: boolean;
       abortController?: AbortController;
     },
@@ -57,13 +57,31 @@ export type BrowserStore = {
   mapToRoute(
     path: string,
     search: string,
-  ): [string | null, null | { id: string; type: string }];
+  ): [
+    string | null,
+    null | { id: string; type: string; label?: InternationalString },
+  ];
 
   // Omnibar state.
   omnibarValue: string;
   setOmnibarValue(value: string): void;
-
   clearHistory(): void;
+  updateHistoryMetadata(
+    id: string,
+    metadata: { type?: string; label?: InternationalString },
+  ): void;
+  persistHistory(): void;
+};
+
+export type LoadedResource = {
+  resource: null | {
+    id: string;
+    type: string;
+    label: InternationalString;
+  };
+  url: string;
+  error: string | null;
+  retries: number;
 };
 
 export type HistoryItem = {
@@ -73,6 +91,12 @@ export type HistoryItem = {
   route: string;
   resource: null | string;
   parent?: { id: string; type: string };
+  // For presentation purposes.
+  metadata?: {
+    type?: string;
+    label?: InternationalString;
+  };
+  timestamp?: string | null;
 };
 
 export type BrowserState = "IDLE" | "LOADING" | "LOADED" | "ERROR" | "RETRYING";
@@ -93,12 +117,21 @@ export type BrowserStoreConfig = {
 
   preprocessManifest?: (manifest: Manifest) => Promise<Manifest>;
   preprocessCollection?: (collection: Collection) => Promise<Collection>;
+  collectionUrlMapping: Record<string, string>;
+  collectionUrlMappingParams: Record<string, string>;
+  seedCollections: Array<Collection>;
 };
 
-export function getLocalStorageLinearHistory(defaultHistory: HistoryItem[]) {
+export function getLocalStorageLinearHistory(
+  defaultHistory: HistoryItem[],
+  {
+    key = "@v1/iiif-browser-linear-history",
+  }: {
+    key?: string;
+  },
+) {
   try {
-    const history =
-      localStorage.getItem("@v1/iiif-browser-linear-history") || "[]";
+    const history = localStorage.getItem(key) || "[]";
     const foundHistory = JSON.parse(history) as HistoryItem[];
     return foundHistory.length === 0 ? defaultHistory : foundHistory;
   } catch (error) {
@@ -106,13 +139,16 @@ export function getLocalStorageLinearHistory(defaultHistory: HistoryItem[]) {
   }
 }
 
-function setLocalStorageLinearHistory(allHistory: HistoryItem[], limit = 100) {
+function setLocalStorageLinearHistory(
+  allHistory: HistoryItem[],
+  {
+    key = "@v1/iiif-browser-linear-history",
+    limit = 100,
+  }: { key?: string; limit?: number } = {},
+) {
   const historyItems = allHistory.slice(0, limit);
   try {
-    localStorage.setItem(
-      "@v1/iiif-browser-linear-history",
-      JSON.stringify(historyItems),
-    );
+    localStorage.setItem(key, JSON.stringify(historyItems));
   } catch (error) {
     // ignore.
   }
@@ -187,6 +223,7 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
     initialHistoryCursor,
     localStorageKey,
     restoreFromLocalStorage,
+    saveToLocalStorage,
   } = options;
 
   const nonEmptyInitialHistory =
@@ -196,6 +233,7 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
             resource: null,
             route: "/",
             url: "iiif://home",
+            timestamp: new Date().toISOString(),
           },
         ]
       : initialHistory;
@@ -220,9 +258,13 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
     //
     history: savedHistory,
     cursor: initialIndex,
-  } = getLocalStorageHistory(nonEmptyInitialHistory, { key: localStorageKey });
-  const linearHistory = getLocalStorageLinearHistory(nonEmptyInitialHistory);
-  const initialPage = savedHistory[0]!;
+  } = getLocalStorageHistory(nonEmptyInitialHistory, {
+    key: `${localStorageKey}_history`,
+  });
+  const linearHistory = getLocalStorageLinearHistory(nonEmptyInitialHistory, {
+    key: `${localStorageKey}_linear`,
+  });
+  const initialPage = savedHistory[initialIndex]!;
   const initialEntries = savedHistory.map((item) => item.route);
 
   const history = createMemoryHistory({
@@ -248,7 +290,19 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     emitter,
     preprocessManifest,
     preprocessCollection,
+    collectionUrlMapping,
+    collectionUrlMappingParams,
+    seedCollections = [],
+    saveToLocalStorage,
+    restoreFromLocalStorage,
+    localStorageKey,
   } = options;
+
+  console.log({
+    saveToLocalStorage,
+    restoreFromLocalStorage,
+    localStorageKey,
+  });
 
   const [
     history,
@@ -261,6 +315,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     },
   ] = getInitialHistory(options);
 
+  const hasMappingRules =
+    Object.keys(options.collectionUrlMapping || {}).length > 0;
+
   let requestAbortController: AbortController | undefined;
 
   const fixedRoutes = routes.filter((route) => route.type === "fixed");
@@ -268,6 +325,24 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
   const notFound404 = fixedRoutes.find((route) => route.fallback)!;
 
   const store = createStore<BrowserStore>((set, get) => {
+    const initialLoaded: Record<string, LoadedResource> = {};
+
+    // Load seed collections.
+    for (const seedCollection of seedCollections) {
+      vault.loadSync(seedCollection.id, seedCollection);
+
+      initialLoaded[seedCollection.id] = {
+        url: seedCollection.id,
+        error: null,
+        resource: {
+          id: seedCollection.id,
+          type: seedCollection.type,
+          label: seedCollection.label,
+        },
+        retries: 0,
+      };
+    }
+
     const browserError = (_id?: string, replace?: boolean) => {
       set({ browserState: "ERROR" });
       if (replace) {
@@ -281,6 +356,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       error: string,
       replace = false,
     ) => {
+      console.log(error);
       set((state) => ({
         browserState: "ERROR",
         loaded: {
@@ -302,7 +378,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     };
     const browserSuccess = (
       lastUrl?: string,
-      resource?: { id: string; type: string },
+      resource?: { id: string; type: string; label: InternationalString },
       viewSource?: boolean,
     ) => {
       const state: Partial<BrowserStore> = {
@@ -313,19 +389,6 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         state.omnibarValue = lastUrl;
       }
       if (resource) {
-        if (resource.type === "Collection") {
-          emitter.emit("collection.change", {
-            id: resource.id,
-            type: resource.type,
-          });
-        }
-        if (resource.type === "Manifest") {
-          emitter.emit("manifest.change", {
-            id: resource.id,
-            type: resource.type,
-          });
-        }
-
         state.loaded = {
           ...get().loaded,
           [resource.id]: {
@@ -334,27 +397,45 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             resource: {
               id: resource.id,
               type: resource.type,
+              label: resource.label,
             },
             retries: 0,
           },
         };
       }
       set(state);
+
+      if (resource?.type === "Collection") {
+        emitter.emit("collection.change", {
+          id: resource.id,
+          type: resource.type,
+          label: resource.label,
+        });
+      }
+      if (resource?.type === "Manifest") {
+        emitter.emit("manifest.change", {
+          id: resource.id,
+          type: resource.type,
+          label: resource.label,
+        });
+      }
     };
     const browserRetry = () => set({ browserState: "RETRYING" });
     const browserLoading = (
       url: string,
-      viewSource?: boolean,
       parent?: { id: string; type: string },
+      searchParams?: URLSearchParams,
     ) => {
       set({
         lastUrl: url,
         browserState: "LOADING",
       });
-      history.push(
-        `/loading?id=${encodeURIComponent(url)}&view-source=${viewSource && "true"}`,
-        { parent },
-      );
+
+      const newSearchParams = searchParams || new URLSearchParams();
+      newSearchParams.set("id", url);
+      const searchParamsString = newSearchParams.toString();
+
+      history.push(`/loading?${searchParamsString}`, { parent });
     };
 
     const loadResource = async (
@@ -363,6 +444,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         parent?: { id: string; type: string };
         viewSource?: boolean;
         abortController?: AbortController;
+        searchParams?: URLSearchParams;
       },
     ) => {
       const { viewSource = false, parent } = options || {};
@@ -393,6 +475,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         // Now at this point do we know if it's JSON definitely?
         const contentType = response.headers.get("Content-Type");
         if (
+          !contentType?.includes("text/plain") &&
           !contentType?.includes("/json") &&
           !contentType?.includes("/ld+json")
         ) {
@@ -409,6 +492,13 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return;
         }
 
+        // Add json parsing hook.
+
+        if (json.id !== url) {
+          // Could be a fork, manually patch it.
+          json.id = url;
+        }
+
         // Now what is it. We will try to upgrade it using the @iiif/parser.
         let result = upgrade(json);
         if (!result.id || !result.type) {
@@ -420,6 +510,17 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         }
         if (result.type === "Collection" && preprocessCollection) {
           result = await preprocessCollection(result);
+        }
+
+        if (result.type === "Collection" && hasMappingRules) {
+          result.items = result.items.map((item) => {
+            item.id = applyIdMapping(
+              item.id,
+              collectionUrlMapping,
+              collectionUrlMappingParams,
+            );
+            return item;
+          });
         }
 
         const route = resourceRoutes.find(
@@ -436,15 +537,16 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         // Load it into the vault, and redirect to the page.
         vault.loadSync(result.id, result);
 
+        const newSearchParams = options?.searchParams || new URLSearchParams();
+        newSearchParams.set("id", result.id);
+        const searchParamsString = newSearchParams.toString();
+
         // Redirect to the route.
-        history.replace(
-          `${route.url}?id=${encodeURIComponent(result.id)}&view-source=${viewSource && "true"}`,
-          { parent },
-        );
         if (abortController === requestAbortController) {
           requestAbortController = undefined;
         }
         browserSuccess(url, result, viewSource);
+        history.replace(`${route.url}?${searchParamsString}`, { parent });
         return;
       } catch (error: any) {
         if (error?.name === "AbortError") {
@@ -462,6 +564,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       browserState: "IDLE",
       omnibarValue: initialPage.url,
       historyList: savedHistory,
+      linearHistory,
       historyIndex: initialIndex, // Initialize with index 0
       router: {
         action: history.action,
@@ -473,9 +576,12 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         didError: false,
         didRetry: false,
       },
-      loaded: {},
+      loaded: initialLoaded,
       loadResource,
-      async resolve(inputUrl, { force = false, parent = undefined } = {}) {
+      async resolve(
+        inputUrl,
+        { force = false, parent = undefined, searchParams } = {},
+      ) {
         const viewSource = inputUrl.startsWith("view-source:");
         const url = viewSource ? inputUrl.slice(12) : inputUrl;
 
@@ -514,17 +620,21 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
               );
             }
 
-            history.push(
-              `${route.url}?id=${encodeURIComponent(fullResource.id)}&view-source=${viewSource && "true"}`,
-              { parent },
-            );
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.set("id", fullResource.id);
+            if (viewSource) {
+              newSearchParams.set("view-source", "true");
+            }
+            history.push(`${route.url}?${newSearchParams.toString()}`, {
+              parent,
+            });
             browserSuccess(url, fullResource, viewSource);
             return;
           }
 
           // Here we have a URL but we don't know what it is.
           // First we can set up an abort controller and save it as the current.
-          return browserLoading(url, viewSource, parent);
+          return browserLoading(url, parent, searchParams);
         }
 
         // imagine iiif://about is passed here. We need to navigate to that mapped route, or go to
@@ -555,6 +665,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const viewSource = searchParams.get("view-source");
         if (manifestUrl) {
           const loaded = get().loaded[manifestUrl];
+
           if (loaded?.error) {
             return [notFound404.url, null];
           }
@@ -583,27 +694,70 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         set({ omnibarValue: value });
       },
 
+      updateHistoryMetadata(id, metadata) {
+        const currentHistoryList = get().historyList;
+        const newHistoryList = currentHistoryList.map((item) => {
+          if (item.resource === id) {
+            return { ...item, metadata };
+          }
+          return item;
+        });
+        const currentLinear = get().linearHistory;
+        const newLinearHistoryList = currentLinear.map((item) => {
+          if (item.resource === id) {
+            return { ...item, metadata };
+          }
+          return item;
+        });
+
+        set({
+          historyList: newHistoryList,
+          linearHistory: newLinearHistoryList,
+        });
+        get().persistHistory();
+      },
+
+      persistHistory() {
+        const { historyList, linearHistory, historyIndex } = get();
+        if (saveToLocalStorage) {
+          setLocalStorageLinearHistory(linearHistory, {
+            key: `${localStorageKey}_linear`,
+          });
+          setLocalStorageHistory(
+            {
+              history: historyList,
+              cursor: historyIndex,
+            },
+            {
+              key: `${localStorageKey}_history`,
+            },
+          );
+        }
+      },
+
       clearHistory(): void {
         const currentPage = get().historyList[get().historyIndex];
+        const newHistory =
+          currentPage.url === "iiif://home"
+            ? [currentPage]
+            : [
+                currentPage,
+                {
+                  resource: null,
+                  route: "/",
+                  url: "iiif://home",
+                  timestamp: new Date().toISOString(),
+                },
+              ];
         set({
-          historyList:
-            currentPage.url === "iiif://home"
-              ? [currentPage]
-              : [
-                  currentPage,
-                  {
-                    resource: null,
-                    route: "/",
-                    url: "iiif://home",
-                  },
-                ],
+          historyList: newHistory,
+          linearHistory: newHistory,
           historyIndex: 0,
         });
-        setLocalStorageHistory({
-          history: get().historyList,
-          cursor: get().historyIndex,
-        });
-        setLocalStorageLinearHistory(get().historyList);
+        if (saveToLocalStorage) {
+          get().persistHistory();
+        }
+        emitter.emit("history.clear");
       },
     };
   });
@@ -660,6 +814,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         route: locationUrl,
         url: resolved,
         parent: parent,
+        metadata: {
+          type: resource?.type,
+          label: resource?.label,
+        },
+        timestamp: new Date().toISOString(),
       };
 
       switch (r.action) {
@@ -685,7 +844,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           newIndex = currentIndex + 1;
 
           // Also update linear history for backward compatibility
-          linearHistory.unshift(historyItem);
+          store.setState((s) => ({
+            linearHistory: [historyItem, ...s.linearHistory],
+          }));
 
           emitter.emit("history.change", {
             item: historyItem,
@@ -704,10 +865,15 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           }
 
           // Also update linear history for backward compatibility
+
           if (linearHistory.length > 0) {
-            linearHistory[0] = historyItem;
+            store.setState((s) => ({
+              linearHistory: [historyItem, ...s.linearHistory.slice(1)],
+            }));
           } else {
-            linearHistory.push(historyItem);
+            store.setState((s) => ({
+              linearHistory: [historyItem, ...s.linearHistory],
+            }));
           }
 
           emitter.emit("history.change", {
@@ -747,12 +913,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       }
     }
 
-    setLocalStorageLinearHistory(linearHistory);
-    setLocalStorageHistory({
-      history: newHistoryList,
-      cursor: newIndex,
-    });
     store.setState(newState);
+    if (saveToLocalStorage) {
+      store.getState().persistHistory();
+    }
   });
 
   emitter.on("history.change", ({ item }) => {

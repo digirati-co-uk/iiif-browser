@@ -1,15 +1,17 @@
 import { useLocation } from "react-router-dom";
-import { useResolve } from "../context";
+import { useLastUrl, useResolve } from "../context";
 import { HomeIcon } from "../icons/HomeIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
-export function BrowserHomeButton() {
+export function BrowserHomeButton({ href }: { href: string }) {
   const resolve = useResolve();
   const location = useLocation();
+  const lastUrl = useLastUrl();
+
   return (
     <BrowserToolbarButton
-      isDisabled={location.pathname === "/"}
-      onPress={() => resolve("iiif://home")}
+      isDisabled={href === lastUrl}
+      onPress={() => resolve(href)}
     >
       <HomeIcon />
     </BrowserToolbarButton>
