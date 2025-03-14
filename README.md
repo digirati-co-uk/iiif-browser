@@ -39,20 +39,17 @@ export interface IIIFBrowserConfig {
 #### Options
 
 - **defaultPages**: Configuration for default pages.
-
   - `homepage`: Enable or disable the homepage.
   - `about`: Enable or disable the about page.
   - `history`: Enable or disable the history page.
   - `bookmarks`: Enable or disable the bookmarks page.
   - `viewSource`: Enable or disable the view source page.
-
 - **backButton**: Show or hide the back button.
 - **forwardButton**: Show or hide the forward button.
 - **reloadButton**: Show or hide the reload button.
 - **homeButton**: Show or hide the home button.
 - **bookmarkButton**: Show or hide the bookmark button.
 - **menuButton**: Show or hide the menu button.
-
 - **collectionPaginationSize**: Number of items per page in collections.
 - **manifestPaginationSize**: Number of items per page in manifests.
 - **paginationNavigationType**: Type of navigation for pagination (`replace`
@@ -103,19 +100,15 @@ export type BrowserLinkConfig = {
 - **markedResources**: List of marked resources (_not yet implemented_)
 - **multiSelect**: Enable or disable multi-selection.
 - **alwaysShowNavigationArrow**: Always show the navigation arrow.
-
 - **clickToSelect**: Enable or disable click to select.
 - **doubleClickToNavigate**: Enable or disable double-click to navigate.
 - **clickToNavigate**: Enable or disable click to navigate.
-
 - **canNavigateToCollection**: Allow navigation to collections.
 - **canNavigateToManifest**: Allow navigation to manifests.
 - **canNavigateToCanvas**: Allow navigation to canvases.
-
 - **canSelectCollection**: Allow selection of collections.
 - **canSelectManifest**: Allow selection of manifests.
 - **canSelectCanvas**: Allow selection of canvases.
-
 - **customCanNavigate**: Custom function to determine if navigation is
   allowed.
 - **customCanSelect**: Custom function to determine if selection is allowed.
@@ -152,7 +145,6 @@ export type BrowserStoreConfig = {
 - **restoreFromLocalStorage**: Restore history from local storage.
 - **saveToLocalStorage**: Save history to local storage.
 - **localStorageKey**: Key for local storage.
-
 - **preprocessManifest**: Function to preprocess manifests.
 - **preprocessCollection**: Function to preprocess collections.
 - **collectionUrlMapping**: Mapping of collection URLs.
