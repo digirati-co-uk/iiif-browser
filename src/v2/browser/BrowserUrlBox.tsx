@@ -1,7 +1,6 @@
 import { Button } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
 import { Omnisearch } from "../components/Omnisearch";
-import { OmnisearchBox } from "../components/OmnisearchBox";
 import { useIsPageLoading } from "../context";
 import { BookmarkIcon } from "../icons/BookmarkIcon";
 import { LockIcon } from "../icons/LockIcon";
