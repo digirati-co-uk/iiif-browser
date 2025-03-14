@@ -1,5 +1,5 @@
 import {
-  BoxSelector,
+  type BoxSelector,
   Vault,
   expandTarget,
   getValue,
