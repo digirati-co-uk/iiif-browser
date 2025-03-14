@@ -4,7 +4,7 @@ import type {
 } from "@iiif/presentation-3-normalized";
 import { LocaleString, useVaultSelector } from "react-iiif-vault";
 import { fixedRoutes } from "../routes";
-import type { HistoryItem } from "../store";
+import type { HistoryItem } from "../stores/browser-store";
 
 export function HistoryListItem({ historyItem }: { historyItem: HistoryItem }) {
   const fullResource = useVaultSelector(
