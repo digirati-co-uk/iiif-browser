@@ -2,6 +2,7 @@ import { Button } from "react-aria-components";
 import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
+import "./styles/tw.css";
 
 export default {
   title: "IIIF Browser v2",
