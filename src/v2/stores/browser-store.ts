@@ -612,7 +612,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           requestAbortController.abort();
         }
 
-        if (url.startsWith("https://")) {
+        if (url.startsWith("https://") || url.startsWith("http://")) {
           // We are dealing with a resource at this point.
           // 1. Do we already know about this resource?
           const existing = get().loaded[url];
@@ -834,7 +834,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       const parent = (r.location.state as any)?.parent;
 
       const historyItem: HistoryItem = {
-        resource: resolved?.startsWith("https://") ? resolved : null,
+        resource:
+          resolved?.startsWith("https://") || resolved?.startsWith("http://")
+            ? resolved
+            : null,
         route: locationUrl,
         url: resolved,
         parent: parent,

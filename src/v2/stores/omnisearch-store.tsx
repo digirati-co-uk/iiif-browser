@@ -227,7 +227,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
         return;
       }
 
-      if (query.startsWith("https://")) {
+      if (query.startsWith("https://") || query.startsWith("http://")) {
         // Handle external links
         set({
           query,
