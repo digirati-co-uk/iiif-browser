@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef } from "react";
 import {
+  Autocomplete,
   Button,
   Dialog,
   DialogTrigger,
@@ -8,7 +9,6 @@ import {
   MenuItem,
   Popover,
   TextField,
-  UNSTABLE_Autocomplete,
 } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
 import { useBrowserContainer } from "../browser/BrowserContainer";
@@ -84,7 +84,7 @@ export function OmnisearchModal({
         shouldUpdatePosition={false}
       >
         <Dialog className="focus:outline-none flex-1 flex overflow-hidden">
-          <UNSTABLE_Autocomplete
+          <Autocomplete
             defaultInputValue={search}
             inputValue={search}
             onInputChange={setSearch}
@@ -206,7 +206,7 @@ export function OmnisearchModal({
                 }}
               </Menu>
             </div>
-          </UNSTABLE_Autocomplete>
+          </Autocomplete>
         </Dialog>
       </Popover>
     </DialogTrigger>

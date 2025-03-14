@@ -1,19 +1,7 @@
-import { useCallback, useRef, useState } from "react";
-import { Button, Toolbar } from "react-aria-components";
-import {
-  CollectionContext,
-  LocaleString,
-  ManifestContext,
-  useCollection,
-  useVault,
-} from "react-iiif-vault";
-import { OmnisearchBox } from "../components/OmnisearchBox";
-import {
-  useResolve,
-  useSearchBoxState,
-  useSearchResults,
-  useSearchState,
-} from "../context";
+import { useCallback, useState } from "react";
+import { Button } from "react-aria-components";
+import { LocaleString, ManifestContext, useCollection } from "react-iiif-vault";
+import { useSearchBoxState } from "../context";
 import { usePaginateArray } from "../hooks/use-paginate-array";
 import { GridIcon } from "../icons/GridIcon";
 import { ListIcon } from "../icons/ListIcon";

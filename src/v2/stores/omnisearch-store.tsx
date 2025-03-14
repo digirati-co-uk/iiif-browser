@@ -4,9 +4,8 @@ import type {
   ManifestNormalized,
 } from "@iiif/presentation-3-normalized";
 import type { History } from "history";
-import MiniSearch, { type SearchResult } from "minisearch";
+import MiniSearch, { type SearchResult, type Options } from "minisearch";
 import type { ReactNode } from "react";
-import type { WithMiniSearchProps } from "react-minisearch";
 import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";
 import type { HistoryItem } from "../stores/browser-store";
@@ -79,7 +78,7 @@ type PageAction = BaseAction & {
 
 export type SearchIndexItem = SearchAction | ResourceAction | PageAction;
 
-const miniSearchOptions: WithMiniSearchProps["options"] = {
+const miniSearchOptions: Options = {
   fields: [
     "label",
     "type",
@@ -228,7 +227,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
         return;
       }
 
-      if (query.startsWith("https://")) {
+      if (query.startsWith("https://") || query.startsWith("http://")) {
         // Handle external links
         set({
           query,
