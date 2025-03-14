@@ -230,11 +230,6 @@ export function createOutputStore(options: OutputStoreOptions) {
       return;
     }
 
-    console.log("changing available outputs", {
-      output,
-      selectedItems,
-    });
-
     const availableOutputs = output.filter((output) => {
       if (selectedItems.length === 1) {
         const item = selectedItems[0]!;

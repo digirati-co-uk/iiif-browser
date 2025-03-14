@@ -1,5 +1,6 @@
 import { Button } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
+import { Omnisearch } from "../components/Omnisearch";
 import { OmnisearchBox } from "../components/OmnisearchBox";
 import { useIsPageLoading } from "../context";
 import { BookmarkIcon } from "../icons/BookmarkIcon";
@@ -26,7 +27,7 @@ export function BrowserUrlBox({
         <LockIcon />
       </div>
       <div className="flex-1 overflow-hidden min-w-32">
-        <OmnisearchBox />
+        <Omnisearch />
       </div>
       {showBookmarkButton && (
         <Button

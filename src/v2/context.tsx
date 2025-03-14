@@ -339,18 +339,26 @@ export function BrowserProvider({
   browserConfig,
   linkConfig,
   outputConfig,
+  debug,
   children,
 }: {
   uiConfig?: DeepPartial<IIIFBrowserConfig>;
   browserConfig?: Partial<BrowserStoreConfig>;
   linkConfig?: Partial<BrowserLinkConfig>;
   outputConfig?: Partial<OutputConfig>;
+  debug?: boolean;
   children: React.ReactNode;
 }) {
   const vault = useExistingVault();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const emitter = useMemo(() => createEmitter(), [browserConfig]);
+  const emitter = useMemo(
+    () =>
+      createEmitter({
+        debug: debug ?? false,
+      }),
+    [browserConfig, debug],
+  );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
     const { defaultPages, ...rest } = uiConfig || {};
@@ -499,8 +507,8 @@ export function BrowserProvider({
   );
 
   const store = useMemo(
-    () => createBrowserStore({ vault, emitter, ...browserStoreConfig }),
-    [emitter, vault, browserStoreConfig],
+    () => createBrowserStore({ vault, emitter, debug, ...browserStoreConfig }),
+    [emitter, vault, browserStoreConfig, debug],
   );
 
   const outputStore = useMemo(

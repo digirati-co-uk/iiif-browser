@@ -45,7 +45,7 @@ export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 } & {};
 
-interface IIIFBrowserProps {
+export interface IIIFBrowserProps {
   ui?: DeepPartial<IIIFBrowserConfig>;
   history?: Partial<BrowserStoreConfig>;
   navigation?: Partial<BrowserLinkConfig>;
@@ -54,16 +54,11 @@ interface IIIFBrowserProps {
   customPages?: {
     [key: string]: ReactNode;
   };
+  debug?: boolean;
 }
 
-export function IIIFBrowser({
-  ui,
-  history,
-  navigation,
-  output,
-  customPages,
-}: IIIFBrowserProps) {
-  const allCustomPages = useMemo(() => {
+export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
+  return useMemo(() => {
     return Object.entries({
       "/": <Homepage />,
       "/about": <AboutPage />,
@@ -75,6 +70,17 @@ export function IIIFBrowser({
       ...(customPages || {}),
     });
   }, [customPages]);
+}
+
+export function IIIFBrowser({
+  ui,
+  history,
+  navigation,
+  output,
+  customPages,
+  debug,
+}: IIIFBrowserProps) {
+  const allCustomPages = useDefaultPages(customPages);
 
   return (
     <BrowserProvider
@@ -82,6 +88,7 @@ export function IIIFBrowser({
       uiConfig={ui}
       browserConfig={history}
       linkConfig={navigation}
+      debug={debug}
     >
       <BrowserContainer>
         <BrowserHeader />

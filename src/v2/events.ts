@@ -23,14 +23,20 @@ export type BrowserEvents = {
 
 export type BrowserEmitter = Emitter<BrowserEvents>;
 
-export function createEmitter() {
+export function createEmitter({ debug }: { debug?: boolean }) {
   const emitter = mitt<BrowserEvents>();
-  emitter.on("*", (e, t) =>
-    console.log(
-      `%c${e}`,
-      "background: seagreen;color:white;padding:2px 8px;",
-      t,
-    ),
-  );
+
+  if (debug) {
+    emitter.on("*", (e, t) =>
+      console.log(
+        "%cIIIF Browser",
+        "background: royalblue;color:white;padding:2px 8px;",
+        `%c${e}`,
+        "background: palevioletred;color:white;padding:2px 8px;",
+        t,
+      ),
+    );
+  }
+
   return emitter;
 }

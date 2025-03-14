@@ -1,4 +1,6 @@
+import { Button } from "react-aria-components";
 import { IIIFBrowser } from "./IIIFBrowser";
+import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
 
 export default {
@@ -9,7 +11,7 @@ export default {
 export const Default = () => (
   <>
     <div className="max-w-2xl">
-      <IIIFBrowser />
+      <IIIFBrowser debug />
     </div>
     <div className="flex">
       <div id="iiif-browser__debug-history" />
@@ -22,6 +24,7 @@ export const CustomHomage = () => (
   <>
     <div className="max-w-2xl">
       <IIIFBrowser
+        debug
         history={{ localStorageKey: "custom-homepage" }}
         customPages={{
           "/": (
@@ -52,6 +55,7 @@ export const CustomHomeButton = () => (
   <>
     <div className="max-w-2xl">
       <IIIFBrowser
+        debug
         history={{
           localStorageKey: "custom-home-button",
           restoreFromLocalStorage: false,
@@ -80,6 +84,7 @@ export const CustomHomeButton = () => (
 export const SeedCollection = () => (
   <div className="max-w-2xl">
     <IIIFBrowser
+      debug
       history={{
         localStorageKey: "seed-collection",
         restoreFromLocalStorage: false,

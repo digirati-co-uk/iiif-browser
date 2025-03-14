@@ -104,6 +104,7 @@ export type BrowserState = "IDLE" | "LOADING" | "LOADED" | "ERROR" | "RETRYING";
 export type CreateBrowserStoreOptions = {
   emitter: BrowserEmitter;
   vault?: Vault;
+  debug?: boolean;
 } & BrowserStoreConfig;
 
 export type BrowserStoreConfig = {
@@ -296,13 +297,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     saveToLocalStorage,
     restoreFromLocalStorage,
     localStorageKey,
+    debug = false,
   } = options;
-
-  console.log({
-    saveToLocalStorage,
-    restoreFromLocalStorage,
-    localStorageKey,
-  });
 
   const [
     history,
@@ -793,11 +789,13 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       .getState()
       .mapToRoute(r.location.pathname, r.location.search);
 
-    console.log(
-      `%c${r.action}`,
-      "background: purple;color:white;padding:2px 8px;",
-      { resolved, resource, location: r.location },
-    );
+    if (debug) {
+      console.log(
+        `%c${r.action}`,
+        "background: purple;color:white;padding:2px 8px;",
+        { resolved, resource, location: r.location },
+      );
+    }
 
     const locationUrl = r.location.pathname + r.location.search;
     const currentHistoryList = store.getState().historyList;

@@ -264,8 +264,6 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
         miniSearchOptions.autoSuggestOptions,
       );
 
-      console.log("here?", { query, results });
-
       set({
         query,
         rawResults: results,
