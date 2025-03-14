@@ -85,6 +85,9 @@ export const SeedCollection = () => (
   <div className="max-w-2xl">
     <IIIFBrowser
       debug
+      navigation={{
+        customCanSelect: (item) => item.id !== "https://example.org/my-seed",
+      }}
       history={{
         localStorageKey: "seed-collection",
         restoreFromLocalStorage: false,

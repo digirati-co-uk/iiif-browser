@@ -32,6 +32,8 @@ import {
   type OutputStore,
   type OutputTarget,
   OutputType,
+  canNavigateItem,
+  canSelectItem,
   createOutputStore,
 } from "./stores/output-store";
 
@@ -136,49 +138,7 @@ export function useCanResolve() {
 
   return useCallback(
     (_input: string | { id: string; type: string }) => {
-      let input = _input;
-      if (typeof input === "string") {
-        input = { id: input, type: "unknown" };
-      }
-
-      if (config.customCanNavigate) {
-        try {
-          const customNav = config.customCanNavigate(input, vault);
-          if (typeof customNav === "boolean") {
-            return customNav;
-          }
-        } catch (error) {
-          console.error("Error in customCanSelect:", error);
-        }
-      }
-
-      if (
-        !config.allowNavigationToBuiltInPages &&
-        !input.id.startsWith("http")
-      ) {
-        return false;
-      }
-
-      if (config.disallowedResources.includes(input.id)) {
-        return false;
-      }
-
-      if (!config.canNavigateToCanvas && input.type === "Canvas") {
-        return false;
-      }
-      if (!config.canNavigateToCollection && input.type === "Collection") {
-        return false;
-      }
-      if (!config.canNavigateToManifest && input.type === "Manifest") {
-        return false;
-      }
-
-      let allowed = true;
-      if (config.onlyAllowedDomains) {
-        allowed = isDomainAllowed(input.id, config.allowedDomains);
-      }
-
-      return allowed;
+      return canNavigateItem(_input, config, vault);
     },
     [config, vault],
   );

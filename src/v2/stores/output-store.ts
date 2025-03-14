@@ -4,7 +4,10 @@ import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
 import { formats } from "../../formats";
 import { targets } from "../../targets";
-import type { BrowserLinkConfig } from "../browser/BrowserLink";
+import {
+  type BrowserLinkConfig,
+  isDomainAllowed,
+} from "../browser/BrowserLink";
 import type { BrowserEvents } from "../events";
 
 type SelectedItem = {
@@ -109,20 +112,101 @@ type OutputStoreEvents = {
   "output.selection-change": undefined;
 };
 
+export function canNavigateItem(
+  _input: SelectedItem | { id: string; type: string } | string,
+  config: BrowserLinkConfig,
+  vault: Vault,
+) {
+  let input = _input;
+  if (typeof input === "string") {
+    input = { id: input, type: "unknown" };
+  }
+
+  if (config.customCanNavigate) {
+    try {
+      const customNav = config.customCanNavigate(input, vault);
+      if (typeof customNav === "boolean") {
+        return customNav;
+      }
+    } catch (error) {
+      console.error("Error in customCanNavigate:", error);
+    }
+  }
+
+  if (!config.allowNavigationToBuiltInPages && !input.id.startsWith("http")) {
+    return false;
+  }
+
+  if (config.disallowedResources.includes(input.id)) {
+    return false;
+  }
+
+  if (!config.canNavigateToCanvas && input.type === "Canvas") {
+    return false;
+  }
+  if (!config.canNavigateToCollection && input.type === "Collection") {
+    return false;
+  }
+  if (!config.canNavigateToManifest && input.type === "Manifest") {
+    return false;
+  }
+
+  let allowed = true;
+  if (config.onlyAllowedDomains) {
+    allowed = isDomainAllowed(input.id, config.allowedDomains);
+  }
+
+  return allowed;
+}
+
+export function canSelectItem(
+  _input: SelectedItem | { id: string; type: string } | string,
+  config: BrowserLinkConfig,
+  vault: Vault,
+) {
+  let input = _input;
+  if (typeof input === "string") {
+    input = { id: input, type: "unknown" };
+  }
+
+  if (config.customCanSelect) {
+    try {
+      const customSelect = config.customCanSelect(input, vault);
+      if (typeof customSelect === "boolean") {
+        return customSelect;
+      }
+    } catch (error) {
+      console.error("Error in customCanSelect:", error);
+    }
+  }
+
+  if (config.disallowedResources.includes(input.id)) {
+    return false;
+  }
+
+  if (!config.canSelectCanvas && input.type === "Canvas") {
+    return false;
+  }
+  if (!config.canSelectCollection && input.type === "Collection") {
+    return false;
+  }
+  if (!config.canSelectManifest && input.type === "Manifest") {
+    return false;
+  }
+
+  let allowed = true;
+  if (config.canSelectOnlyAllowedDomains) {
+    allowed = isDomainAllowed(input.id, config.allowedDomains);
+  }
+
+  return allowed;
+}
+
 export function createOutputStore(options: OutputStoreOptions) {
   const { output, emitter, linkConfig, vault } = options;
 
   function canSelect(item: SelectedItem) {
-    if (item.type === "Canvas" && !linkConfig.canSelectCanvas) {
-      return false;
-    }
-    if (item.type === "Manifest" && !linkConfig.canSelectManifest) {
-      return false;
-    }
-    if (item.type === "Collection" && !linkConfig.canSelectCollection) {
-      return false;
-    }
-    return true;
+    return canSelectItem(item, linkConfig, vault);
   }
 
   const store = createStore<OutputStore>((set, get) => ({
