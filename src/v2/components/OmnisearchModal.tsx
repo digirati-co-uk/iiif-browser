@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   Button,
-  ComboBox,
   Dialog,
   DialogTrigger,
   Input,
-  type Key,
-  Label,
-  ListBox,
   Menu,
   MenuItem,
   Popover,
   TextField,
   UNSTABLE_Autocomplete,
 } from "react-aria-components";
+import { twMerge } from "tailwind-merge";
 import { useBrowserContainer } from "../browser/BrowserContainer";
 import {
   useGetSearchResult,
@@ -27,139 +24,62 @@ import {
 } from "../context";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { CloseIcon } from "../icons/CloseIcon";
-import { HistoryIcon } from "../icons/HistoryIcon";
-import { HomeIcon } from "../icons/HomeIcon";
-import { InfoIcon } from "../icons/InfoIcon";
-import { PageIcon } from "../icons/PageIcon";
-import { PortalResourceIcon } from "../icons/PortalResourceIcon";
 import { SearchIcon } from "../icons/SearchIcon";
 import type { SearchIndexItem } from "../stores/omnisearch-store";
+import { SearchResultIcon } from "./SearchResultIcon";
 
-export interface OmnisearchBoxConfig {
-  defaultSources: {
-    history: boolean;
-    bookmarks: boolean;
-    currentCollection: boolean;
-  };
-  staticPages: Array<SearchIndexItem>;
-}
-
-export function OmnisearchBox() {
+export function OmnisearchModal({
+  children,
+  className,
+  onSelect,
+  wasLastOpenRef: wasLastOpen,
+  onClose,
+}: {
+  className?: string;
+  wasLastOpenRef: React.MutableRefObject<boolean>;
+  children: React.ReactNode;
+  onSelect: (result: SearchIndexItem) => void;
+  onClose?: () => void;
+}) {
   const container = useBrowserContainer();
   const [search, setSearch] = useSearchState();
   const { isIndexing } = useSearchIndex();
-  const lastUrl = useLastUrl();
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useSearchResults();
   const getSearchResult = useGetSearchResult();
-  const resolve = useResolve();
-  const wasLastOpen = useRef(false);
-  const {
-    isOpen: isModalOpen,
-    open: openModal,
-    close: closeModal,
-  } = useSearchBoxState();
-  const loading = useIsPageLoading();
-  const lastUrlWithoutHttps = useMemo(() => {
-    return lastUrl.replace(/^https?:\/\//, "");
-  }, [lastUrl]);
-  const valueToShow = useMemo(() => {
-    if (loading) {
-      return search.replace(/^https?:\/\//, "");
-    }
-    return lastUrlWithoutHttps;
-  }, [loading, search, lastUrlWithoutHttps]);
+  const { isOpen: isModalOpen, close: closeModal } = useSearchBoxState();
 
-  const setIsModalOpen = useCallback(
-    (open: boolean) => {
-      if (open) {
-        openModal(lastUrl);
-      } else {
-        closeModal();
-        wasLastOpen.current = true;
-      }
+  const closeModalAction = useCallback(
+    (open?: boolean) => {
+      if (open === true) return;
+      closeModal();
+      wasLastOpen.current = true;
+      onClose?.();
     },
-    [lastUrl, openModal, closeModal],
+    [closeModal, onClose, wasLastOpen],
   );
 
   const selectionAction = useCallback(
     (result: SearchIndexItem) => {
       if (result) {
-        if (result.type === "resource") {
-          resolve(result.resource.id);
-        }
-        if (result.type === "action") {
-          result.action();
-        }
-        if (result.type === "page") {
-          resolve(result.url);
-        }
-        setIsModalOpen(false);
+        onSelect(result);
+        closeModalAction();
         setSearch(result.id as string);
       }
     },
-    [setIsModalOpen, setSearch, resolve],
+    [closeModalAction, setSearch, onSelect],
   );
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setIsModalOpen(!isModalOpen);
-      }
-    };
-
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, [isModalOpen, setIsModalOpen]);
-
-  const onBlur = useCallback(() => {
-    if (!isModalOpen) {
-      wasLastOpen.current = false;
-    }
-  }, [isModalOpen]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Needs to be re-run when indexing status changes
-  useEffect(() => {
-    if (!isModalOpen) {
-      setSearch(lastUrl);
-    } else {
-      wasLastOpen.current = true;
-    }
-  }, [isModalOpen, lastUrl, setSearch, isIndexing]);
-
-  useEffect(() => {
-    if (isModalOpen) {
-      // I hate this hack, but it's the only way to focus the input after the modal opens
-      // setTimeout(() => {
-      //   inputRef.current?.focus();
-      // }, 100);
-    }
-  }, [isModalOpen]);
-
   return (
-    <DialogTrigger isOpen={isModalOpen} onOpenChange={setIsModalOpen}>
-      {/* What is visible when the modal is closed */}
-      <div>
-        <Label className="sr-only">Search</Label>
-        <Button
-          onBlur={onBlur}
-          onFocus={() => {
-            if (!wasLastOpen.current) {
-              setIsModalOpen(true);
-            }
-          }}
-          className="p-1 text-sm focus:outline-none text-slate-600 z-10 w-full text-left"
-        >
-          <span className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis block truncate">
-            {valueToShow}
-          </span>
-        </Button>
-      </div>
+    <DialogTrigger isOpen={isModalOpen} onOpenChange={closeModalAction}>
+      {children}
 
       {/* What is visible when the modal is open */}
       <Popover
-        className="bg-white inset-0 flex flex-col overflow-hidden"
+        className={twMerge(
+          "bg-white inset-0 flex flex-col overflow-hidden",
+          className,
+        )}
         UNSTABLE_portalContainer={container || undefined}
         shouldUpdatePosition={false}
       >
@@ -189,7 +109,7 @@ export function OmnisearchBox() {
                     onKeyDown={(e) => {
                       // Close on esc
                       if (e.key === "Escape") {
-                        setIsModalOpen(false);
+                        closeModalAction();
                         wasLastOpen.current = true;
                       }
                     }}
@@ -199,7 +119,7 @@ export function OmnisearchBox() {
                 </TextField>
 
                 <Button
-                  onPress={() => setIsModalOpen(false)}
+                  onPress={() => closeModalAction()}
                   className="text-2xl rounded focus:outline-none focus:bg-gray-200 flex-shrink-0 px-3 text-slate-500 hover:text-slate-700 m-1"
                 >
                   <CloseIcon />
@@ -291,41 +211,4 @@ export function OmnisearchBox() {
       </Popover>
     </DialogTrigger>
   );
-}
-
-function SearchResultIcon({
-  item,
-  className,
-}: { item: SearchIndexItem; className?: string }) {
-  if (item.icon) {
-    return item.icon;
-  }
-
-  if (item.source === "history") {
-    return <HistoryIcon className={`text-2xl ${className}`} />;
-  }
-
-  if (item.type === "resource") {
-    return (
-      <PortalResourceIcon
-        noFill
-        className={`${className}`}
-        type={item.resource.type}
-      />
-    );
-  }
-
-  if (item.id === "iiif://home") {
-    return <HomeIcon className={`text-2xl ${className}`} />;
-  }
-
-  if (item.id === "iiif://about") {
-    return <InfoIcon className={`text-2xl ${className}`} />;
-  }
-
-  if (item.id === "iiif://history") {
-    return <HistoryIcon className={`text-2xl ${className}`} />;
-  }
-
-  return <PageIcon className={`text-2xl ${className}`} />;
 }
