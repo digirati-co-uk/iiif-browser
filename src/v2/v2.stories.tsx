@@ -199,3 +199,24 @@ export const SeedCollection = () => (
     />
   </div>
 );
+
+export const AllOfDelft = () => (
+  <IIIFBrowser
+    debug
+    history={{
+      localStorageKey: "custom-home-button",
+      restoreFromLocalStorage: false,
+      saveToLocalStorage: false,
+      initialHistory: [
+        {
+          url: "https://heritage.tudelft.nl/iiif/collection.json",
+          resource: "https://heritage.tudelft.nl/iiif/collection.json",
+          route: "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+        },
+      ],
+    }}
+    ui={{
+      homeLink: "https://heritage.tudelft.nl/iiif/collection.json",
+    }}
+  />
+);
