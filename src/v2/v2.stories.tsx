@@ -76,3 +76,51 @@ export const CustomHomeButton = () => (
     </div>
   </>
 );
+
+export const SeedCollection = () => (
+  <div className="max-w-2xl">
+    <IIIFBrowser
+      history={{
+        localStorageKey: "seed-collection",
+        restoreFromLocalStorage: false,
+        saveToLocalStorage: false,
+        initialHistory: [
+          {
+            url: "https://example.org/my-seed",
+            resource: "https://example.org/my-seed",
+            route: "/loading?id=https://example.org/my-seed",
+            metadata: {
+              type: "Collection",
+              label: { en: ["Seed collection"] },
+            },
+          },
+        ],
+        seedCollections: [
+          {
+            "@context": "http://iiif.io/api/presentation/3/context.json",
+            id: "https://example.org/my-seed",
+            label: {
+              en: ["Seed collection"],
+            },
+            type: "Collection",
+            items: [
+              {
+                id: "https://iiif.io/api/cookbook/recipe/0001-mvm-image/manifest.json",
+                type: "Manifest",
+                label: { en: ["Cookbook recipe"] },
+              },
+              {
+                id: "https://view.nls.uk/manifest/7445/74457611/manifest.json",
+                type: "Manifest",
+                label: { en: ["Photographs of the south side of Edinburgh"] },
+              },
+            ],
+          } as any,
+        ],
+      }}
+      ui={{
+        homeLink: "https://example.org/my-seed",
+      }}
+    />
+  </div>
+);

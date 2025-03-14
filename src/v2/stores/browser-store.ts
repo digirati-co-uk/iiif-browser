@@ -456,6 +456,32 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           options?.abortController || new AbortController();
         const abortController = requestAbortController;
 
+        const seedCollection = seedCollections.find(
+          (collection) => collection.id === url,
+        );
+
+        if (seedCollection) {
+          const route = resourceRoutes.find(
+            (route) => route.resource === seedCollection.type,
+          );
+          if (!route) {
+            return browserResourceError(
+              url,
+              `No route found for ${seedCollection.type}`,
+              true,
+            );
+          }
+
+          const newSearchParams =
+            options?.searchParams || new URLSearchParams();
+          newSearchParams.set("id", seedCollection.id);
+          const searchParamsString = newSearchParams.toString();
+
+          browserSuccess(url, seedCollection, viewSource);
+          history.replace(`${route.url}?${searchParamsString}`, { parent });
+          return;
+        }
+
         const response = await fetch(url, {
           signal: abortController.signal,
           ...(requestInitOptions || {}),
