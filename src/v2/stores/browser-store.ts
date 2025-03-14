@@ -685,7 +685,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return browserLoading(url, parent, searchParams);
         }
 
-        if (url.startsWith("https://")) {
+        if (url.startsWith("https://") || url.startsWith("http://")) {
           // We _might_ have been passed a canvas id
           const canvasRef = vault.get({ id: url, type: "Canvas" });
           if (canvasRef) {
@@ -914,7 +914,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       const parent = (r.location.state as any)?.parent;
 
       const historyItem: HistoryItem = {
-        resource: resolved?.startsWith("https://") ? resolved : null,
+        resource:
+          resolved?.startsWith("https://") || resolved?.startsWith("http://")
+            ? resolved
+            : null,
         route: locationUrl,
         url: resolved,
         parent: parent,
