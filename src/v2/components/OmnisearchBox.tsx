@@ -26,6 +26,7 @@ import {
   useSearchState,
 } from "../context";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
+import { CloseIcon } from "../icons/CloseIcon";
 import { HistoryIcon } from "../icons/HistoryIcon";
 import { HomeIcon } from "../icons/HomeIcon";
 import { InfoIcon } from "../icons/InfoIcon";
@@ -196,6 +197,13 @@ export function OmnisearchBox() {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </TextField>
+
+                <Button
+                  onPress={() => setIsModalOpen(false)}
+                  className="text-2xl rounded focus:outline-none focus:bg-gray-200 flex-shrink-0 px-3 text-slate-500 hover:text-slate-700 m-1"
+                >
+                  <CloseIcon />
+                </Button>
               </div>
 
               {/* The search results. */}

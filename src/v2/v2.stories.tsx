@@ -119,6 +119,10 @@ export const SeedCollection = () => (
         ],
       }}
       ui={{
+        defaultPages: {
+          homepage: false,
+        },
+        homeButton: true,
         homeLink: "https://example.org/my-seed",
       }}
     />

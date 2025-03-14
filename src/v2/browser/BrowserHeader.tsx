@@ -20,7 +20,7 @@ export function BrowserHeader() {
 
   return (
     <div className="flex w-full items-center justify-between border-b shadow-sm gap-1 px-1">
-      {defaultPages.homepage && homeButton && (
+      {(defaultPages.homepage || homeLink) && homeButton && (
         <BrowserHomeButton href={homeLink} />
       )}
       {backButton && <BrowserBackButton />}

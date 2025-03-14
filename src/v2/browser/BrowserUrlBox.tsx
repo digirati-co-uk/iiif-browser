@@ -15,6 +15,7 @@ export function BrowserUrlBox({
       className={twMerge(
         "flex-1 min-w-0 w-full relative my-2 bg-white rounded border border-slate-300 shadow-sm flex gap-1.5 py-1 px-2 items-center",
         // Loading state
+        "transition-colors hover:bg-blue-50",
         "after:content-[''] after:bottom-0 after:absolute after:left-0 after:h-0.5 after:bg-gradient-to-r after:rounded-r-lg after:shadow-sm",
         "after:bg-transparent after:w-0 after:duration-1000 after:opacity-0 after:transition-none",
         loading &&
