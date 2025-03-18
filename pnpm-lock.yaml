@@ -38,6 +38,9 @@ importers:
       path-to-regexp:
         specifier: ^8.2.0
         version: 8.2.0
+      polygon-editor:
+        specifier: ^0.0.6
+        version: 0.0.6
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -2544,6 +2547,9 @@ packages:
 
   polygon-editor@0.0.4:
     resolution: {integrity: sha512-meDMpdEJdYB8VueoHjSmWKjHbA1kV7U83bxl3GDJNg6ZpBp5oTCsUWe8PCifTe0MxNRF+elZFae/yfMs0PjhLg==}
+
+  polygon-editor@0.0.6:
+    resolution: {integrity: sha512-mQbsAg02d17NwilQQnXuSjPbki3kavg9xXLz1Z4wvkmnSfyEm3xGhdBu3bRm9Vb/cLREGxMNK3TbVjheqfNswg==}
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -6004,6 +6010,8 @@ snapshots:
       '@babel/runtime': 7.26.7
 
   polygon-editor@0.0.4: {}
+
+  polygon-editor@0.0.6: {}
 
   possible-typed-array-names@1.1.0: {}
 
