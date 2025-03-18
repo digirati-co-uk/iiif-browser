@@ -1,10 +1,12 @@
-import { getValue, type Vault } from "@iiif/helpers";
+import type { ViewerMode } from "@atlas-viewer/atlas";
+import { type Vault, getValue } from "@iiif/helpers";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import {
   VaultProvider,
@@ -14,6 +16,7 @@ import {
 } from "react-iiif-vault";
 import { Router, useSearchParams } from "react-router-dom";
 import { type StoreApi, useStore } from "zustand";
+import { create } from "zustand";
 import type { DeepPartial, IIIFBrowserConfig } from "./IIIFBrowser";
 import { type BrowserLinkConfig, isDomainAllowed } from "./browser/BrowserLink";
 import { type BrowserEmitter, createEmitter } from "./events";
@@ -36,8 +39,6 @@ import {
   canSelectItem,
   createOutputStore,
 } from "./stores/output-store";
-import { create } from "zustand";
-import type { ViewerMode } from "@atlas-viewer/atlas";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
@@ -336,6 +337,7 @@ export function BrowserProvider({
   debug?: boolean;
   children: React.ReactNode;
 }) {
+  const readyRef = useRef(false);
   const vault = useExistingVault(customVault);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -567,6 +569,11 @@ export function BrowserProvider({
       }),
     [emitter, vault, store, uiConfigValue],
   );
+
+  if (!readyRef.current) {
+    emitter.emit("ready");
+    readyRef.current = true;
+  }
 
   return (
     <UIConfigContext.Provider value={uiConfigValue}>

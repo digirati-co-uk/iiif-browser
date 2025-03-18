@@ -3,6 +3,7 @@ import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
 import "./styles/tw.css";
+import { useState } from "react";
 
 export default {
   title: "IIIF Browser v2",
@@ -20,6 +21,28 @@ export const Default = () => (
     </div>
   </>
 );
+
+export const DefaultHideAndShow = () => {
+  const [isHidden, setIsHidden] = useState(false);
+
+  return (
+    <>
+      <Button
+        className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
+        onPress={() => setIsHidden(!isHidden)}
+      >
+        {isHidden ? "Show" : "Hide"}
+      </Button>
+      <div className="w-full h-[80vh] flex">
+        {isHidden ? null : <IIIFBrowser debug />}
+      </div>
+      <div className="flex">
+        <div id="iiif-browser__debug-history" />
+        <div id="iiif-browser__debug-selected" />
+      </div>
+    </>
+  );
+};
 
 export const DefaultInResizableContainer = () => (
   <>

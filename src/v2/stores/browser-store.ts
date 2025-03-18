@@ -61,6 +61,7 @@ export type BrowserStore = {
       abortController?: AbortController;
     },
   ): Promise<void>;
+  getLoadedResource(url: string): LoadedResource | undefined;
   mapToRoute(
     path: string,
     search: string,
@@ -302,7 +303,6 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     collectionUrlMappingParams,
     seedCollections = [],
     saveToLocalStorage,
-    restoreFromLocalStorage,
     localStorageKey,
     debug = false,
   } = options;
@@ -765,7 +765,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const manifestUrl = searchParams.get("id");
         const viewSource = searchParams.get("view-source");
         if (manifestUrl) {
-          const loaded = get().loaded[manifestUrl];
+          const loaded = get().getLoadedResource(manifestUrl);
 
           if (loaded?.error) {
             return [notFound404.url, null];
@@ -789,6 +789,38 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         // }
 
         return [null, null];
+      },
+
+      getLoadedResource(url: string): LoadedResource | undefined {
+        const loaded = get().loaded[url];
+        if (loaded) {
+          return loaded;
+        }
+
+        const vaultRef = vault.get(url) as any;
+        if (vaultRef) {
+          const resource = {
+            retries: 0,
+            url,
+            resource: {
+              id: vaultRef.id,
+              type: vaultRef.type,
+              label: vaultRef.label,
+            },
+            error: null,
+          };
+          // Set it to the loaded
+          set((state) => ({
+            loaded: {
+              [url]: resource,
+              ...state.loaded,
+            },
+          }));
+
+          return resource;
+        }
+
+        return undefined;
       },
 
       setOmnibarValue(value: string): void {
@@ -862,6 +894,24 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       },
     };
   });
+
+  // Look into this again in the future (atm dead code.)
+  function dispatchHistoryItemEvents(historyItem: HistoryItem) {
+    const resourceRef = historyItem.resource;
+    const resource = vault.get(resourceRef as any);
+
+    // Emit events
+    emitter.emit("history.change", {
+      item: historyItem,
+      source: "history.listen.pop",
+    });
+    if (resource?.type === "Collection") {
+      emitter.emit("collection.change", resource);
+    }
+    if (resource?.type === "Manifest") {
+      emitter.emit("manifest.change", resource);
+    }
+  }
 
   history.listen((r) => {
     const [resolved, resource] = store
@@ -1052,6 +1102,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
   emitter.on("manifest.change", (resource) => {
     emitter.emit("resource.change", resource);
+  });
+
+  emitter.on("ready", () => {
+    // Dispatch the initial page.
+    history.replace(initialPage.route);
   });
 
   return store;

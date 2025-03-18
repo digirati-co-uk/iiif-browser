@@ -5,10 +5,10 @@ import {
   useManifest,
 } from "react-iiif-vault";
 import { useSelectedItems } from "../context";
-import { PortalResourceIcon } from "../icons/PortalResourceIcon";
-import { SelectedItem } from "../stores/output-store";
 import { CropIcon } from "../icons/CropIcon";
 import { MultiImageIcon } from "../icons/MultiImageIcon";
+import { PortalResourceIcon } from "../icons/PortalResourceIcon";
+import type { SelectedItem } from "../stores/output-store";
 
 export function BrowserOutputPreview() {
   const selectedItems = useSelectedItems();
@@ -124,6 +124,10 @@ function RenderSelectedListOfType() {
 }
 
 function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
+  if (items.length === 0) {
+    return <div />;
+  }
+
   return (
     <div className="flex items-center gap-3">
       <MultiImageIcon className="text-2xl text-[#C63E75]" />
