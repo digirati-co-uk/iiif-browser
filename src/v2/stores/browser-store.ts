@@ -674,7 +674,6 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             });
 
             const region = canvasSearchParams.get("xywh");
-            console.log("canvas region->", region);
 
             // Browser success with Canvas
             browserSuccess(url, fullResource, viewSource, parent);
