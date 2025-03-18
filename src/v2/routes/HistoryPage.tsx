@@ -25,27 +25,29 @@ export function HistoryPage() {
         </Button>
       </div>
       <ListBox className="w-full p-2">
-        {history.map((item, index) => (
-          <ListBoxItem
-            onAction={() => resolve(item.url)}
-            key={index}
-            className="flex items-center hover:bg-blue-100 p-2"
-          >
-            <div className="flex flex-col flex-1">
-              {item.metadata?.label ? (
-                <LocaleString className="font-semibold">
-                  {item.metadata?.label}
-                </LocaleString>
-              ) : (
-                ""
-              )}
-              <div className="text-sm underline">{item.url}</div>
-            </div>
-            <div className="flex-shrink-0 text-xs opacity-50">
-              {item.timestamp ? <TimeAgo date={item.timestamp} /> : ""}
-            </div>
-          </ListBoxItem>
-        ))}
+        {history.map((item, index) =>
+          item.url === "iiif://history" ? null : (
+            <ListBoxItem
+              onAction={() => resolve(item.url)}
+              key={index}
+              className="flex items-center hover:bg-blue-100 p-2"
+            >
+              <div className="flex flex-col flex-1">
+                {item.metadata?.label ? (
+                  <LocaleString className="font-semibold">
+                    {item.metadata?.label}
+                  </LocaleString>
+                ) : (
+                  ""
+                )}
+                <div className="text-sm underline">{item.url}</div>
+              </div>
+              <div className="flex-shrink-0 text-xs opacity-50">
+                {item.timestamp ? <TimeAgo date={item.timestamp} /> : ""}
+              </div>
+            </ListBoxItem>
+          ),
+        )}
       </ListBox>
     </>
   );
