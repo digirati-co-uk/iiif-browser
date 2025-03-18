@@ -17,6 +17,7 @@ import { LoadingPage } from "./routes/LoadingPage";
 import { ManifestPage } from "./routes/ManifestPage";
 import type { BrowserStoreConfig } from "./stores/browser-store";
 import type { OutputTarget } from "./stores/output-store";
+import type { Vault } from "@iiif/helpers";
 
 export interface IIIFBrowserConfig {
   defaultPages: {
@@ -55,6 +56,7 @@ export interface IIIFBrowserProps {
     [key: string]: ReactNode;
   };
   debug?: boolean;
+  vault?: Vault;
 }
 
 export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
@@ -80,11 +82,13 @@ export function IIIFBrowser({
   customPages,
   debug,
   className,
+  vault,
 }: IIIFBrowserProps) {
   const allCustomPages = useDefaultPages(customPages);
 
   return (
     <BrowserProvider
+      vault={vault}
       outputConfig={output}
       uiConfig={ui}
       browserConfig={history}

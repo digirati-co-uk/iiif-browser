@@ -220,3 +220,49 @@ export const AllOfDelft = () => (
     }}
   />
 );
+
+export const TestingCanvasCallback = () => (
+  <div className="max-w-2xl h-[80vh] flex">
+    <IIIFBrowser
+      debug
+      history={{
+        localStorageKey: "testing-canvas-callback",
+        restoreFromLocalStorage: false,
+        saveToLocalStorage: false,
+        initialHistory: [
+          {
+            url: "https://heritage.tudelft.nl/iiif/collection.json",
+            resource: "https://heritage.tudelft.nl/iiif/collection.json",
+            route:
+              "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+          },
+        ],
+      }}
+      output={[
+        {
+          type: "callback",
+          label: "Select",
+          supportedTypes: [
+            "Canvas",
+            "CanvasList",
+            "CanvasRegion",
+            "ImageService",
+            "ImageServiceRegion",
+          ],
+          cb: (resource) => {
+            console.log("output", resource);
+          },
+          format: {
+            type: "custom",
+            format: (resource, parent) => ({ resource, parent }),
+          },
+        },
+      ]}
+      navigation={{
+        canSelectCanvas: true,
+        canSelectManifest: false,
+        canSelectCollection: false,
+      }}
+    />
+  </div>
+);

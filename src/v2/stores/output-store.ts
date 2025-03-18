@@ -401,6 +401,7 @@ export function createOutputStore(options: OutputStoreOptions) {
       wasManuallySelected: false,
     });
     emitter.emit("output.select-item", item);
+    emitter.emit("output.selection-change");
   });
 
   emitter.on("resource.change", (resource) => {

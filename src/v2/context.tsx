@@ -1,4 +1,4 @@
-import { getValue } from "@iiif/helpers";
+import { getValue, type Vault } from "@iiif/helpers";
 import {
   createContext,
   useCallback,
@@ -37,7 +37,7 @@ import {
   createOutputStore,
 } from "./stores/output-store";
 import { create } from "zustand";
-import { ViewerMode } from "@atlas-viewer/atlas";
+import type { ViewerMode } from "@atlas-viewer/atlas";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
@@ -320,6 +320,7 @@ export function useSelectedActions() {
 }
 
 export function BrowserProvider({
+  vault: customVault,
   uiConfig,
   browserConfig,
   linkConfig,
@@ -327,6 +328,7 @@ export function BrowserProvider({
   debug,
   children,
 }: {
+  vault?: Vault;
   uiConfig?: DeepPartial<IIIFBrowserConfig>;
   browserConfig?: Partial<BrowserStoreConfig>;
   linkConfig?: Partial<BrowserLinkConfig>;
@@ -334,7 +336,7 @@ export function BrowserProvider({
   debug?: boolean;
   children: React.ReactNode;
 }) {
-  const vault = useExistingVault();
+  const vault = useExistingVault(customVault);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const emitter = useMemo(
