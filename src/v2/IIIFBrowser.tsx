@@ -50,7 +50,7 @@ export interface IIIFBrowserProps {
   history?: Partial<BrowserStoreConfig>;
   navigation?: Partial<BrowserLinkConfig>;
   output?: OutputTarget[]; // format is specified in each target now.
-
+  className?: string;
   customPages?: {
     [key: string]: ReactNode;
   };
@@ -79,6 +79,7 @@ export function IIIFBrowser({
   output,
   customPages,
   debug,
+  className,
 }: IIIFBrowserProps) {
   const allCustomPages = useDefaultPages(customPages);
 
@@ -90,7 +91,7 @@ export function IIIFBrowser({
       linkConfig={navigation}
       debug={debug}
     >
-      <BrowserContainer>
+      <BrowserContainer className={className}>
         <BrowserHeader />
 
         <BrowserWindow>

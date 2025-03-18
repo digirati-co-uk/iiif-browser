@@ -19,6 +19,7 @@ export type BrowserLinkConfig = {
   disallowedResources: string[];
   markedResources: string[];
   multiSelect: boolean;
+  canCropImage: boolean;
   alwaysShowNavigationArrow: boolean;
 
   clickToSelect: boolean;

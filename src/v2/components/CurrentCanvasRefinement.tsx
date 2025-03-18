@@ -1,9 +1,10 @@
-import { BoxStyle, DrawBox, RegionHighlight } from "@atlas-viewer/atlas";
+import { BoxStyle, DrawBox } from "@atlas-viewer/atlas";
 import {
   useCanvasOutputSelector,
   useOutputStore,
   useRefineSelectedItem,
 } from "../context";
+import { RegionHighlight } from "./RegionHighlight";
 import { BoxSelector, useCanvas } from "react-iiif-vault";
 import { useStore } from "zustand";
 import { useCallback } from "react";
@@ -56,7 +57,7 @@ export function CurrentCanvasRefinement({
             highlightStyle
               ? highlightStyle
               : {
-                  border: "1px solid red",
+                  outline: "2px solid #4E80EE",
                   background: "rgba(255, 255, 255, .1)",
                 }
           }

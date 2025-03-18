@@ -36,6 +36,8 @@ import {
   canSelectItem,
   createOutputStore,
 } from "./stores/output-store";
+import { create } from "zustand";
+import { ViewerMode } from "@atlas-viewer/atlas";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
@@ -44,6 +46,16 @@ const OmnisearchContext = createContext<StoreApi<OmnisearchStore> | null>(null);
 export const OutputContext = createContext<StoreApi<OutputStore> | null>(null);
 const BrowserConfigContext = createContext<BrowserStoreConfig | null>(null);
 const BrowserEventsContext = createContext<BrowserEmitter | null>(null);
+
+export const useMode = create<{
+  mode: ViewerMode;
+  setMode: (mode: ViewerMode) => void;
+  setEditMode: (editing: boolean) => void;
+}>((set) => ({
+  mode: "explore",
+  setMode: (mode) => set({ mode }),
+  setEditMode: (editing) => set({ mode: editing ? "sketch" : "explore" }),
+}));
 
 export function useBrowserConfig() {
   const context = useContext(BrowserConfigContext);
@@ -470,6 +482,7 @@ export function BrowserProvider({
           canSelectManifest: true,
           canSelectCanvas: true,
           multiSelect: false,
+          canCropImage: false,
           alwaysShowNavigationArrow: true,
 
           customCanSelect: null,

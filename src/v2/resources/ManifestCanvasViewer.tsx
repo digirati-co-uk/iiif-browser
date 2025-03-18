@@ -7,14 +7,16 @@ import {
 } from "react-iiif-vault";
 import { useNavigate } from "react-router-dom";
 import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
-import { OutputContext, useCanvasOutputSelector } from "../context";
+import { OutputContext, useCanvasOutputSelector, useMode } from "../context";
+import { CanvasControls } from "../components/CanvasControls";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
   const outputCtx = useContext(OutputContext);
   const { sequence, items, currentSequenceIndex } = useSimpleViewer();
   const navigate = useNavigate();
-  const [editMode, setEditMode] = useState(false);
+  const { mode, setEditMode } = useMode();
+  const editMode = mode === "sketch";
 
   const current = sequence[currentSequenceIndex];
   const canvas = items[current[0]];
@@ -49,11 +51,10 @@ export function ManifestCanvasViewer() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex w-full flex-1 min-h-0">
-        <CanvasPanel.Viewer
-          height={"auto"}
-          mode={editMode ? "sketch" : "explore"}
-        >
-          <CanvasPanel.RenderCanvas>
+        <CanvasPanel.Viewer height={"auto"} mode={mode}>
+          <CanvasPanel.RenderCanvas
+            renderViewerControls={() => <CanvasControls />}
+          >
             <OutputContext.Provider value={outputCtx}>
               <CurrentCanvasRefinement
                 editMode={editMode}
@@ -63,9 +64,6 @@ export function ManifestCanvasViewer() {
           </CanvasPanel.RenderCanvas>
         </CanvasPanel.Viewer>
       </div>
-      <button onClick={() => setEditMode(!editMode)}>
-        {editMode ? "Exit Edit Mode" : "Enter Edit Mode"}
-      </button>
       <div className="flex-shrink-0 h-32 items-center flex">
         <SequenceThumbnails
           classes={{

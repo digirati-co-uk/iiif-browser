@@ -10,7 +10,7 @@ export default {
 
 export const Default = () => (
   <>
-    <div className="max-w-2xl">
+    <div className="w-full h-[80vh] flex">
       <IIIFBrowser debug />
     </div>
     <div className="flex">
@@ -20,9 +20,17 @@ export const Default = () => (
   </>
 );
 
+export const DefaultInResizableContainer = () => (
+  <>
+    <div className="resize bg-[red] h-[600px] p-4 flex ov80vhw-auto">
+      <IIIFBrowser debug />
+    </div>
+  </>
+);
+
 export const DefaultOnlyManifests = () => (
   <>
-    <div className="max-w-2xl">
+    <div className="w-full h-[80vh] flex">
       <IIIFBrowser debug navigation={{ canSelectCanvas: false }} />
     </div>
     <div className="flex">
@@ -34,7 +42,7 @@ export const DefaultOnlyManifests = () => (
 
 export const DefaultWithUniversalViewer = () => (
   <>
-    <div className="max-w-2xl">
+    <div className="w-full h-[80vh] flex">
       <IIIFBrowser
         debug
         output={[
@@ -47,7 +55,7 @@ export const DefaultWithUniversalViewer = () => (
             format: { type: "url", resolvable: true },
           },
         ]}
-        navigation={{ canSelectCanvas: true }}
+        navigation={{ canSelectCanvas: true, canCropImage: true }}
       />
     </div>
     <div className="flex">
@@ -59,7 +67,7 @@ export const DefaultWithUniversalViewer = () => (
 
 export const CustomHomage = () => (
   <>
-    <div className="max-w-2xl">
+    <div className="w-full h-[80vh] flex">
       <IIIFBrowser
         debug
         history={{ localStorageKey: "custom-homepage" }}
@@ -90,7 +98,7 @@ export const CustomHomage = () => (
 
 export const CustomHomeButton = () => (
   <>
-    <div className="max-w-2xl">
+    <div className="w-full h-[80vh] flex">
       <IIIFBrowser
         debug
         history={{
@@ -119,7 +127,7 @@ export const CustomHomeButton = () => (
 );
 
 export const SeedCollection = () => (
-  <div className="max-w-2xl">
+  <div className="max-w-2xl h-[80vh] flex">
     <IIIFBrowser
       debug
       navigation={{
