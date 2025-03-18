@@ -24,7 +24,7 @@ export const openNewWindowTarget: ExplorerAction<"open-new-window"> = {
 
     if (parent?.type === "Manifest") {
       manifest = parent?.id;
-      canvas = data;
+      canvas = ref.id;
 
       const manifestVault = vault.get<ManifestNormalized>(manifest);
       if (manifestVault) {
