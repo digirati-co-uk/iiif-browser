@@ -110,6 +110,21 @@ function DebugHistory() {
           <div className="text-lg font-bold">Debug History</div>
           <div className="text-xs text-gray-500">Index: {historyIndex}</div>
           <div className="text-xs text-gray-500">Last URL: {lastUrl}</div>
+
+          {/* <pre>
+            {JSON.stringify({
+              initialHistory: [
+                {
+                  url: "https://view.nls.uk/collections/7446/74466699.json",
+                  resource:
+                    "https://view.nls.uk/collections/7446/74466699.json",
+                  route:
+                    "/loading?id=https://view.nls.uk/collections/7446/74466699.json",
+                },
+              ],
+            })}
+          </pre> */}
+
           <div className="flex gap-1">
             <Button
               onPress={() => history.go(-1)}

@@ -1,7 +1,14 @@
-import { LocaleString, useCollection, useManifest } from "react-iiif-vault";
+import {
+  LocaleString,
+  useCanvas,
+  useCollection,
+  useManifest,
+} from "react-iiif-vault";
 import { useSelectedItems } from "../context";
 import { PortalResourceIcon } from "../icons/PortalResourceIcon";
 import { SelectedItem } from "../stores/output-store";
+import { CropIcon } from "../icons/CropIcon";
+import { MultiImageIcon } from "../icons/MultiImageIcon";
 
 export function BrowserOutputPreview() {
   const selectedItems = useSelectedItems();
@@ -20,10 +27,7 @@ export function BrowserOutputPreview() {
     return <div />;
   }
 
-  // Option 2. Multiple resources of the same type
-  // Option 3. Multiple resources of different types
-
-  return <div />;
+  return <RenderSelectedListOfManyTypes items={selectedItems} />;
 }
 
 function RenderSelectedManifest({ id }: { id: string }) {
@@ -85,17 +89,45 @@ function RenderSelectedCollection({ id }: { id: string }) {
 }
 
 function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
-  if (item.selector) {
-    return <div>Canvas with Selector</div>;
-  }
+  const manifest = useManifest({ id: item.parent?.id! });
+  const canvas = useCanvas({ id: item.id })!;
 
-  return <div>Just canvas</div>;
+  return (
+    <div className="flex flex-row items-center gap-2 w-full overflow-hidden truncate">
+      {item.selector ? (
+        <div className="text-3xl text-[#F58962]">
+          <CropIcon />
+        </div>
+      ) : (
+        <PortalResourceIcon type="canvas" />
+      )}
+      <div className="flex flex-col flex-1 w-full overflow-hidden">
+        <div className="flex items-center gap-2 w-full">
+          {manifest ? (
+            <>
+              <LocaleString as="span" className="truncate">
+                {manifest.label}
+              </LocaleString>
+              {" - "}
+            </>
+          ) : null}
+          <LocaleString>{canvas.label}</LocaleString>
+        </div>
+        <span className="text-blue-500 truncate text-xs">{item.id}</span>
+      </div>
+    </div>
+  );
 }
 
 function RenderSelectedListOfType() {
   return <div />;
 }
 
-function RenderSelectedListOfManyTypes() {
-  return <div />;
+function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
+  return (
+    <div className="flex items-center gap-3">
+      <MultiImageIcon className="text-2xl text-[#C63E75]" />
+      <span>{items.length} items selected</span>
+    </div>
+  );
 }

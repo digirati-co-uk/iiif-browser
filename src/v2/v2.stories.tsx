@@ -40,6 +40,23 @@ export const DefaultOnlyManifests = () => (
   </>
 );
 
+export const MultiSelection = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          multiSelect: true,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const DefaultWithUniversalViewer = () => (
   <>
     <div className="w-full h-[80vh] flex">

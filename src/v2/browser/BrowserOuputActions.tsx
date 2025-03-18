@@ -7,7 +7,7 @@ export function BrowserOutputActions() {
 
   const first = availableOutputs[0];
   if (!first) {
-    return <div>No outputs available</div>;
+    return <div className="px-4 text-sm opacity-40">No actions available</div>;
   }
 
   return (

@@ -35,7 +35,7 @@ export function BrowserFooter({
   if (!id) return null;
 
   return (
-    <div className="p-3 border-t bg-gray-100 flex gap-2 justify-between">
+    <div className="p-2 border-t bg-gray-100 flex gap-2 justify-between min-h-16 items-center">
       <BrowserOutputPreview />
       <BrowserOutputActions />
     </div>
