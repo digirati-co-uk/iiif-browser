@@ -41,7 +41,7 @@ const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
 const StoreContext = createContext<StoreApi<BrowserStore> | null>(null);
 const OmnisearchContext = createContext<StoreApi<OmnisearchStore> | null>(null);
-const OutputContext = createContext<StoreApi<OutputStore> | null>(null);
+export const OutputContext = createContext<StoreApi<OutputStore> | null>(null);
 const BrowserConfigContext = createContext<BrowserStoreConfig | null>(null);
 const BrowserEventsContext = createContext<BrowserEmitter | null>(null);
 
@@ -265,6 +265,19 @@ export function useOutputStore() {
   return context;
 }
 
+export function useRefineSelectedItem() {
+  const store = useOutputStore();
+  return useStore(store, (state) => state.refineSelectedItem);
+}
+
+export function useCanvasOutputSelector(canvas?: { id?: string } | null) {
+  const store = useOutputStore();
+  return useStore(
+    store,
+    (s) => s.selectedItems.find((item) => item.id === canvas?.id)?.selector,
+  );
+}
+
 export function useAvailableOutputs() {
   const store = useOutputStore();
   return useStore(store, (state) => state.availableOutputs);
@@ -409,6 +422,17 @@ export function BrowserProvider({
             urlPattern: "https://theseusviewer.org/?iiif-content={COLLECTION}",
             format: { type: "url", resolvable: false },
             supportedTypes: ["Collection"],
+          },
+          {
+            label: "Open Canvas in Theseus",
+            type: "open-new-window",
+            urlPattern:
+              "https://theseusviewer.org/?iiif-content={MANIFEST}&canvas={CANVAS}",
+            format: {
+              type: "url",
+              resolvable: true,
+            },
+            supportedTypes: ["Canvas"],
           },
         ] as OutputTarget[];
       }

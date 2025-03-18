@@ -1,4 +1,4 @@
-import type { Vault } from "@iiif/helpers";
+import type { BoxSelector, Vault } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/presentation-3";
 import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
@@ -10,7 +10,7 @@ import {
 } from "../browser/BrowserLink";
 import type { BrowserEvents } from "../events";
 
-type SelectedItem = {
+export type SelectedItem = {
   id: string;
   type: string;
   label?: InternationalString;
@@ -21,6 +21,7 @@ type SelectedItem = {
     label?: InternationalString;
     thumbnail?: string;
   };
+  selector?: BoxSelector;
 };
 
 // This needs to track the following:
@@ -42,6 +43,7 @@ export interface OutputStore {
   deselectItem(item: SelectedItem): void;
   resetSelection(): void;
   runTargetAction(target: OutputTarget): void;
+  refineSelectedItem(id: string, refinement: BoxSelector | null): void;
 }
 
 export type OutputType =
@@ -110,6 +112,7 @@ type OutputStoreEvents = {
   "output.deselect-all-items": undefined;
   "output.reset-selection": undefined;
   "output.selection-change": undefined;
+  "output.refine-selected-item": SelectedItem;
 };
 
 export function canNavigateItem(
@@ -278,6 +281,20 @@ export function createOutputStore(options: OutputStoreOptions) {
       }
     },
 
+    refineSelectedItem(id: string, refinement: BoxSelector | null): void {
+      const item = get().selectedItems.find((i) => i.id === id);
+      if (!item) return;
+      set({
+        selectedItems: [
+          ...get().selectedItems.filter((i) => i.id !== id),
+          { ...item, selector: refinement || undefined },
+        ],
+        wasManuallySelected: true,
+      });
+      emitter.emit("output.refine-selected-item", item);
+      emitter.emit("output.selection-change");
+    },
+
     resetSelection(): void {
       const defaultSelectedItem = get().defaultSelectedItem;
       set({
@@ -353,6 +370,39 @@ export function createOutputStore(options: OutputStoreOptions) {
     store.setState({ availableOutputs });
   });
 
+  // Special case, because the resource (loaded resource) is the Manifest.
+  emitter.on("canvas.change", (canvas) => {
+    if (!canvas) {
+      store.setState({
+        defaultSelectedItem: null,
+        selectedItems: [],
+        wasManuallySelected: false,
+      });
+      emitter.emit("output.deselect-all-items");
+      return;
+    }
+
+    // Check if we can select canvases, otherwise fallback to manifest.
+    if (!linkConfig.canSelectCanvas) {
+      // In theory because of the events, the Manifest should be selected.
+      return;
+    }
+
+    const item: SelectedItem = {
+      id: canvas.id,
+      type: "Canvas",
+      parent: canvas.parent,
+      selector: canvas.selector,
+    };
+
+    store.setState({
+      defaultSelectedItem: item,
+      selectedItems: canSelect(item) ? [item] : [],
+      wasManuallySelected: false,
+    });
+    emitter.emit("output.select-item", item);
+  });
+
   emitter.on("resource.change", (resource) => {
     if (!resource) {
       store.setState({
@@ -364,7 +414,7 @@ export function createOutputStore(options: OutputStoreOptions) {
       return;
     }
 
-    const item = {
+    const item: SelectedItem = {
       id: resource.id,
       type: resource.type,
       // @todo once we have label/thumbnail/parent add it here.

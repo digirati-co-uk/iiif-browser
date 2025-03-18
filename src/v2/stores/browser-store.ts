@@ -1,4 +1,10 @@
-import { Vault, getValue } from "@iiif/helpers";
+import {
+  BoxSelector,
+  Vault,
+  expandTarget,
+  getValue,
+  parseSelector,
+} from "@iiif/helpers";
 import { upgrade } from "@iiif/parser/upgrader";
 import type {
   Collection,
@@ -14,6 +20,7 @@ import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
+import { selectorFromXYWH } from "../utilities/selector-from-xywh";
 
 // Things the store needs to do:
 // - Handle conversion of URLs to Routes
@@ -374,8 +381,18 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     };
     const browserSuccess = (
       lastUrl?: string,
-      resource?: { id: string; type: string; label: InternationalString },
+      resource?: {
+        id: string;
+        type: string;
+        label?: InternationalString | null;
+        selector?: BoxSelector | null;
+      },
       viewSource?: boolean,
+      parent?: {
+        id: string;
+        type: string;
+        label?: InternationalString | null;
+      },
     ) => {
       const state: Partial<BrowserStore> = {
         browserState: "LOADED",
@@ -393,7 +410,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             resource: {
               id: resource.id,
               type: resource.type,
-              label: resource.label,
+              label: resource.label || { en: ["Untitled"] },
             },
             retries: 0,
           },
@@ -405,14 +422,27 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         emitter.emit("collection.change", {
           id: resource.id,
           type: resource.type,
-          label: resource.label,
+          label: resource.label || { en: ["Untitled"] },
         });
       }
       if (resource?.type === "Manifest") {
         emitter.emit("manifest.change", {
           id: resource.id,
           type: resource.type,
-          label: resource.label,
+          label: resource.label || { en: ["Untitled"] },
+        });
+      }
+      if (resource?.type === "Canvas") {
+        emitter.emit("canvas.change", {
+          id: resource.id,
+          type: resource.type,
+          label: resource.label || { en: ["Untitled"] },
+          parent: {
+            id: parent?.id || "",
+            type: parent?.type || "",
+            label: parent?.label || { en: ["Untitled"] },
+          },
+          selector: resource.selector || undefined,
         });
       }
     };
@@ -612,7 +642,57 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           requestAbortController.abort();
         }
 
+        // Handle canvas with parent passed in.
+        if (parent?.type === "Manifest") {
+          const manifestUrl = parent.id;
+          const canvasId = url;
+
+          const canvasSearchParams = new URLSearchParams(searchParams);
+
+          canvasSearchParams.set("id", manifestUrl);
+          canvasSearchParams.set("canvas", canvasId);
+
+          // Assume if the parent is a Manifest, then the URL must be a Canvas.
+          // /manifest?id={manifest_id}&canvas={canvas_id}
+          const existing = get().loaded[manifestUrl];
+          if (existing && !force) {
+            const fullResource = vault.get<ManifestNormalized>(parent as any);
+            if (!fullResource) {
+              // This is an unknown state.
+              return browserResourceError(url, "Unknown resource");
+            }
+
+            const route = resourceRoutes.find((r) => r.resource === "Manifest");
+            if (!route) {
+              return browserResourceError(
+                url,
+                `Unsupported resource type Manifest`,
+              );
+            }
+            history.push(`${route.url}?${canvasSearchParams.toString()}`, {
+              parent,
+            });
+
+            const region = canvasSearchParams.get("xywh");
+            console.log("canvas region->", region);
+
+            // Browser success with Canvas
+            browserSuccess(url, fullResource, viewSource, parent);
+
+            return;
+          }
+
+          return browserLoading(url, parent, searchParams);
+        }
+
         if (url.startsWith("https://")) {
+          // We _might_ have been passed a canvas id
+          const canvasRef = vault.get({ id: url, type: "Canvas" });
+          if (canvasRef) {
+            // @todo Handle this with iiif-parser:hasPart property.
+            return;
+          }
+
           // We are dealing with a resource at this point.
           // 1. Do we already know about this resource?
           const existing = get().loaded[url];
@@ -913,6 +993,21 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       }
       if (resource?.type === "Manifest") {
         emitter.emit("manifest.change", resource);
+
+        // Search check for changed canvas.
+        const searchParams = new URLSearchParams(r.location.search);
+        const canvasId = searchParams.get("canvas");
+        const xywh = searchParams.get("xywh");
+        if (canvasId) {
+          const selector = selectorFromXYWH(xywh);
+
+          emitter.emit("canvas.change", {
+            id: canvasId,
+            type: "Canvas",
+            parent: resource,
+            selector,
+          });
+        }
       }
     }
 

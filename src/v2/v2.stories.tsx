@@ -20,6 +20,43 @@ export const Default = () => (
   </>
 );
 
+export const DefaultOnlyManifests = () => (
+  <>
+    <div className="max-w-2xl">
+      <IIIFBrowser debug navigation={{ canSelectCanvas: false }} />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const DefaultWithUniversalViewer = () => (
+  <>
+    <div className="max-w-2xl">
+      <IIIFBrowser
+        debug
+        output={[
+          {
+            type: "open-new-window",
+            urlPattern:
+              "https://uv-v4.netlify.app/#?iiifManifestId={MANIFEST}&cv={CANVAS_INDEX}&xywh={XYWH}",
+            label: "Open in UV",
+            supportedTypes: ["Manifest", "Canvas", "CanvasRegion"],
+            format: { type: "url", resolvable: true },
+          },
+        ]}
+        navigation={{ canSelectCanvas: true }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const CustomHomage = () => (
   <>
     <div className="max-w-2xl">

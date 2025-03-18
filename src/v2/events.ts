@@ -1,6 +1,7 @@
 import type { InternationalString } from "@iiif/presentation-3";
 import mitt, { type Emitter } from "mitt";
 import type { HistoryItem } from "./stores/browser-store";
+import { BoxSelector } from "react-iiif-vault";
 
 export type BrowserEvents = {
   "history.change": { item: HistoryItem; source: string };
@@ -14,6 +15,17 @@ export type BrowserEvents = {
     id: string;
     type: string;
     label?: InternationalString;
+  } | null;
+  "canvas.change": {
+    id: string;
+    type: string;
+    label?: InternationalString;
+    parent?: {
+      id: string;
+      type: string;
+      label?: InternationalString;
+    };
+    selector?: BoxSelector;
   } | null;
   "search.index-start": undefined;
   "search.index-complete": undefined;
@@ -29,8 +41,6 @@ export function createEmitter({ debug }: { debug?: boolean }) {
   if (debug) {
     emitter.on("*", (e, t) =>
       console.log(
-        "%cIIIF Browser",
-        "background: royalblue;color:white;padding:2px 8px;",
         `%c${e}`,
         "background: palevioletred;color:white;padding:2px 8px;",
         t,

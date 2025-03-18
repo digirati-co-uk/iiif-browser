@@ -1,5 +1,10 @@
 import { useEffect, useMemo } from "react";
-import { ManifestContext, SimpleViewerProvider, useManifest, useVault } from "react-iiif-vault";
+import {
+  ManifestContext,
+  SimpleViewerProvider,
+  useManifest,
+  useVault,
+} from "react-iiif-vault";
 import { useSearchParams } from "react-router-dom";
 import { useHistory } from "../context";
 import { ManifestCanvasViewer } from "../resources/ManifestCanvasViewer";
@@ -17,7 +22,6 @@ export function ManifestPage() {
     if (!viewSource || !manifest) return null;
     return vault.toPresentation3(manifest as any);
   }, [vault, manifest, viewSource]);
-
 
   useEffect(() => {
     if (!manifest) {

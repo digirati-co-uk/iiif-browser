@@ -1,28 +1,15 @@
-import { useCallback, useRef, useState } from "react";
-import { Button, Toolbar } from "react-aria-components";
-import {
-  CollectionContext,
-  LocaleString,
-  ManifestContext,
-  useCollection,
-  useVault,
-} from "react-iiif-vault";
-import { OmnisearchBox } from "../components/OmnisearchBox";
-import {
-  useResolve,
-  useSearchBoxState,
-  useSearchResults,
-  useSearchState,
-} from "../context";
+import { useCallback, useState } from "react";
+import { Button } from "react-aria-components";
+import { LocaleString, ManifestContext, useCollection } from "react-iiif-vault";
+import { useSearchBoxState } from "../context";
 import { usePaginateArray } from "../hooks/use-paginate-array";
-import { GridIcon } from "../icons/GridIcon";
-import { ListIcon } from "../icons/ListIcon";
 import { SearchIcon } from "../icons/SearchIcon";
 import { useLocalStorage } from "../utilities/use-local-storage";
 import { CollectionGridSnippet } from "./CollectionGridSnippet";
 import { CollectionListSnippet } from "./CollectionListSnippet";
 import { ManifestGridSnippet } from "./ManifestGridSnippet";
 import { ManifestListSnippet } from "./ManifestListSnippet";
+import { LayoutSwitcher } from "../components/LayoutSwitcher";
 
 export function CollectionItemList({ id }: { id: string }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
@@ -76,32 +63,7 @@ export function CollectionItemList({ id }: { id: string }) {
             <span>Search collection</span>
           </Button>
         </div>
-        <div className="inline-flex border rounded border-gray-300 overflow-hidden p-0.5">
-          <Button
-            aria-selected={!isListView}
-            className={
-              // biome-ignore lint/style/useTemplate: <explanation>
-              `p-2 rounded-sm ` +
-              //
-              `${!isListView ? "bg-gray-200" : ""}`
-            }
-            onPress={() => setIsListView(false)}
-          >
-            <GridIcon />
-          </Button>
-          <Button
-            aria-selected={isListView}
-            className={
-              // biome-ignore lint/style/useTemplate: <explanation>
-              `p-2 rounded-sm ` +
-              //
-              `${isListView ? "bg-gray-200" : ""}`
-            }
-            onPress={() => setIsListView(true)}
-          >
-            <ListIcon />
-          </Button>
-        </div>
+        <LayoutSwitcher isListView={isListView} setIsListView={setIsListView} />
       </div>
 
       {isListView ? (

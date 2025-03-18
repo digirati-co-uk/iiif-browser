@@ -78,6 +78,10 @@ function DebugSelected() {
       <pre className="text-sm text-gray-500">
         {JSON.stringify(allOutputs, null, 2)}
       </pre>
+      <h3 className="text-md font-bold">Debug selected items</h3>
+      <pre className="text-sm text-gray-500">
+        {JSON.stringify(selectedItems, null, 2)}
+      </pre>
     </div>
   );
 }

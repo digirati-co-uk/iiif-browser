@@ -1,6 +1,7 @@
 import { LocaleString, useCollection, useManifest } from "react-iiif-vault";
 import { useSelectedItems } from "../context";
 import { PortalResourceIcon } from "../icons/PortalResourceIcon";
+import { SelectedItem } from "../stores/output-store";
 
 export function BrowserOutputPreview() {
   const selectedItems = useSelectedItems();
@@ -14,7 +15,7 @@ export function BrowserOutputPreview() {
     } else if (item.type === "Collection") {
       return <RenderSelectedCollection id={item.id} />;
     } else if (item.type === "Canvas") {
-      return <RenderSelectedCanvas />;
+      return <RenderSelectedCanvas item={item} />;
     }
     return <div />;
   }
@@ -83,8 +84,12 @@ function RenderSelectedCollection({ id }: { id: string }) {
   );
 }
 
-function RenderSelectedCanvas() {
-  return <div />;
+function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
+  if (item.selector) {
+    return <div>Canvas with Selector</div>;
+  }
+
+  return <div>Just canvas</div>;
 }
 
 function RenderSelectedListOfType() {

@@ -4,10 +4,17 @@ import invariant from "tiny-invariant";
 import { CanvasThumbnailImage } from "../components/CanvasThumbnailImage";
 import { usePaginateArray } from "../hooks/use-paginate-array";
 import { CanvasSnippet } from "./CanvasSnippet";
+import { LayoutSwitcher } from "../components/LayoutSwitcher";
+import { useLocalStorage } from "../utilities/use-local-storage";
+import { CanvasListSnippet } from "./CanvasListSnippet";
 
 export function ManifestItemList() {
   const manifest = useManifest();
   const [items, actions] = usePaginateArray(manifest?.items || [], 48);
+  const [isListView, setIsListView] = useLocalStorage(
+    "list-view-toggle-canvas",
+    false,
+  );
 
   invariant(manifest);
 
@@ -17,6 +24,8 @@ export function ManifestItemList() {
       <LocaleString as="h1" className="text-2xl font-bold m-8 text-center">
         {manifest.label}
       </LocaleString>
+      <LayoutSwitcher isListView={isListView} setIsListView={setIsListView} />
+
       {actions.totalPages > 1 ? (
         <div className="grid grid-cols-3 sticky left-0 right-0 top-2 bg-white p-4 rounded-full items-center mb-4 shadow">
           <Button
@@ -38,18 +47,29 @@ export function ManifestItemList() {
           </Button>
         </div>
       ) : null}
-      <div className="grid grid-sm gap-0.5">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-md cursor-pointer hover:bg-slate-200 p-1 group aspect-square items-center"
-          >
-            <CanvasContext canvas={item.id}>
-              <CanvasSnippet />
+
+      {isListView ? (
+        <div>
+          {items.map((item) => (
+            <CanvasContext key={item.id} canvas={item.id}>
+              <CanvasListSnippet manifest={manifest} />
             </CanvasContext>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-sm gap-0.5">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-md cursor-pointer hover:bg-slate-200 p-1 group aspect-square items-center"
+            >
+              <CanvasContext canvas={item.id}>
+                <CanvasSnippet />
+              </CanvasContext>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

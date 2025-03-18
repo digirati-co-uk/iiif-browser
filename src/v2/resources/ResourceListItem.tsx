@@ -9,6 +9,7 @@ import { PortalResourceIcon } from "../icons/PortalResourceIcon";
 export function ResourceListItem({
   resource,
   large = false,
+  parent,
 }: {
   resource: {
     id: string;
@@ -16,14 +17,15 @@ export function ResourceListItem({
     label: null | InternationalString;
     behavior?: string[];
   };
+  parent?: { id: string; type: string };
   large?: boolean;
 }) {
   const reference = useMemo(
-    () => ({ id: resource.id, type: resource.type }),
-    [resource.id, resource.type],
+    () => ({ id: resource.id, type: resource.type, parent }),
+    [resource.id, resource.type, parent],
   );
   return (
-    <BrowserLink resource={reference}>
+    <BrowserLink resource={reference} parent={parent}>
       {({
         canNavigate,
         canSelect,

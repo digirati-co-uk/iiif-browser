@@ -90,12 +90,12 @@ export function isDomainAllowed(link: string, allowedDomains: string[]) {
 
 export function BrowserLink<ET extends React.ElementType = "span">({
   children,
-  resource,
+  resource: inputResource,
   as: Wrapper = "span",
   disablePreloadOnHover,
   withoutContext,
   search,
-  parent,
+  parent: inputParent,
   manualLink,
   ...elementProps
 }: BrowserLinkProps<ET>) {
@@ -105,6 +105,23 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   const canResolve = useCanResolve();
   const selectedItems = useSelectedItems();
   const selectedActions = useSelectedActions();
+  const parent = useMemo(() => {
+    if (!inputParent) return undefined;
+    return { id: inputParent.id, type: inputParent.type };
+  }, [inputParent]);
+  const resource = useMemo(
+    () => ({
+      ...inputResource,
+      parent:
+        (inputResource as any).parent && !parent
+          ? {
+              id: (inputResource as any).parent.id,
+              type: (inputResource as any).parent.type,
+            }
+          : parent,
+    }),
+    [],
+  );
 
   const { isPressed, pressProps } = usePress({
     onPress: (e) => {
@@ -132,7 +149,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
       }
 
       if (config.clickToNavigate) {
-        resolve(resource.id);
+        resolve(resource.id, { parent });
       }
     },
   });
@@ -141,11 +158,11 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     () => ({
       onDoubleClick: () => {
         if (config.doubleClickToNavigate) {
-          resolve(resource.id);
+          resolve(resource.id, { parent });
         }
       },
     }),
-    [config.doubleClickToNavigate, resolve, resource.id],
+    [config.doubleClickToNavigate, resolve, resource.id, parent],
   );
 
   const { isHovered, hoverProps } = useHover({
@@ -227,14 +244,12 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     renderDotsMenu: () => <div />,
     navigate: () => {
       // @todo handle parent.
-      resolve(resource.id);
+      resolve(resource.id, { parent });
     },
     setSelected: (selected) => {
       selectedActions.toggleItemSelection(resource, !config.multiSelect);
     },
   };
-
-  // @todo rest of the owl.
 
   return (
     <Wrapper
