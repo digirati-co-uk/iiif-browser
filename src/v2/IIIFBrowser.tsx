@@ -124,7 +124,7 @@ const targets = [
   {
     type: "open-new-window",
     urlPattern:
-      "https://uv-v4.netlify.app/#?iiifManifestId={MANIFEST}&cv={CANVAS_INDEX}&xywh={XYWH}",
+      "https://universalviewer.dev/#?iiifManifestId={MANIFEST}&cv={CANVAS_INDEX}&xywh={XYWH}",
     label: "Open in UV",
   },
   {
