@@ -2,11 +2,12 @@ import { Button } from "react-aria-components";
 import { CanvasContext, LocaleString, useManifest } from "react-iiif-vault";
 import invariant from "tiny-invariant";
 import { CanvasThumbnailImage } from "../components/CanvasThumbnailImage";
-import { usePaginateArray } from "../hooks/use-paginate-array";
-import { CanvasSnippet } from "./CanvasSnippet";
 import { LayoutSwitcher } from "../components/LayoutSwitcher";
+import { usePaginateArray } from "../hooks/use-paginate-array";
 import { useLocalStorage } from "../utilities/use-local-storage";
+import { CanvasGridSnippet } from "./CanvasGridSnippet";
 import { CanvasListSnippet } from "./CanvasListSnippet";
+import { CanvasSnippet } from "./CanvasSnippet";
 
 export function ManifestItemList() {
   const manifest = useManifest();
@@ -21,7 +22,7 @@ export function ManifestItemList() {
   return (
     <div className="p-2">
       <div ref={actions.topRef} />
-      <LocaleString as="h1" className="text-2xl font-bold m-8 text-center">
+      <LocaleString as="h1" className="text-2xl font-bold m-3 text-center">
         {manifest.label}
       </LocaleString>
       <LayoutSwitcher isListView={isListView} setIsListView={setIsListView} />
@@ -64,7 +65,7 @@ export function ManifestItemList() {
               className="rounded-md cursor-pointer hover:bg-slate-200 p-1 group aspect-square items-center"
             >
               <CanvasContext canvas={item.id}>
-                <CanvasSnippet />
+                <CanvasGridSnippet manifest={manifest} />
               </CanvasContext>
             </div>
           ))}

@@ -1,21 +1,33 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "react-aria-components";
 import { LocaleString, ManifestContext, useCollection } from "react-iiif-vault";
-import { useSearchBoxState } from "../context";
+import { LayoutSwitcher } from "../components/LayoutSwitcher";
+import { useCanSelect, useSearchBoxState } from "../context";
 import { usePaginateArray } from "../hooks/use-paginate-array";
+import { FilterOnOffIcon } from "../icons/FilterOnOffIcon";
 import { SearchIcon } from "../icons/SearchIcon";
 import { useLocalStorage } from "../utilities/use-local-storage";
 import { CollectionGridSnippet } from "./CollectionGridSnippet";
 import { CollectionListSnippet } from "./CollectionListSnippet";
 import { ManifestGridSnippet } from "./ManifestGridSnippet";
 import { ManifestListSnippet } from "./ManifestListSnippet";
-import { LayoutSwitcher } from "../components/LayoutSwitcher";
 
 export function CollectionItemList({ id }: { id: string }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const collection = useCollection({ id });
+  const canSelect = useCanSelect();
   const [isListView, setIsListView] = useLocalStorage("list-view-toggle", true);
-  const [items, actions] = usePaginateArray(collection?.items || [], 48);
+  const [hideDisabled, setHideDisabled] = useState(false);
+
+  const filteredItems = useMemo(() => {
+    const items = collection?.items || [];
+    if (!hideDisabled) {
+      return items;
+    }
+    return items.filter((item) => canSelect(item));
+  }, [hideDisabled, collection, canSelect]);
+
+  const [items, actions] = usePaginateArray(filteredItems, 48);
   const { openWithFilter } = useSearchBoxState();
 
   const setRef = useCallback((node: HTMLDivElement | null) => {
@@ -27,7 +39,7 @@ export function CollectionItemList({ id }: { id: string }) {
   return (
     <div ref={setRef} className="px-2">
       <div ref={actions.topRef} />
-      <LocaleString as="h1" className="text-2xl font-bold p-8 text-center">
+      <LocaleString as="h1" className="text-2xl font-bold p-3 text-center">
         {collection.label}
       </LocaleString>
 
@@ -63,7 +75,19 @@ export function CollectionItemList({ id }: { id: string }) {
             <span>Search collection</span>
           </Button>
         </div>
-        <LayoutSwitcher isListView={isListView} setIsListView={setIsListView} />
+        <div className="flex items-center gap-1">
+          <Button
+            onPress={() => setHideDisabled(!hideDisabled)}
+            className="border rounded border-gray-300 overflow-hidden py-1 px-3 self-stretch"
+          >
+            <FilterOnOffIcon enabled={!hideDisabled} />
+          </Button>
+
+          <LayoutSwitcher
+            isListView={isListView}
+            setIsListView={setIsListView}
+          />
+        </div>
       </div>
 
       {isListView ? (

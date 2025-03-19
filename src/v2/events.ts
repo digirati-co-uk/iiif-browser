@@ -1,9 +1,10 @@
 import type { InternationalString } from "@iiif/presentation-3";
 import mitt, { type Emitter } from "mitt";
 import type { HistoryItem } from "./stores/browser-store";
-import { BoxSelector } from "react-iiif-vault";
+import type { BoxSelector } from "react-iiif-vault";
 
 export type BrowserEvents = {
+  ready: undefined;
   "history.change": { item: HistoryItem; source: string };
   "collection.change": {
     id: string;

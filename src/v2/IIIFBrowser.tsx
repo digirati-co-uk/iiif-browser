@@ -1,4 +1,5 @@
 import "./index.css";
+import type { Vault } from "@iiif/helpers";
 import { type ReactNode, useMemo } from "react";
 import { Route, Routes } from "react-router-dom";
 import { BrowserContainer } from "./browser/BrowserContainer";
@@ -39,6 +40,7 @@ export interface IIIFBrowserConfig {
   paginationNavigationType: "replace" | "push";
   portalIcons: boolean;
   homeLink: string;
+  collectionSearchTagEnabled: boolean;
 }
 
 export type DeepPartial<T> = {
@@ -55,6 +57,7 @@ export interface IIIFBrowserProps {
     [key: string]: ReactNode;
   };
   debug?: boolean;
+  vault?: Vault;
 }
 
 export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
@@ -80,11 +83,13 @@ export function IIIFBrowser({
   customPages,
   debug,
   className,
+  vault,
 }: IIIFBrowserProps) {
   const allCustomPages = useDefaultPages(customPages);
 
   return (
     <BrowserProvider
+      vault={vault}
       outputConfig={output}
       uiConfig={ui}
       browserConfig={history}
@@ -124,7 +129,7 @@ const targets = [
   {
     type: "open-new-window",
     urlPattern:
-      "https://uv-v4.netlify.app/#?iiifManifestId={MANIFEST}&cv={CANVAS_INDEX}&xywh={XYWH}",
+      "https://universalviewer.dev/#?iiifManifestId={MANIFEST}&cv={CANVAS_INDEX}&xywh={XYWH}",
     label: "Open in UV",
   },
   {

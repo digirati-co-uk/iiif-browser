@@ -61,7 +61,7 @@ export type OutputType =
   | "CanvasList";
 
 type OutputFormat =
-  | { type: "content-state"; encoded?: boolean }
+  | { type: "content-state"; encoded?: boolean; pretty?: boolean }
   | { type: "json"; pretty?: boolean }
   | {
       type: "custom";
@@ -401,6 +401,7 @@ export function createOutputStore(options: OutputStoreOptions) {
       wasManuallySelected: false,
     });
     emitter.emit("output.select-item", item);
+    emitter.emit("output.selection-change");
   });
 
   emitter.on("resource.change", (resource) => {

@@ -5,6 +5,7 @@ import { useVault } from "react-iiif-vault";
 import { Checkbox } from "../components/Checkbox";
 import {
   useCanResolve,
+  useCanSelect,
   useLinkConfig,
   useResolve,
   useSelectedActions,
@@ -57,6 +58,7 @@ type BrowserLinkInternalProps = {
   manualLink?: boolean;
   manualSelect?: boolean;
   disablePreloadOnHover?: boolean;
+  ignoreAlwaysShowNavigationArrow?: boolean;
   children:
     | string
     | React.ReactElement
@@ -98,12 +100,14 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   search,
   parent: inputParent,
   manualLink,
+  ignoreAlwaysShowNavigationArrow,
   ...elementProps
 }: BrowserLinkProps<ET>) {
   const vault = useVault();
   const config = useLinkConfig();
   const resolve = useResolve();
   const canResolve = useCanResolve();
+  const canSelectHook = useCanSelect();
   const selectedItems = useSelectedItems();
   const selectedActions = useSelectedActions();
   const parent = useMemo(() => {
@@ -185,35 +189,8 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   }, [canResolve, resource]);
 
   const canSelect = useMemo(() => {
-    if (config.customCanSelect) {
-      try {
-        const customSelect = config.customCanSelect(resource, vault);
-        if (typeof customSelect === "boolean") {
-          return customSelect;
-        }
-      } catch (error) {
-        console.error("Error in customCanSelect:", error);
-      }
-    }
-
-    if (
-      config.canSelectOnlyAllowedDomains &&
-      !isDomainAllowed(resource.id, config.allowedDomains)
-    ) {
-      return false;
-    }
-
-    if (config.canSelectCanvas && resource.type === "Canvas") {
-      return true;
-    }
-    if (config.canSelectManifest && resource.type === "Manifest") {
-      return true;
-    }
-    if (config.canSelectCollection && resource.type === "Collection") {
-      return true;
-    }
-    return false;
-  }, []);
+    return canSelectHook(resource);
+  }, [canSelectHook, resource]);
 
   // @todo - get the selected item handling (list, add, remove)
   // @todo - get loading state of resource passed in.
@@ -228,8 +205,9 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     canSelect,
     canNavigate,
     isMarked,
-    showNavigationArrow:
-      config.alwaysShowNavigationArrow || config.doubleClickToNavigate,
+    showNavigationArrow: ignoreAlwaysShowNavigationArrow
+      ? config.doubleClickToNavigate
+      : config.alwaysShowNavigationArrow || config.doubleClickToNavigate,
     doubleClickToNavigate: config.doubleClickToNavigate,
     renderCheckbox: () => {
       return (

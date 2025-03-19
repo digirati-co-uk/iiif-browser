@@ -1,46 +1,52 @@
 {
   "name": "iiif-browser",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
   "bugs": "https://github.com/digirati-co-uk/iiif-browser/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/digirati-co-uk/iiif-browser.git"
+    "url": "git+https://github.com/digirati-co-uk/iiif-browser.git"
   },
   "engines": {
     "node": ">=18.14.1"
   },
-  "keywords": [
-    "iiif",
-    "editor",
-    "typescript"
-  ],
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "keywords": ["iiif", "editor", "typescript"],
+  "files": ["dist"],
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
       "require": {
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       }
     },
-    "./dist/index.css": "./dist/index.css"
+    "./v1": {
+      "require": {
+        "types": "./dist/v1.d.ts",
+        "default": "./dist/v1.cjs"
+      },
+      "import": {
+        "types": "./dist/v1.d.ts",
+        "default": "./dist/v1.js"
+      }
+    },
+    "./dist/index.css": "./dist/index.css",
+    "./dist/v1.css": "./dist/v1.css"
   },
   "scripts": {
-    "build": "tsup src/index.ts",
+    "build": "tsup",
     "start": "vite",
     "dev": "tsup src/index.ts --watch",
     "lint": "publint",
     "typecheck": "tsc --noEmit",
-    "prepack": "tsup src/index.ts",
+    "prepack": "tsup",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -50,7 +56,6 @@
     "@iiif/parser": "^2.1.7",
     "@iiif/presentation-3": "^2.2.3",
     "@iiif/presentation-3-normalized": "^0.9.7",
-    "cmdk": "^1.0.4",
     "history": "^5.3.0",
     "minisearch": "^7.1.2",
     "mitt": "^3.0.1",
@@ -59,11 +64,10 @@
     "react": "^18.3.1",
     "react-accessible-dropdown-menu-hook": "4.0.0",
     "react-aria": "^3.37.0",
-    "react-aria-components": "^1.6.0",
+    "react-aria-components": "^1.7.1",
     "react-dom": "^18.3.1",
     "react-iiif-vault": "^1.5.2",
     "react-lazy-load-image-component": "^1.6.0",
-    "react-minisearch": "^7.1.3",
     "react-router-dom": "^7.1.5",
     "react-timeago": "^8.0.0",
     "tailwind-merge": "^3.0.1",
@@ -88,11 +92,13 @@
     "esbuild-plugin-react18-css": "^0.0.2",
     "esbuild-plugin-umd-wrapper": "^2.0.0",
     "postcss": "^8.4.38",
+    "publint": "^0.3.9",
     "react-error-boundary": "^4.0.13",
     "storybook": "^8.5.5",
     "tailwindcss": "3",
     "tiny-invariant": "^1.3.3",
     "tsup": "^8.0.2",
+    "typescript": "^5.8.2",
     "typescript-plugin-css-modules": "^5.1.0",
     "vite": "^6.1.0"
   },

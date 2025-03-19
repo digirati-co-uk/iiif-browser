@@ -1,5 +1,5 @@
 import {
-  BoxSelector,
+  type BoxSelector,
   Vault,
   expandTarget,
   getValue,
@@ -61,6 +61,7 @@ export type BrowserStore = {
       abortController?: AbortController;
     },
   ): Promise<void>;
+  getLoadedResource(url: string): LoadedResource | undefined;
   mapToRoute(
     path: string,
     search: string,
@@ -125,6 +126,7 @@ export type BrowserStoreConfig = {
 
   preprocessManifest?: (manifest: Manifest) => Promise<Manifest>;
   preprocessCollection?: (collection: Collection) => Promise<Collection>;
+  beforeFetchUrl?: (url: string) => Promise<string>;
   collectionUrlMapping: Record<string, string>;
   collectionUrlMappingParams: Record<string, string>;
   seedCollections: Array<Collection>;
@@ -302,8 +304,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     collectionUrlMappingParams,
     seedCollections = [],
     saveToLocalStorage,
-    restoreFromLocalStorage,
     localStorageKey,
+    beforeFetchUrl,
     debug = false,
   } = options;
 
@@ -508,7 +510,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return;
         }
 
-        const response = await fetch(url, {
+        const urlToFetch = beforeFetchUrl ? await beforeFetchUrl(url) : url;
+        const response = await fetch(urlToFetch, {
           signal: abortController.signal,
           ...(requestInitOptions || {}),
         });
@@ -549,6 +552,17 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         if (json.id !== url) {
           // Could be a fork, manually patch it.
           json.id = url;
+        }
+
+        // Some empty IIIF collections may not have items.
+        if (
+          !json.items &&
+          (json["@type"] === "sc:Collection" ||
+            json["@type"] === "sc:Manifest" ||
+            json.type === "Collection" ||
+            json.type === "Manifest")
+        ) {
+          json.items = [];
         }
 
         // Now what is it. We will try to upgrade it using the @iiif/parser.
@@ -674,7 +688,6 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             });
 
             const region = canvasSearchParams.get("xywh");
-            console.log("canvas region->", region);
 
             // Browser success with Canvas
             browserSuccess(url, fullResource, viewSource, parent);
@@ -685,7 +698,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return browserLoading(url, parent, searchParams);
         }
 
-        if (url.startsWith("https://")) {
+        if (url.startsWith("https://") || url.startsWith("http://")) {
           // We _might_ have been passed a canvas id
           const canvasRef = vault.get({ id: url, type: "Canvas" });
           if (canvasRef) {
@@ -766,7 +779,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const manifestUrl = searchParams.get("id");
         const viewSource = searchParams.get("view-source");
         if (manifestUrl) {
-          const loaded = get().loaded[manifestUrl];
+          const loaded = get().getLoadedResource(manifestUrl);
 
           if (loaded?.error) {
             return [notFound404.url, null];
@@ -790,6 +803,38 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         // }
 
         return [null, null];
+      },
+
+      getLoadedResource(url: string): LoadedResource | undefined {
+        const loaded = get().loaded[url];
+        if (loaded) {
+          return loaded;
+        }
+
+        const vaultRef = vault.get(url) as any;
+        if (vaultRef) {
+          const resource = {
+            retries: 0,
+            url,
+            resource: {
+              id: vaultRef.id,
+              type: vaultRef.type,
+              label: vaultRef.label,
+            },
+            error: null,
+          };
+          // Set it to the loaded
+          set((state) => ({
+            loaded: {
+              [url]: resource,
+              ...state.loaded,
+            },
+          }));
+
+          return resource;
+        }
+
+        return undefined;
       },
 
       setOmnibarValue(value: string): void {
@@ -864,6 +909,24 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     };
   });
 
+  // Look into this again in the future (atm dead code.)
+  function dispatchHistoryItemEvents(historyItem: HistoryItem) {
+    const resourceRef = historyItem.resource;
+    const resource = vault.get(resourceRef as any);
+
+    // Emit events
+    emitter.emit("history.change", {
+      item: historyItem,
+      source: "history.listen.pop",
+    });
+    if (resource?.type === "Collection") {
+      emitter.emit("collection.change", resource);
+    }
+    if (resource?.type === "Manifest") {
+      emitter.emit("manifest.change", resource);
+    }
+  }
+
   history.listen((r) => {
     const [resolved, resource] = store
       .getState()
@@ -914,7 +977,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       const parent = (r.location.state as any)?.parent;
 
       const historyItem: HistoryItem = {
-        resource: resolved?.startsWith("https://") ? resolved : null,
+        resource:
+          resolved?.startsWith("https://") || resolved?.startsWith("http://")
+            ? resolved
+            : null,
         route: locationUrl,
         url: resolved,
         parent: parent,
@@ -1050,6 +1116,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
   emitter.on("manifest.change", (resource) => {
     emitter.emit("resource.change", resource);
+  });
+
+  emitter.on("ready", () => {
+    // Dispatch the initial page.
+    history.replace(initialPage.route);
   });
 
   return store;

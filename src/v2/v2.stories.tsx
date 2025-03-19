@@ -2,6 +2,8 @@ import { Button } from "react-aria-components";
 import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
+import "./styles/tw.css";
+import { useMemo, useState } from "react";
 
 export default {
   title: "IIIF Browser v2",
@@ -20,6 +22,28 @@ export const Default = () => (
   </>
 );
 
+export const DefaultHideAndShow = () => {
+  const [isHidden, setIsHidden] = useState(false);
+
+  return (
+    <>
+      <Button
+        className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
+        onPress={() => setIsHidden(!isHidden)}
+      >
+        {isHidden ? "Show" : "Hide"}
+      </Button>
+      <div className="w-full h-[80vh] flex">
+        {isHidden ? null : <IIIFBrowser debug />}
+      </div>
+      <div className="flex">
+        <div id="iiif-browser__debug-history" />
+        <div id="iiif-browser__debug-selected" />
+      </div>
+    </>
+  );
+};
+
 export const DefaultInResizableContainer = () => (
   <>
     <div className="resize bg-[red] h-[600px] p-4 flex ov80vhw-auto">
@@ -28,10 +52,77 @@ export const DefaultInResizableContainer = () => (
   </>
 );
 
-export const DefaultOnlyManifests = () => (
+export const SelectOnlyCanvases = () => (
   <>
     <div className="w-full h-[80vh] flex">
-      <IIIFBrowser debug navigation={{ canSelectCanvas: false }} />
+      <IIIFBrowser
+        debug
+        navigation={{
+          canSelectCollection: false,
+          canSelectManifest: false,
+          canSelectCanvas: true,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const SelectOnlyManifests = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          canSelectCollection: false,
+          canSelectManifest: false,
+          canSelectCanvas: false,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const SelectOnlyCollections = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          canSelectCollection: true,
+          canSelectManifest: false,
+          canSelectCanvas: false,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const NavigateAndSelectOnlyCollections = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          canNavigateToCollection: true,
+          canNavigateToManifest: false,
+          canNavigateToCanvas: false,
+          canSelectCollection: true,
+          canSelectManifest: false,
+          canSelectCanvas: false,
+        }}
+      />
     </div>
     <div className="flex">
       <div id="iiif-browser__debug-history" />
@@ -46,6 +137,25 @@ export const MultiSelection = () => (
       <IIIFBrowser
         debug
         navigation={{
+          multiSelect: true,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const MultiSelectionClickToSelect = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          clickToSelect: true,
+          doubleClickToNavigate: true,
           multiSelect: true,
         }}
       />
@@ -198,3 +308,129 @@ export const SeedCollection = () => (
     />
   </div>
 );
+
+export const AllOfDelft = () => (
+  <IIIFBrowser
+    debug
+    history={{
+      localStorageKey: "custom-home-button",
+      restoreFromLocalStorage: false,
+      saveToLocalStorage: false,
+      initialHistory: [
+        {
+          url: "https://heritage.tudelft.nl/iiif/collection.json",
+          resource: "https://heritage.tudelft.nl/iiif/collection.json",
+          route: "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+        },
+      ],
+    }}
+    ui={{
+      homeLink: "https://heritage.tudelft.nl/iiif/collection.json",
+    }}
+  />
+);
+
+export const TestingCanvasCallback = () => (
+  <div className="max-w-2xl h-[80vh] flex">
+    <IIIFBrowser
+      debug
+      history={{
+        localStorageKey: "testing-canvas-callback",
+        restoreFromLocalStorage: false,
+        saveToLocalStorage: false,
+        initialHistory: [
+          {
+            url: "https://heritage.tudelft.nl/iiif/collection.json",
+            resource: "https://heritage.tudelft.nl/iiif/collection.json",
+            route:
+              "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+          },
+        ],
+      }}
+      output={[
+        {
+          type: "callback",
+          label: "Select",
+          supportedTypes: [
+            "Canvas",
+            "CanvasList",
+            "CanvasRegion",
+            "ImageService",
+            "ImageServiceRegion",
+          ],
+          cb: (resource) => {
+            console.log("output", resource);
+          },
+          format: {
+            type: "custom",
+            format: (resource, parent) => ({ resource, parent }),
+          },
+        },
+      ]}
+      navigation={{
+        canSelectCanvas: true,
+        canSelectManifest: false,
+        canSelectCollection: false,
+      }}
+    />
+  </div>
+);
+
+export const TestingCanvasCallbackContentState = () => {
+  const [value, setValue] = useState("");
+  return (
+    <div className="h-[80vh] flex flex-col">
+      <pre className="border rounded text-lg whitespace-pre mb-8">{value}</pre>
+      {useMemo(
+        () => (
+          <IIIFBrowser
+            debug
+            history={{
+              localStorageKey: "testing-canvas-callback",
+              restoreFromLocalStorage: false,
+              saveToLocalStorage: false,
+              initialHistory: [
+                {
+                  url: "https://heritage.tudelft.nl/iiif/collection.json",
+                  resource: "https://heritage.tudelft.nl/iiif/collection.json",
+                  route:
+                    "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+                },
+              ],
+            }}
+            output={[
+              {
+                type: "callback",
+                label: "Select",
+                supportedTypes: [
+                  "Manifest",
+                  "Collection",
+                  "Canvas",
+                  "CanvasList",
+                  "CanvasRegion",
+                  "ImageService",
+                  "ImageServiceRegion",
+                ],
+                cb: (resource) => {
+                  setValue(resource);
+                },
+                format: {
+                  type: "content-state",
+                  encoded: false,
+                  pretty: true,
+                },
+              },
+            ]}
+            navigation={{
+              canSelectCanvas: true,
+              canSelectManifest: true,
+              canSelectCollection: true,
+              canCropImage: true,
+            }}
+          />
+        ),
+        [],
+      )}
+    </div>
+  );
+};

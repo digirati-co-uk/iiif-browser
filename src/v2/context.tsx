@@ -1,10 +1,12 @@
-import { getValue } from "@iiif/helpers";
+import type { ViewerMode } from "@atlas-viewer/atlas";
+import { type Vault, getValue } from "@iiif/helpers";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import {
   VaultProvider,
@@ -14,6 +16,7 @@ import {
 } from "react-iiif-vault";
 import { Router, useSearchParams } from "react-router-dom";
 import { type StoreApi, useStore } from "zustand";
+import { create } from "zustand";
 import type { DeepPartial, IIIFBrowserConfig } from "./IIIFBrowser";
 import { type BrowserLinkConfig, isDomainAllowed } from "./browser/BrowserLink";
 import { type BrowserEmitter, createEmitter } from "./events";
@@ -36,8 +39,6 @@ import {
   canSelectItem,
   createOutputStore,
 } from "./stores/output-store";
-import { create } from "zustand";
-import { ViewerMode } from "@atlas-viewer/atlas";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
@@ -144,6 +145,18 @@ export function useHistory() {
   return useStore(store, (state) => state.history);
 }
 
+export function useCanSelect() {
+  const vault = useVault();
+  const config = useLinkConfig();
+
+  return useCallback(
+    (_input: string | { id: string; type: string }) => {
+      return canSelectItem(_input, config, vault);
+    },
+    [config, vault],
+  );
+}
+
 export function useCanResolve() {
   const vault = useVault();
   const config = useLinkConfig();
@@ -159,15 +172,23 @@ export function useCanResolve() {
 export function useResolve() {
   const canResolve = useCanResolve();
   const store = useBrowserStoreContext();
+  const vault = useVault();
   const _resolve = useStore(store, (state) => state.resolve);
 
   return useCallback(
     (...input: Parameters<typeof _resolve>) => {
-      if (canResolve(input[0])) {
+      let toCheck: any = input[0];
+      if (typeof toCheck === "string") {
+        const maybeResource = vault.get(toCheck);
+        if (maybeResource) {
+          toCheck = { id: maybeResource.id, type: maybeResource.type };
+        }
+      }
+      if (canResolve(toCheck)) {
         _resolve(...input);
       }
     },
-    [_resolve, canResolve],
+    [_resolve, canResolve, vault],
   );
 }
 
@@ -249,6 +270,11 @@ export function useSearchState() {
   return useStore(store, (state) => [state.query, state.updateQuery] as const);
 }
 
+export function useSearchSourceFilter() {
+  const store = useOmnisearchStore();
+  return useStore(store, (state) => state.sourceFilter);
+}
+
 export function useGetSearchResult() {
   const store = useOmnisearchStore();
   return useStore(store, (state) => state.getResult);
@@ -320,6 +346,7 @@ export function useSelectedActions() {
 }
 
 export function BrowserProvider({
+  vault: customVault,
   uiConfig,
   browserConfig,
   linkConfig,
@@ -327,6 +354,7 @@ export function BrowserProvider({
   debug,
   children,
 }: {
+  vault?: Vault;
   uiConfig?: DeepPartial<IIIFBrowserConfig>;
   browserConfig?: Partial<BrowserStoreConfig>;
   linkConfig?: Partial<BrowserLinkConfig>;
@@ -334,7 +362,8 @@ export function BrowserProvider({
   debug?: boolean;
   children: React.ReactNode;
 }) {
-  const vault = useExistingVault();
+  const readyRef = useRef(false);
+  const vault = useExistingVault(customVault);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const emitter = useMemo(
@@ -366,6 +395,7 @@ export function BrowserProvider({
       manifestPaginationSize: 25,
       paginationNavigationType: "replace",
       homeLink: "iiif://home",
+      collectionSearchTagEnabled: true,
       portalIcons: true,
       ...rest,
     } as IIIFBrowserConfig;
@@ -390,6 +420,7 @@ export function BrowserProvider({
       collectionUrlMapping: {},
       preprocessManifest: undefined,
       preprocessCollection: undefined,
+      beforeFetchUrl: undefined,
 
       seedCollections: [],
 
@@ -565,6 +596,11 @@ export function BrowserProvider({
       }),
     [emitter, vault, store, uiConfigValue],
   );
+
+  if (!readyRef.current) {
+    emitter.emit("ready");
+    readyRef.current = true;
+  }
 
   return (
     <UIConfigContext.Provider value={uiConfigValue}>
