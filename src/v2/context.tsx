@@ -145,6 +145,18 @@ export function useHistory() {
   return useStore(store, (state) => state.history);
 }
 
+export function useCanSelect() {
+  const vault = useVault();
+  const config = useLinkConfig();
+
+  return useCallback(
+    (_input: string | { id: string; type: string }) => {
+      return canSelectItem(_input, config, vault);
+    },
+    [config, vault],
+  );
+}
+
 export function useCanResolve() {
   const vault = useVault();
   const config = useLinkConfig();

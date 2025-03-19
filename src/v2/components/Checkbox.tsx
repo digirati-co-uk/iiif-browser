@@ -9,7 +9,7 @@ export function Checkbox({ children, ...props }: CheckboxProps) {
       {({ isIndeterminate, isSelected }) => (
         <>
           <div
-            className={`text-2xl p-1 ${isSelected ? "text-blue-600" : "text-gray-500"}`}
+            className={`text-2xl p-0.5 ${isSelected ? "text-blue-600" : "text-gray-500"}`}
           >
             <svg
               width="1em"
@@ -17,6 +17,7 @@ export function Checkbox({ children, ...props }: CheckboxProps) {
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
+              <rect x="4" y="4" width="16" height="16" fill="#fff" />
               {isSelected ? (
                 <path
                   fill="currentColor"

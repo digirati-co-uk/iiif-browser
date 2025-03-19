@@ -148,6 +148,25 @@ export const MultiSelection = () => (
   </>
 );
 
+export const MultiSelectionClickToSelect = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          clickToSelect: true,
+          doubleClickToNavigate: true,
+          multiSelect: true,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const DefaultWithUniversalViewer = () => (
   <>
     <div className="w-full h-[80vh] flex">
