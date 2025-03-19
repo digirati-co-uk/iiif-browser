@@ -126,6 +126,7 @@ export type BrowserStoreConfig = {
 
   preprocessManifest?: (manifest: Manifest) => Promise<Manifest>;
   preprocessCollection?: (collection: Collection) => Promise<Collection>;
+  beforeFetchUrl?: (url: string) => Promise<string>;
   collectionUrlMapping: Record<string, string>;
   collectionUrlMappingParams: Record<string, string>;
   seedCollections: Array<Collection>;
@@ -304,6 +305,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     seedCollections = [],
     saveToLocalStorage,
     localStorageKey,
+    beforeFetchUrl,
     debug = false,
   } = options;
 
@@ -508,7 +510,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return;
         }
 
-        const response = await fetch(url, {
+        const urlToFetch = beforeFetchUrl ? await beforeFetchUrl(url) : url;
+        const response = await fetch(urlToFetch, {
           signal: abortController.signal,
           ...(requestInitOptions || {}),
         });

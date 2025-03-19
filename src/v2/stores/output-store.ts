@@ -61,7 +61,7 @@ export type OutputType =
   | "CanvasList";
 
 type OutputFormat =
-  | { type: "content-state"; encoded?: boolean }
+  | { type: "content-state"; encoded?: boolean; pretty?: boolean }
   | { type: "json"; pretty?: boolean }
   | {
       type: "custom";

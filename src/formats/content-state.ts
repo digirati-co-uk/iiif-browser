@@ -1,7 +1,7 @@
-import type { ExplorerFormat } from "../IIIFBrowser.types";
 import { type ContentState, serialiseContentState } from "@iiif/helpers";
 import type { Reference } from "@iiif/presentation-3";
 import type { CanvasNormalized } from "@iiif/presentation-3-normalized";
+import type { ExplorerFormat } from "../IIIFBrowser.types";
 
 export const contentStateFormat: ExplorerFormat<"content-state"> = {
   label: "Content state",
@@ -32,7 +32,7 @@ export const contentStateFormat: ExplorerFormat<"content-state"> = {
     }
 
     if (resource.type === "Manifest") {
-      if (ref.listing && ref.listing.length) {
+      if (ref.listing?.length) {
         base.target = ref.listing.map((canvas: any) =>
           createCanvasTarget(
             canvas,
@@ -55,7 +55,7 @@ export const contentStateFormat: ExplorerFormat<"content-state"> = {
 
     return options.encoded
       ? serialiseContentState(base as ContentState)
-      : JSON.stringify(base);
+      : JSON.stringify(base, null, options.pretty ? 2 : 0);
   },
 };
 

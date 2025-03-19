@@ -3,7 +3,7 @@ import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
 import "./styles/tw.css";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default {
   title: "IIIF Browser v2",
@@ -289,3 +289,62 @@ export const TestingCanvasCallback = () => (
     />
   </div>
 );
+
+export const TestingCanvasCallbackContentState = () => {
+  const [value, setValue] = useState("");
+  return (
+    <div className="h-[80vh] flex flex-col">
+      <pre className="border rounded text-lg whitespace-pre mb-8">{value}</pre>
+      {useMemo(
+        () => (
+          <IIIFBrowser
+            debug
+            history={{
+              localStorageKey: "testing-canvas-callback",
+              restoreFromLocalStorage: false,
+              saveToLocalStorage: false,
+              initialHistory: [
+                {
+                  url: "https://heritage.tudelft.nl/iiif/collection.json",
+                  resource: "https://heritage.tudelft.nl/iiif/collection.json",
+                  route:
+                    "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+                },
+              ],
+            }}
+            output={[
+              {
+                type: "callback",
+                label: "Select",
+                supportedTypes: [
+                  "Manifest",
+                  "Collection",
+                  "Canvas",
+                  "CanvasList",
+                  "CanvasRegion",
+                  "ImageService",
+                  "ImageServiceRegion",
+                ],
+                cb: (resource) => {
+                  setValue(resource);
+                },
+                format: {
+                  type: "content-state",
+                  encoded: false,
+                  pretty: true,
+                },
+              },
+            ]}
+            navigation={{
+              canSelectCanvas: true,
+              canSelectManifest: true,
+              canSelectCollection: true,
+              canCropImage: true,
+            }}
+          />
+        ),
+        [],
+      )}
+    </div>
+  );
+};
