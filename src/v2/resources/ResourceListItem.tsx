@@ -76,7 +76,7 @@ export function ResourceListItem({
               </div>
             ) : null}
           </div>
-          {showNavigationArrow ? (
+          {showNavigationArrow && canNavigate ? (
             <Button onPress={navigate} className="ml-auto bg-gray-500/10 p-2">
               <ArrowForwardIcon />
             </Button>

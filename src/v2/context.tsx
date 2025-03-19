@@ -160,15 +160,23 @@ export function useCanResolve() {
 export function useResolve() {
   const canResolve = useCanResolve();
   const store = useBrowserStoreContext();
+  const vault = useVault();
   const _resolve = useStore(store, (state) => state.resolve);
 
   return useCallback(
     (...input: Parameters<typeof _resolve>) => {
-      if (canResolve(input[0])) {
+      let toCheck: any = input[0];
+      if (typeof toCheck === "string") {
+        const maybeResource = vault.get(toCheck);
+        if (maybeResource) {
+          toCheck = { id: maybeResource.id, type: maybeResource.type };
+        }
+      }
+      if (canResolve(toCheck)) {
         _resolve(...input);
       }
     },
-    [_resolve, canResolve],
+    [_resolve, canResolve, vault],
   );
 }
 
@@ -394,6 +402,7 @@ export function BrowserProvider({
       collectionUrlMapping: {},
       preprocessManifest: undefined,
       preprocessCollection: undefined,
+      beforeFetchUrl: undefined,
 
       seedCollections: [],
 

@@ -52,10 +52,77 @@ export const DefaultInResizableContainer = () => (
   </>
 );
 
-export const DefaultOnlyManifests = () => (
+export const SelectOnlyCanvases = () => (
   <>
     <div className="w-full h-[80vh] flex">
-      <IIIFBrowser debug navigation={{ canSelectCanvas: false }} />
+      <IIIFBrowser
+        debug
+        navigation={{
+          canSelectCollection: false,
+          canSelectManifest: false,
+          canSelectCanvas: true,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const SelectOnlyManifests = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          canSelectCollection: false,
+          canSelectManifest: false,
+          canSelectCanvas: false,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const SelectOnlyCollections = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          canSelectCollection: true,
+          canSelectManifest: false,
+          canSelectCanvas: false,
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const NavigateAndSelectOnlyCollections = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          canNavigateToCollection: true,
+          canNavigateToManifest: false,
+          canNavigateToCanvas: false,
+          canSelectCollection: true,
+          canSelectManifest: false,
+          canSelectCanvas: false,
+        }}
+      />
     </div>
     <div className="flex">
       <div id="iiif-browser__debug-history" />
