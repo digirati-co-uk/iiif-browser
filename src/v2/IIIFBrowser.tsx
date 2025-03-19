@@ -1,4 +1,5 @@
 import "./index.css";
+import type { Vault } from "@iiif/helpers";
 import { type ReactNode, useMemo } from "react";
 import { Route, Routes } from "react-router-dom";
 import { BrowserContainer } from "./browser/BrowserContainer";
@@ -17,7 +18,6 @@ import { LoadingPage } from "./routes/LoadingPage";
 import { ManifestPage } from "./routes/ManifestPage";
 import type { BrowserStoreConfig } from "./stores/browser-store";
 import type { OutputTarget } from "./stores/output-store";
-import type { Vault } from "@iiif/helpers";
 
 export interface IIIFBrowserConfig {
   defaultPages: {
@@ -40,6 +40,7 @@ export interface IIIFBrowserConfig {
   paginationNavigationType: "replace" | "push";
   portalIcons: boolean;
   homeLink: string;
+  collectionSearchTagEnabled: boolean;
 }
 
 export type DeepPartial<T> = {

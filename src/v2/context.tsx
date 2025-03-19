@@ -258,6 +258,11 @@ export function useSearchState() {
   return useStore(store, (state) => [state.query, state.updateQuery] as const);
 }
 
+export function useSearchSourceFilter() {
+  const store = useOmnisearchStore();
+  return useStore(store, (state) => state.sourceFilter);
+}
+
 export function useGetSearchResult() {
   const store = useOmnisearchStore();
   return useStore(store, (state) => state.getResult);
@@ -378,6 +383,7 @@ export function BrowserProvider({
       manifestPaginationSize: 25,
       paginationNavigationType: "replace",
       homeLink: "iiif://home",
+      collectionSearchTagEnabled: true,
       portalIcons: true,
       ...rest,
     } as IIIFBrowserConfig;

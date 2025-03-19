@@ -20,7 +20,9 @@ import {
   useSearchBoxState,
   useSearchIndex,
   useSearchResults,
+  useSearchSourceFilter,
   useSearchState,
+  useUIConfig,
 } from "../context";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { CloseIcon } from "../icons/CloseIcon";
@@ -43,11 +45,15 @@ export function OmnisearchModal({
 }) {
   const container = useBrowserContainer();
   const [search, setSearch] = useSearchState();
+  const { collectionSearchTagEnabled } = useUIConfig();
   const { isIndexing } = useSearchIndex();
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useSearchResults();
   const getSearchResult = useGetSearchResult();
+  const sourceFilter = useSearchSourceFilter();
   const { isOpen: isModalOpen, close: closeModal } = useSearchBoxState();
+
+  const showCollectionTag = collectionSearchTagEnabled && !sourceFilter;
 
   const closeModalAction = useCallback(
     (open?: boolean) => {
@@ -168,7 +174,8 @@ export function OmnisearchModal({
                           <div className="flex-1 min-w-0 truncate select-none">
                             <div className="flex items-center gap-2">
                               <strong className="truncate">{item.label}</strong>
-                              {item.source === "collection" ? (
+                              {item.source === "collection" &&
+                              showCollectionTag ? (
                                 <div className="flex-shrink-0 text-xs min-w-0 bg-gray-50 text-gray-500 rounded-sm px-2">
                                   current collection
                                 </div>
