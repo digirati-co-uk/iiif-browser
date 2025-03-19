@@ -554,6 +554,17 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           json.id = url;
         }
 
+        // Some empty IIIF collections may not have items.
+        if (
+          !json.items &&
+          (json["@type"] === "sc:Collection" ||
+            json["@type"] === "sc:Manifest" ||
+            json.type === "Collection" ||
+            json.type === "Manifest")
+        ) {
+          json.items = [];
+        }
+
         // Now what is it. We will try to upgrade it using the @iiif/parser.
         let result = upgrade(json);
         if (!result.id || !result.type) {
