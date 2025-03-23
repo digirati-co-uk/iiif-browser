@@ -78,6 +78,7 @@ export type OutputTarget = {
   format: OutputFormat;
   supportedTypes: OutputType[];
   inlineAction?: boolean;
+  buttonClassName?: string;
 } & OutputTargetTypes;
 
 export type OutputTargetTypes =

@@ -42,6 +42,7 @@ export interface IIIFBrowserConfig {
   homeLink: string;
   showFilterButton: boolean;
   collectionSearchTagEnabled: boolean;
+  buttonClassName: string;
 }
 
 export type DeepPartial<T> = {

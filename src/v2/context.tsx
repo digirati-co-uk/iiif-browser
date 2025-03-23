@@ -391,6 +391,8 @@ export function BrowserProvider({
       homeButton: true,
       forwardButton: true,
       bookmarkButton: false,
+      showFilterButton: false,
+      buttonClassName: "",
       collectionPaginationSize: 25,
       manifestPaginationSize: 25,
       paginationNavigationType: "replace",

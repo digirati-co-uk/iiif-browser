@@ -23,6 +23,21 @@ export const Default = () => (
   </>
 );
 
+export const DefaultCustomButton = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        ui={{ buttonClassName: "bg-[red] hover:bg-[green]" }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const DefaultHideAndShow = () => {
   const [isHidden, setIsHidden] = useState(false);
 
