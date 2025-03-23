@@ -3,6 +3,7 @@ import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
 import "./styles/tw.css";
+import { Vault } from "@iiif/helpers";
 import { useMemo, useState } from "react";
 
 export default {
@@ -35,6 +36,36 @@ export const DefaultHideAndShow = () => {
       </Button>
       <div className="w-full h-[80vh] flex">
         {isHidden ? null : <IIIFBrowser debug />}
+      </div>
+      <div className="flex">
+        <div id="iiif-browser__debug-history" />
+        <div id="iiif-browser__debug-selected" />
+      </div>
+    </>
+  );
+};
+
+export const DefaultHideAndShowWithRegion = () => {
+  const [isHidden, setIsHidden] = useState(false);
+
+  return (
+    <>
+      <Button
+        className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
+        onPress={() => setIsHidden(!isHidden)}
+      >
+        {isHidden ? "Show" : "Hide"}
+      </Button>
+      <div className="w-full h-[80vh] flex">
+        {isHidden ? null : (
+          <IIIFBrowser
+            vault={new Vault()}
+            navigation={{
+              canCropImage: true,
+            }}
+            debug
+          />
+        )}
       </div>
       <div className="flex">
         <div id="iiif-browser__debug-history" />
