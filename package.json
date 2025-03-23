@@ -1,6 +1,6 @@
 {
   "name": "iiif-browser",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -14,8 +14,14 @@
   "engines": {
     "node": ">=18.14.1"
   },
-  "keywords": ["iiif", "editor", "typescript"],
-  "files": ["dist"],
+  "keywords": [
+    "iiif",
+    "editor",
+    "typescript"
+  ],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "require": {
