@@ -365,13 +365,13 @@ export function BrowserProvider({
   const readyRef = useRef(false);
   const vault = useExistingVault(customVault);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const emitter = useMemo(
     () =>
       createEmitter({
         debug: debug ?? false,
       }),
-    [browserConfig, debug],
+    [],
   );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
@@ -534,11 +534,13 @@ export function BrowserProvider({
     [linkConfig],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const store = useMemo(
     () => createBrowserStore({ vault, emitter, debug, ...browserStoreConfig }),
-    [emitter, vault, browserStoreConfig, debug],
+    [],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const outputStore = useMemo(
     () =>
       createOutputStore({
@@ -547,9 +549,10 @@ export function BrowserProvider({
         linkConfig: linkConfigValue,
         output: outputConfigValue,
       }),
-    [emitter, vault, linkConfigValue, outputConfigValue],
+    [],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const omnisearchStore = useMemo(
     () =>
       createOmnisearchStore({
@@ -594,7 +597,7 @@ export function BrowserProvider({
             : null,
         ].filter(Boolean) as any[],
       }),
-    [emitter, vault, store, uiConfigValue],
+    [],
   );
 
   if (!readyRef.current) {
