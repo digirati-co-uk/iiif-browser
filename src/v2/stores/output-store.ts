@@ -429,8 +429,7 @@ export function createOutputStore(options: OutputStoreOptions) {
     emitter.emit("output.selection-change");
   });
 
-  // emitter.emit("output.selection-change");
-  console.log("not running selection change.");
+  emitter.emit("output.selection-change");
 
   return store;
 }
