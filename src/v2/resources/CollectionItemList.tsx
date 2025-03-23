@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "react-aria-components";
 import { LocaleString, ManifestContext, useCollection } from "react-iiif-vault";
 import { LayoutSwitcher } from "../components/LayoutSwitcher";
-import { useCanSelect, useSearchBoxState } from "../context";
+import { useCanSelect, useSearchBoxState, useUIConfig } from "../context";
 import { usePaginateArray } from "../hooks/use-paginate-array";
 import { FilterOnOffIcon } from "../icons/FilterOnOffIcon";
 import { SearchIcon } from "../icons/SearchIcon";
@@ -18,6 +18,7 @@ export function CollectionItemList({ id }: { id: string }) {
   const canSelect = useCanSelect();
   const [isListView, setIsListView] = useLocalStorage("list-view-toggle", true);
   const [hideDisabled, setHideDisabled] = useState(false);
+  const { showFilterButton } = useUIConfig();
 
   const filteredItems = useMemo(() => {
     const items = collection?.items || [];
@@ -76,12 +77,14 @@ export function CollectionItemList({ id }: { id: string }) {
           </Button>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            onPress={() => setHideDisabled(!hideDisabled)}
-            className="border rounded border-gray-300 overflow-hidden py-1 px-3 self-stretch"
-          >
-            <FilterOnOffIcon enabled={!hideDisabled} />
-          </Button>
+          {showFilterButton ? (
+            <Button
+              onPress={() => setHideDisabled(!hideDisabled)}
+              className="border rounded border-gray-300 overflow-hidden py-1 px-3 self-stretch"
+            >
+              <FilterOnOffIcon enabled={!hideDisabled} />
+            </Button>
+          ) : null}
 
           <LayoutSwitcher
             isListView={isListView}

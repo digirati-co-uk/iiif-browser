@@ -46,8 +46,9 @@ export function ResourceGridItem({
         <div
           className={
             // biome-ignore lint/style/useTemplate: <explanation>
-            "rounded-md cursor-pointer hover:bg-slate-200 p-1 group relative" +
-            `${canNavigate ? " hover:bg-blue-200" : "opacity-25"}` +
+            "rounded-md cursor-pointer p-1 group relative" +
+            `${canSelect && ` hover:bg-slate-200`}` +
+            `${canNavigate ? " hover:bg-blue-200" : " opacity-50"}` +
             `${isSelected ? " bg-blue-50" : ""}` +
             `${hideLabel ? "" : " mb-4"}`
           }

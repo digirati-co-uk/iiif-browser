@@ -40,6 +40,7 @@ export interface IIIFBrowserConfig {
   paginationNavigationType: "replace" | "push";
   portalIcons: boolean;
   homeLink: string;
+  showFilterButton: boolean;
   collectionSearchTagEnabled: boolean;
 }
 

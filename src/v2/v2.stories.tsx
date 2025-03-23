@@ -284,6 +284,41 @@ export const CustomHomeButton = () => (
   </>
 );
 
+export const DisallowedResources = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          disallowedResources: [
+            "https://view.nls.uk/manifest/7446/74464117/manifest.json",
+          ],
+        }}
+        history={{
+          localStorageKey: "custom-home-button",
+          restoreFromLocalStorage: false,
+          saveToLocalStorage: false,
+          initialHistory: [
+            {
+              url: "https://view.nls.uk/collections/7446/74466699.json",
+              resource: "https://view.nls.uk/collections/7446/74466699.json",
+              route:
+                "/loading?id=https://view.nls.uk/collections/7446/74466699.json",
+            },
+          ],
+        }}
+        ui={{
+          homeLink: "https://view.nls.uk/collections/7446/74466699.json",
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const SeedCollection = () => (
   <div className="max-w-2xl h-[80vh] flex">
     <IIIFBrowser
