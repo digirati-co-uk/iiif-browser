@@ -57,4 +57,19 @@ export const routes: BrowserRoutes = [
     resource: "Manifest",
     url: "/manifest",
   },
+  {
+    type: "resource",
+    resource: "ImageService1",
+    url: "/image-service",
+  },
+  {
+    type: "resource",
+    resource: "ImageService2",
+    url: "/image-service",
+  },
+  {
+    type: "resource",
+    resource: "ImageService3",
+    url: "/image-service",
+  },
 ];

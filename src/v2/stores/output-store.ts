@@ -405,6 +405,26 @@ export function createOutputStore(options: OutputStoreOptions) {
     emitter.emit("output.selection-change");
   });
 
+  // Another special case for image services.
+  emitter.on("image-service.change", (resource) => {
+    if (!linkConfig.canSelectImageService) {
+      return;
+    }
+
+    const item: SelectedItem = {
+      id: resource.id,
+      type: "ImageService",
+    };
+
+    store.setState({
+      defaultSelectedItem: item,
+      selectedItems: canSelect(item) ? [item] : [],
+      wasManuallySelected: false,
+    });
+    emitter.emit("output.select-item", item);
+    emitter.emit("output.selection-change");
+  });
+
   emitter.on("resource.change", (resource) => {
     if (!resource) {
       store.setState({

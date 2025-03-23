@@ -1,31 +1,43 @@
-import { BoxStyle, DrawBox } from "@atlas-viewer/atlas";
+import { type BoxStyle, DrawBox } from "@atlas-viewer/atlas";
+import { useCallback, useMemo } from "react";
+import { type BoxSelector, useCanvas } from "react-iiif-vault";
+import { useStore } from "zustand";
 import {
   useCanvasOutputSelector,
   useOutputStore,
   useRefineSelectedItem,
 } from "../context";
 import { RegionHighlight } from "./RegionHighlight";
-import { BoxSelector, useCanvas } from "react-iiif-vault";
-import { useStore } from "zustand";
-import { useCallback } from "react";
 
 export function CurrentCanvasRefinement({
+  id,
   highlightStyle,
   editMode,
   setEditMode,
 }: {
+  id?: string;
   highlightStyle?: BoxStyle;
   editMode: boolean;
   setEditMode: (editMode: boolean) => void;
 }) {
-  const canvas = useCanvas();
+  const inputCanvas = useCanvas();
   const refineSelectedItem = useRefineSelectedItem();
+  const canvas = useMemo(() => {
+    if (id) {
+      return { id };
+    }
+    if (inputCanvas) {
+      return inputCanvas;
+    }
+    return null;
+  }, [id, inputCanvas]);
   const currentCanvasSelector = useCanvasOutputSelector(canvas);
   const setCurrentSelector = useCallback(
     (selector: BoxSelector) => {
-      if (!canvas) return;
-      refineSelectedItem(canvas.id, selector);
-      // Add to URL?
+      if (canvas) {
+        refineSelectedItem(canvas.id, selector);
+        return;
+      }
     },
     [canvas, refineSelectedItem],
   );

@@ -479,6 +479,13 @@ export function BrowserProvider({
             },
             supportedTypes: ["Canvas"],
           },
+          {
+            label: "Open Image in Theseus",
+            type: "open-new-window",
+            urlPattern: "https://theseusviewer.org/?iiif-content={MANIFEST}",
+            format: { type: "url", resolvable: true },
+            supportedTypes: ["ImageService"],
+          },
         ] as OutputTarget[];
       }
 
@@ -514,6 +521,7 @@ export function BrowserProvider({
           canSelectCollection: true,
           canSelectManifest: true,
           canSelectCanvas: true,
+          canSelectImageService: true,
           multiSelect: false,
           canCropImage: false,
           alwaysShowNavigationArrow: true,

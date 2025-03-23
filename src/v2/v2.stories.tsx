@@ -2,6 +2,7 @@ import { Button } from "react-aria-components";
 import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
+import "./styles/lib.css";
 import "./styles/tw.css";
 import { Vault } from "@iiif/helpers";
 import { useMemo, useState } from "react";
