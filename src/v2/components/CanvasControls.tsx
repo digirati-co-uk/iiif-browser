@@ -16,7 +16,7 @@ import { PlusIcon } from "../icons/PlusIcon";
 import { ReloadIcon } from "../icons/ReloadIcon";
 import { paste } from "../utilities/paste-util";
 
-export function CanvasControls() {
+export function CanvasControls({ id }: { id?: string }) {
   const canvas = useCanvas();
   const preset = useViewerPreset();
   const { canCropImage } = useLinkConfig();
@@ -76,7 +76,11 @@ export function CanvasControls() {
             isDisabled={!canvasOutputSelector}
             onPress={() => {
               if (confirm("Remove crop?")) {
-                refine(canvas.id, null);
+                if (id) {
+                  refine(id, null);
+                } else if (canvas) {
+                  refine(canvas.id, null);
+                }
               }
             }}
           >
