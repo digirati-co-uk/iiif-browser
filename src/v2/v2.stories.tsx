@@ -2,7 +2,9 @@ import { Button } from "react-aria-components";
 import { IIIFBrowser } from "./IIIFBrowser";
 import { IIIFBrowserOmnisearch } from "./OmnisearchBox";
 import { BrowserLink } from "./browser/BrowserLink";
+import "./styles/lib.css";
 import "./styles/tw.css";
+import { Vault } from "@iiif/helpers";
 import { useMemo, useState } from "react";
 
 export default {
@@ -14,6 +16,21 @@ export const Default = () => (
   <>
     <div className="w-full h-[80vh] flex">
       <IIIFBrowser debug />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const DefaultCustomButton = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        ui={{ buttonClassName: "bg-[red] hover:bg-[green]" }}
+      />
     </div>
     <div className="flex">
       <div id="iiif-browser__debug-history" />
@@ -35,6 +52,36 @@ export const DefaultHideAndShow = () => {
       </Button>
       <div className="w-full h-[80vh] flex">
         {isHidden ? null : <IIIFBrowser debug />}
+      </div>
+      <div className="flex">
+        <div id="iiif-browser__debug-history" />
+        <div id="iiif-browser__debug-selected" />
+      </div>
+    </>
+  );
+};
+
+export const DefaultHideAndShowWithRegion = () => {
+  const [isHidden, setIsHidden] = useState(false);
+
+  return (
+    <>
+      <Button
+        className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4"
+        onPress={() => setIsHidden(!isHidden)}
+      >
+        {isHidden ? "Show" : "Hide"}
+      </Button>
+      <div className="w-full h-[80vh] flex">
+        {isHidden ? null : (
+          <IIIFBrowser
+            vault={new Vault()}
+            navigation={{
+              canCropImage: true,
+            }}
+            debug
+          />
+        )}
       </div>
       <div className="flex">
         <div id="iiif-browser__debug-history" />
@@ -228,6 +275,41 @@ export const CustomHomeButton = () => (
     <div className="w-full h-[80vh] flex">
       <IIIFBrowser
         debug
+        history={{
+          localStorageKey: "custom-home-button",
+          restoreFromLocalStorage: false,
+          saveToLocalStorage: false,
+          initialHistory: [
+            {
+              url: "https://view.nls.uk/collections/7446/74466699.json",
+              resource: "https://view.nls.uk/collections/7446/74466699.json",
+              route:
+                "/loading?id=https://view.nls.uk/collections/7446/74466699.json",
+            },
+          ],
+        }}
+        ui={{
+          homeLink: "https://view.nls.uk/collections/7446/74466699.json",
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const DisallowedResources = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        navigation={{
+          disallowedResources: [
+            "https://view.nls.uk/manifest/7446/74464117/manifest.json",
+          ],
+        }}
         history={{
           localStorageKey: "custom-home-button",
           restoreFromLocalStorage: false,

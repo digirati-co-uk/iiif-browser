@@ -20,6 +20,13 @@
   --total-gap-width: 1.5rem;
 }
 
+.atlas-viewer-container .atlas-container {
+  min-width: 0;
+  min-height: 0;
+  --atlas-container-flex: 1 1 0px;
+  --atlas-background: #e5e7f0;
+}
+
 .grid-lg,
 .grid-md,
 .grid-sm {

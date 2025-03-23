@@ -1,7 +1,7 @@
 import type { InternationalString } from "@iiif/presentation-3";
 import mitt, { type Emitter } from "mitt";
-import type { HistoryItem } from "./stores/browser-store";
 import type { BoxSelector } from "react-iiif-vault";
+import type { HistoryItem } from "./stores/browser-store";
 
 export type BrowserEvents = {
   ready: undefined;
@@ -28,6 +28,9 @@ export type BrowserEvents = {
     };
     selector?: BoxSelector;
   } | null;
+  "image-service.change": {
+    id: string;
+  };
   "search.index-start": undefined;
   "search.index-complete": undefined;
   "history.page": { url: string; route: string };

@@ -9,11 +9,11 @@ import {
   useUIConfig,
 } from "../context";
 import { CropIcon } from "../icons/CropIcon";
-import { HandIcon } from "../icons/HandIcon";
 import { DeleteForeverIcon } from "../icons/DeleteForeverIcon";
-import { ReloadIcon } from "../icons/ReloadIcon";
+import { HandIcon } from "../icons/HandIcon";
 import { MinusIcon } from "../icons/MinusIcon";
 import { PlusIcon } from "../icons/PlusIcon";
+import { ReloadIcon } from "../icons/ReloadIcon";
 import { paste } from "../utilities/paste-util";
 
 export function CanvasControls() {
@@ -24,12 +24,7 @@ export function CanvasControls() {
   const canvasOutputSelector = useCanvasOutputSelector(canvas);
   const refine = useRefineSelectedItem();
   const editMode = mode === "sketch";
-
-  let canvasButton = paste();
-
-  if (!canvas) {
-    return null;
-  }
+  const canvasButton = paste();
 
   return (
     <Toolbar className="absolute bottom-0 flex gap-1 p-2 z-50">

@@ -1,5 +1,5 @@
-import $ from "../styles/ComboButton.module.css";
 import _useDropdownMenu from "react-accessible-dropdown-menu-hook";
+import $ from "../styles/ComboButton.module.css";
 
 // @ts-ignore
 const useDropdownMenu = _useDropdownMenu.default ?? _useDropdownMenu;
@@ -11,7 +11,8 @@ export interface ComboButtonProps {
 
 export function ComboButton(props: ComboButtonProps) {
   const [first, ...otherOptions] = props.actions || [];
-  const { isOpen, buttonProps, itemProps, setIsOpen, moveFocus } = useDropdownMenu(otherOptions.length);
+  const { isOpen, buttonProps, itemProps, setIsOpen, moveFocus } =
+    useDropdownMenu(otherOptions.length);
 
   if (!first) return null;
 
@@ -43,7 +44,11 @@ export function ComboButton(props: ComboButtonProps) {
             <ul className={$.ComboButtonOverlay} data-open={isOpen}>
               {otherOptions.map((option, k) => (
                 <li key={k} className={$.ComboButtonOption}>
-                  <a className={$.ComboButtonOptionButton} onClick={option.action} {...itemProps[k]}>
+                  <a
+                    className={$.ComboButtonOptionButton}
+                    onClick={option.action}
+                    {...itemProps[k]}
+                  >
                     {option.label}
                   </a>
                 </li>

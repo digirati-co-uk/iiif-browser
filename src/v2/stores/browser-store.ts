@@ -5,6 +5,7 @@ import {
   getValue,
   parseSelector,
 } from "@iiif/helpers";
+import { isImageService } from "@iiif/parser/image-3";
 import { upgrade } from "@iiif/parser/upgrader";
 import type {
   Collection,
@@ -447,6 +448,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           selector: resource.selector || undefined,
         });
       }
+      if (resource && (resource?.type || "").startsWith("ImageService")) {
+        emitter.emit("image-service.change", {
+          id: resource.id,
+        });
+      }
     };
     const browserRetry = () => set({ browserState: "RETRYING" });
     const browserLoading = (
@@ -552,6 +558,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         if (json.id !== url) {
           // Could be a fork, manually patch it.
           json.id = url;
+        }
+
+        if (isImageService(json)) {
+          json.type = json.type || "ImageService3";
         }
 
         // Some empty IIIF collections may not have items.
@@ -1074,6 +1084,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             selector,
           });
         }
+      }
+      if (resource && (resource?.type || "").startsWith("ImageService")) {
+        emitter.emit("image-service.change", {
+          id: resource.id,
+        });
       }
     }
 

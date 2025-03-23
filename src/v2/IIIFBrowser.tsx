@@ -14,6 +14,7 @@ import AboutPage from "./routes/AboutPage";
 import { CollectionPage } from "./routes/CollectionPage";
 import { HistoryPage } from "./routes/HistoryPage";
 import { Homepage } from "./routes/Homepage";
+import { ImageServicePage } from "./routes/ImageServicePage";
 import { LoadingPage } from "./routes/LoadingPage";
 import { ManifestPage } from "./routes/ManifestPage";
 import type { BrowserStoreConfig } from "./stores/browser-store";
@@ -40,7 +41,9 @@ export interface IIIFBrowserConfig {
   paginationNavigationType: "replace" | "push";
   portalIcons: boolean;
   homeLink: string;
+  showFilterButton: boolean;
   collectionSearchTagEnabled: boolean;
+  buttonClassName: string;
 }
 
 export type DeepPartial<T> = {
@@ -68,6 +71,7 @@ export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
       "/collection": <CollectionPage />,
       "/manifest": <ManifestPage />,
       "/history": <HistoryPage />,
+      "/image-service": <ImageServicePage />,
       "/not-found": <NotFoundPage />,
       "/loading": <LoadingPage />,
       ...(customPages || {}),

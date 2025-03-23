@@ -365,13 +365,13 @@ export function BrowserProvider({
   const readyRef = useRef(false);
   const vault = useExistingVault(customVault);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const emitter = useMemo(
     () =>
       createEmitter({
         debug: debug ?? false,
       }),
-    [browserConfig, debug],
+    [],
   );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
@@ -391,6 +391,8 @@ export function BrowserProvider({
       homeButton: true,
       forwardButton: true,
       bookmarkButton: false,
+      showFilterButton: false,
+      buttonClassName: "",
       collectionPaginationSize: 25,
       manifestPaginationSize: 25,
       paginationNavigationType: "replace",
@@ -477,6 +479,13 @@ export function BrowserProvider({
             },
             supportedTypes: ["Canvas"],
           },
+          {
+            label: "Open Image in Theseus",
+            type: "open-new-window",
+            urlPattern: "https://theseusviewer.org/?iiif-content={MANIFEST}",
+            format: { type: "url", resolvable: true },
+            supportedTypes: ["ImageService"],
+          },
         ] as OutputTarget[];
       }
 
@@ -512,6 +521,7 @@ export function BrowserProvider({
           canSelectCollection: true,
           canSelectManifest: true,
           canSelectCanvas: true,
+          canSelectImageService: true,
           multiSelect: false,
           canCropImage: false,
           alwaysShowNavigationArrow: true,
@@ -534,11 +544,13 @@ export function BrowserProvider({
     [linkConfig],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const store = useMemo(
     () => createBrowserStore({ vault, emitter, debug, ...browserStoreConfig }),
-    [emitter, vault, browserStoreConfig, debug],
+    [],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const outputStore = useMemo(
     () =>
       createOutputStore({
@@ -547,9 +559,10 @@ export function BrowserProvider({
         linkConfig: linkConfigValue,
         output: outputConfigValue,
       }),
-    [emitter, vault, linkConfigValue, outputConfigValue],
+    [],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const omnisearchStore = useMemo(
     () =>
       createOmnisearchStore({
@@ -594,7 +607,7 @@ export function BrowserProvider({
             : null,
         ].filter(Boolean) as any[],
       }),
-    [emitter, vault, store, uiConfigValue],
+    [],
   );
 
   if (!readyRef.current) {

@@ -78,6 +78,7 @@ export type OutputTarget = {
   format: OutputFormat;
   supportedTypes: OutputType[];
   inlineAction?: boolean;
+  buttonClassName?: string;
 } & OutputTargetTypes;
 
 export type OutputTargetTypes =
@@ -393,6 +394,26 @@ export function createOutputStore(options: OutputStoreOptions) {
       type: "Canvas",
       parent: canvas.parent,
       selector: canvas.selector,
+    };
+
+    store.setState({
+      defaultSelectedItem: item,
+      selectedItems: canSelect(item) ? [item] : [],
+      wasManuallySelected: false,
+    });
+    emitter.emit("output.select-item", item);
+    emitter.emit("output.selection-change");
+  });
+
+  // Another special case for image services.
+  emitter.on("image-service.change", (resource) => {
+    if (!linkConfig.canSelectImageService) {
+      return;
+    }
+
+    const item: SelectedItem = {
+      id: resource.id,
+      type: "ImageService",
     };
 
     store.setState({

@@ -34,6 +34,7 @@ export type BrowserLinkConfig = {
   canSelectCollection: boolean;
   canSelectManifest: boolean;
   canSelectCanvas: boolean;
+  canSelectImageService: boolean;
 
   customCanNavigate: null | ((resource: any, vault: Vault) => boolean);
   customCanSelect: null | ((resource: any, vault: Vault) => boolean);

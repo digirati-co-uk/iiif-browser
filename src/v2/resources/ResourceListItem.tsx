@@ -42,7 +42,7 @@ export function ResourceListItem({
           className={
             // biome-ignore lint/style/useTemplate: <explanation>
             `flex h-12 items-center gap-3 px-2 group` +
-            `${canNavigate ? " hover:bg-blue-100" : "opacity-25"}` +
+            `${canNavigate ? " hover:bg-blue-100" : " opacity-50"}` +
             `${isSelected ? " bg-blue-50" : ""}` +
             `${large ? " py-8" : ""}`
           }
