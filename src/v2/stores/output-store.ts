@@ -63,6 +63,7 @@ export type OutputType =
 type OutputFormat =
   | { type: "content-state"; encoded?: boolean; pretty?: boolean }
   | { type: "json"; pretty?: boolean }
+  | { type: "image-service" }
   | {
       type: "custom";
       format: (

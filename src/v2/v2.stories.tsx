@@ -391,6 +391,45 @@ export const SeedCollection = () => (
   </div>
 );
 
+// https://observablehq.com/embed/@allmaps/tile-pyramid?cells=viz&url=
+export const TilePyramid = () => {
+  return (
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        output={[
+          {
+            type: "open-new-window",
+            label: "View pyramid",
+            urlPattern:
+              "https://observablehq.com/embed/@allmaps/tile-pyramid?cells=viz&url={RESULT}",
+            supportedTypes: ["Canvas"],
+            format: {
+              type: "image-service",
+            },
+          },
+        ]}
+        history={{
+          localStorageKey: "custom-home-button",
+          restoreFromLocalStorage: false,
+          saveToLocalStorage: false,
+          initialHistory: [
+            {
+              url: "https://heritage.tudelft.nl/iiif/collection.json",
+              resource: "https://heritage.tudelft.nl/iiif/collection.json",
+              route:
+                "/loading?id=https://heritage.tudelft.nl/iiif/collection.json",
+            },
+          ],
+        }}
+        ui={{
+          homeLink: "https://heritage.tudelft.nl/iiif/collection.json",
+        }}
+      />
+    </div>
+  );
+};
+
 export const AllOfDelft = () => (
   <IIIFBrowser
     debug
