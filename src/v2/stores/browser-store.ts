@@ -257,7 +257,7 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
     return [
       history,
       {
-        savedHistory: [],
+        savedHistory: nonEmptyInitialHistory,
         initialIndex: initialHistoryCursor,
         initialPage: nonEmptyInitialHistory[initialHistoryCursor]!,
         linearHistory: [],
