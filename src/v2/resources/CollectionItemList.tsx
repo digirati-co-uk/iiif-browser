@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Button } from "react-aria-components";
+import { Button, GridList } from "react-aria-components";
 import { LocaleString, ManifestContext, useCollection } from "react-iiif-vault";
 import { LayoutSwitcher } from "../components/LayoutSwitcher";
 import { useCanSelect, useSearchBoxState, useUIConfig } from "../context";
@@ -50,16 +50,21 @@ export function CollectionItemList({ id }: { id: string }) {
             className="text-blue-600 hover:underline disabled:text-gray-300 text-start focus:outline-none px-4"
             onPress={actions.prevPage}
             isDisabled={actions.currentPage === 1}
+            aria-label="Previous page"
           >
             Previous
           </Button>
-          <div className="text-center text-sm text-gray-400">
+          <div
+            className="text-center text-sm text-gray-400"
+            aria-label="Page number"
+          >
             Page {actions.currentPage} of {actions.totalPages}
           </div>
           <Button
             className="text-blue-600 hover:underline disabled:text-gray-300 text-end focus:outline-none px-4"
             onPress={actions.nextPage}
             isDisabled={actions.currentPage === actions.totalPages}
+            aria-label="Next page"
           >
             Next
           </Button>
@@ -69,6 +74,7 @@ export function CollectionItemList({ id }: { id: string }) {
       <div className="flex px-4 py-4 justify-between">
         <div>
           <Button
+            aria-label="Search current collection"
             className="text-blue-600 hover:underline flex items-center gap-2"
             onPress={() => openWithFilter("", "collection")}
           >
@@ -79,6 +85,7 @@ export function CollectionItemList({ id }: { id: string }) {
         <div className="flex items-center gap-1">
           {showFilterButton ? (
             <Button
+              aria-label="Filter items not selectable"
               onPress={() => setHideDisabled(!hideDisabled)}
               className="border rounded border-gray-300 overflow-hidden py-1 px-3 self-stretch"
             >
@@ -94,7 +101,7 @@ export function CollectionItemList({ id }: { id: string }) {
       </div>
 
       {isListView ? (
-        <div>
+        <GridList selectionMode="multiple" layout="stack">
           {items.map((item) =>
             item.type === "Collection" ? (
               <CollectionListSnippet key={item.id} id={item.id} />
@@ -104,9 +111,13 @@ export function CollectionItemList({ id }: { id: string }) {
               </ManifestContext>
             ),
           )}
-        </div>
+        </GridList>
       ) : (
-        <div className="grid grid-sm gap-2">
+        <GridList
+          className="grid grid-sm gap-2"
+          selectionMode="multiple"
+          layout="grid"
+        >
           {items.map((item) =>
             item.type === "Collection" ? (
               <CollectionGridSnippet key={item.id} id={item.id} />
@@ -116,7 +127,7 @@ export function CollectionItemList({ id }: { id: string }) {
               </ManifestContext>
             ),
           )}
-        </div>
+        </GridList>
       )}
     </div>
   );

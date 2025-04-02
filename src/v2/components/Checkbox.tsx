@@ -2,14 +2,18 @@ import {
   Checkbox as BaseCheckbox,
   type CheckboxProps,
 } from "react-aria-components";
+import { twMerge } from "tailwind-merge";
 
 export function Checkbox({ children, ...props }: CheckboxProps) {
   return (
     <BaseCheckbox {...props}>
-      {({ isIndeterminate, isSelected }) => (
+      {({ isIndeterminate, isSelected, isFocusVisible }) => (
         <>
           <div
-            className={`text-2xl p-0.5 ${isSelected ? "text-blue-600" : "text-gray-500"}`}
+            className={twMerge(
+              `text-2xl p-0.5 ${isSelected ? "text-blue-600" : "text-gray-500"}`,
+              isFocusVisible ? "ring ring-blue-600" : "",
+            )}
           >
             <svg
               width="1em"

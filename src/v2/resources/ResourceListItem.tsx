@@ -1,6 +1,7 @@
+import { getValue } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/presentation-3";
 import { useMemo } from "react";
-import { Button } from "react-aria-components";
+import { Button, GridListItem } from "react-aria-components";
 import { LocaleString } from "react-iiif-vault";
 import { BrowserLink } from "../browser/BrowserLink";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
@@ -25,7 +26,13 @@ export function ResourceListItem({
     [resource.id, resource.type, parent],
   );
   return (
-    <BrowserLink resource={reference} parent={parent}>
+    <BrowserLink
+      aria-label={resource.label ? getValue(resource.label) : "Resource"}
+      as={GridListItem}
+      isReactAria
+      resource={reference}
+      parent={parent}
+    >
       {({
         canNavigate,
         canSelect,
@@ -77,7 +84,11 @@ export function ResourceListItem({
             ) : null}
           </div>
           {showNavigationArrow && canNavigate ? (
-            <Button onPress={navigate} className="ml-auto bg-gray-500/10 p-2">
+            <Button
+              aria-label="Navigate to resource"
+              onPress={navigate}
+              className="ml-auto bg-gray-500/10 p-2"
+            >
               <ArrowForwardIcon />
             </Button>
           ) : null}

@@ -31,6 +31,7 @@ export function BrowserBackButton() {
   return (
     <MenuTrigger trigger="longPress">
       <BrowserToolbarButton
+        aria-label="Go Back"
         isDisabled={backHistoryList.length <= 0}
         onPress={() => {
           history.back();

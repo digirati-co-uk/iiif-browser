@@ -47,6 +47,7 @@ function RenderSelectedManifest({ id }: { id: string }) {
           </LocaleString>
         </div>
         <a
+          aria-label="Selected Manifest URL"
           className="text-blue-500 hover:underline truncate text-xs"
           href={manifest.id}
           target="_blank"
@@ -76,6 +77,7 @@ function RenderSelectedCollection({ id }: { id: string }) {
           </LocaleString>
         </div>
         <a
+          aria-label="Selected Collection URL"
           className="text-blue-500 hover:underline truncate text-xs"
           href={collection.id}
           target="_blank"
@@ -113,7 +115,12 @@ function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
           ) : null}
           <LocaleString>{canvas.label}</LocaleString>
         </div>
-        <span className="text-blue-500 truncate text-xs">{item.id}</span>
+        <span
+          aria-label="Selected Canvas ID"
+          className="text-blue-500 truncate text-xs"
+        >
+          {item.id}
+        </span>
       </div>
     </div>
   );
@@ -131,7 +138,9 @@ function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
   return (
     <div className="flex items-center gap-3">
       <MultiImageIcon className="text-2xl text-[#C63E75]" />
-      <span>{items.length} items selected</span>
+      <span aria-label="Multiple items selected">
+        {items.length} items selected
+      </span>
     </div>
   );
 }

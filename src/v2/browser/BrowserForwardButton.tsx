@@ -31,6 +31,7 @@ export function BrowserForwardButton() {
   return (
     <MenuTrigger trigger="longPress">
       <BrowserToolbarButton
+        aria-label="Go Forward"
         isDisabled={forwardHistoryList.length <= 0}
         onPress={() => {
           history.forward();

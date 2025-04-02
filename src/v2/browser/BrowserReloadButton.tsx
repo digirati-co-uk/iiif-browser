@@ -9,7 +9,11 @@ export function BrowserReloadButton() {
   const loadResource = useLoadResource();
 
   return (
-    <BrowserToolbarButton isDisabled={!id} onPress={() => loadResource(id)}>
+    <BrowserToolbarButton
+      aria-label="Reload resource"
+      isDisabled={!id}
+      onPress={() => loadResource(id)}
+    >
       <ReloadIcon />
     </BrowserToolbarButton>
   );

@@ -27,6 +27,7 @@ export function BrowserContextMenu() {
       >
         <Menu className="flex flex-col gap-1 outline-none">
           <MenuItem
+            aria-label="Refresh"
             onAction={() => resolve(lastUrl)}
             className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
           >
@@ -34,6 +35,7 @@ export function BrowserContextMenu() {
           </MenuItem>
           {ui.defaultPages.homepage ? (
             <MenuItem
+              aria-label="View Homepage"
               onAction={() => resolve("iiif://home")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
@@ -42,6 +44,7 @@ export function BrowserContextMenu() {
           ) : null}
           {ui.defaultPages.history ? (
             <MenuItem
+              aria-label="View History"
               onAction={() => resolve("iiif://history")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
@@ -50,6 +53,7 @@ export function BrowserContextMenu() {
           ) : null}
           {ui.defaultPages.viewSource ? (
             <MenuItem
+              aria-label="View Source"
               onAction={() => resolve(`view-source:${lastUrl}`)}
               isDisabled={
                 lastUrl.startsWith("iiif://") ||
@@ -62,6 +66,7 @@ export function BrowserContextMenu() {
           ) : null}
           {ui.defaultPages.about ? (
             <MenuItem
+              aria-label="View About"
               onAction={() => resolve("iiif://about")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >

@@ -1,5 +1,5 @@
 import type { Vault } from "@iiif/helpers";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useHover, usePress } from "react-aria";
 import { useVault } from "react-iiif-vault";
 import { Checkbox } from "../components/Checkbox";
@@ -58,6 +58,7 @@ type BrowserLinkInternalProps = {
   search?: Record<string, string>;
   manualLink?: boolean;
   manualSelect?: boolean;
+  isReactAria?: boolean;
   disablePreloadOnHover?: boolean;
   ignoreAlwaysShowNavigationArrow?: boolean;
   children:
@@ -101,6 +102,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   search,
   parent: inputParent,
   manualLink,
+  isReactAria,
   ignoreAlwaysShowNavigationArrow,
   ...elementProps
 }: BrowserLinkProps<ET>) {
@@ -128,6 +130,31 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     }),
     [],
   );
+
+  const onAction = useCallback(() => {
+    if (config.clickToSelect) {
+      if (!config.multiSelect) {
+        selectedActions.replaceSelectedItems([resource]);
+
+        return;
+      }
+
+      selectedActions.replaceSelectedItems([resource]);
+      return;
+    }
+
+    if (config.clickToNavigate) {
+      resolve(resource.id, { parent });
+    }
+  }, [
+    config.clickToSelect,
+    selectedActions,
+    config.multiSelect,
+    config.clickToNavigate,
+    resolve,
+    resource,
+    parent,
+  ]);
 
   const { isPressed, pressProps } = usePress({
     onPress: (e) => {
@@ -213,6 +240,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     renderCheckbox: () => {
       return (
         <Checkbox
+          slot="selection"
           isDisabled={!canSelect}
           isSelected={isSelected}
           onChange={() =>
@@ -231,12 +259,20 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     },
   };
 
+  const wrapperProps: any = {};
+
+  if (isReactAria) {
+    wrapperProps.onAction = onAction;
+  } else {
+    Object.assign(wrapperProps, pressProps);
+  }
+
   return (
     <Wrapper
       {...elementProps}
-      {...pressProps}
       {...hoverProps}
       {...doubleClickProps}
+      {...wrapperProps}
     >
       {typeof children === "function" ? children(renderProps) : children}
     </Wrapper>

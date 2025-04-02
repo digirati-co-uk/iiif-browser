@@ -1,6 +1,7 @@
+import { getValue } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/presentation-3";
 import { type ReactNode, useMemo } from "react";
-import { Button } from "react-aria-components";
+import { Button, GridListItem } from "react-aria-components";
 import { LocaleString } from "react-iiif-vault";
 import { BrowserLink } from "../browser/BrowserLink";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
@@ -10,7 +11,9 @@ export function ResourceGridItem({
   parent,
   thumbnail,
   hideLabel,
+  className,
 }: {
+  className?: string;
   resource: {
     id: string;
     type: string;
@@ -27,9 +30,13 @@ export function ResourceGridItem({
   );
   return (
     <BrowserLink
+      as={GridListItem}
+      aria-label={resource.label ? getValue(resource.label) : "Resource"}
+      isReactAria
       ignoreAlwaysShowNavigationArrow
       resource={reference}
       parent={parent}
+      className={className}
     >
       {({
         canNavigate,
