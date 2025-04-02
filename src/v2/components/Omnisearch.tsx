@@ -121,6 +121,7 @@ export function Omnisearch() {
       <div>
         <Label className="sr-only">Search</Label>
         <Button
+          aria-label="Edit URL and show search"
           onBlur={onBlur}
           onFocus={() => {
             if (!wasLastOpen.current) {
@@ -134,7 +135,10 @@ export function Omnisearch() {
           }}
           className="p-1 text-sm focus:outline-none text-slate-600 z-10 w-full text-left"
         >
-          <span className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis block truncate">
+          <span
+            aria-label="Current URL"
+            className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis block truncate"
+          >
             {valueToShow}
           </span>
         </Button>

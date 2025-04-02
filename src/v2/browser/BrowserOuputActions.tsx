@@ -23,8 +23,12 @@ export function BrowserOutputActions() {
   const className = first.buttonClassName || buttonClassName;
 
   return (
-    <div className="flex-shrink-0 flex gap-2 items-center whitespace-nowrap">
+    <div
+      aria-label="Output actions"
+      className="flex-shrink-0 flex gap-2 items-center whitespace-nowrap"
+    >
       <Button
+        aria-label={first.label}
         className={twMerge(
           "bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded",
           className,

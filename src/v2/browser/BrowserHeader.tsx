@@ -1,3 +1,4 @@
+import { SkipToContent } from "../components/SkipToContent";
 import { useUIConfig } from "../context";
 import { BrowserBackButton } from "./BrowserBackButton";
 import { BrowserContextMenu } from "./BrowserContextMenu";
@@ -20,6 +21,7 @@ export function BrowserHeader() {
 
   return (
     <div className="flex w-full items-center justify-between border-b shadow-sm gap-1 px-1">
+      <SkipToContent />
       {(defaultPages.homepage || homeLink) && homeButton && (
         <BrowserHomeButton href={homeLink} />
       )}

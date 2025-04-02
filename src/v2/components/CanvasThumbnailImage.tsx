@@ -1,7 +1,8 @@
-import { useThumbnail } from "react-iiif-vault";
+import { useCanvas, useThumbnail } from "react-iiif-vault";
 import { LazyLoadComponent } from "react-lazy-load-image-component";
 
 export function CanvasThumbnailImage() {
+  const canvas = useCanvas();
   const thumbnail = useThumbnail({ height: 120, width: 120 }, false);
   // const ref = useRef<HTMLDivElement>(null);
   // Save this for later.

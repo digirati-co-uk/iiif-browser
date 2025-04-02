@@ -12,6 +12,7 @@ export function BrowserHomeButton({ href }: { href: string }) {
     <BrowserToolbarButton
       isDisabled={href === lastUrl}
       onPress={() => resolve(href)}
+      aria-label="Go Home"
     >
       <HomeIcon />
     </BrowserToolbarButton>

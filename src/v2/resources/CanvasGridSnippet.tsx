@@ -1,4 +1,4 @@
-import { useCanvas, useManifest } from "react-iiif-vault";
+import { CanvasContext, useCanvas, useManifest } from "react-iiif-vault";
 import { CanvasThumbnailImage } from "../components/CanvasThumbnailImage";
 import { ResourceGridItem } from "./ResourceGridItem";
 
@@ -13,9 +13,14 @@ export function CanvasGridSnippet({
 
   return (
     <ResourceGridItem
+      className="rounded-md cursor-pointer hover:bg-slate-200 p-1 group aspect-square items-center"
       resource={canvas}
       parent={manifest}
-      thumbnail={<CanvasThumbnailImage />}
+      thumbnail={
+        <CanvasContext canvas={canvas.id}>
+          <CanvasThumbnailImage />
+        </CanvasContext>
+      }
       hideLabel
     />
   );

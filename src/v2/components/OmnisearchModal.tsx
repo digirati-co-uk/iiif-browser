@@ -89,7 +89,10 @@ export function OmnisearchModal({
         UNSTABLE_portalContainer={container || undefined}
         shouldUpdatePosition={false}
       >
-        <Dialog className="focus:outline-none flex-1 flex overflow-hidden">
+        <Dialog
+          aria-label="Omnisearch Modal"
+          className="focus:outline-none flex-1 flex overflow-hidden"
+        >
           <Autocomplete
             defaultInputValue={search}
             inputValue={search}
@@ -99,11 +102,11 @@ export function OmnisearchModal({
               {/* The header / search box itself. */}
               <div className="flex h-14 border-b shadow bg-gray-50">
                 <div className="w-11 ml-0.5 text-xl flex items-center justify-center text-slate-500">
-                  <SearchIcon />
+                  <SearchIcon className="not-sr-only" />
                 </div>
 
                 <TextField
-                  aria-label="Search commands"
+                  aria-label="Search commands or enter a URL to a IIIF Manifest or Collection"
                   className="relative flex-1 min-w-0 translate-y-[-1px] translate-x-[-1px] text-sm"
                 >
                   <Input
@@ -125,6 +128,7 @@ export function OmnisearchModal({
                 </TextField>
 
                 <Button
+                  aria-label="Close Omnisearch"
                   onPress={() => closeModalAction()}
                   className="text-2xl rounded focus:outline-none focus:bg-gray-200 flex-shrink-0 px-3 text-slate-500 hover:text-slate-700 m-1"
                 >
@@ -152,6 +156,7 @@ export function OmnisearchModal({
                   if (!item) return <MenuItem />;
                   return (
                     <MenuItem
+                      aria-label={item.label}
                       onAction={() => {
                         selectionAction(item);
                       }}

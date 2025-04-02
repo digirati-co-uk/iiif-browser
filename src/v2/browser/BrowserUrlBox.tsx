@@ -23,13 +23,14 @@ export function BrowserUrlBox({
       )}
     >
       <div className="text-md p-1 flex-shink-0">
-        <LockIcon />
+        <LockIcon className="not-sr-only" />
       </div>
       <div className="flex-1 overflow-hidden min-w-32">
         <Omnisearch />
       </div>
       {showBookmarkButton && (
         <Button
+          aria-label="Bookmark current resource"
           className={twMerge(
             "text-xl relative rounded text-slate-300 hover:text-slate-500 z-20 flex-shrink-0",
           )}
