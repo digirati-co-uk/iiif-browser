@@ -5,7 +5,8 @@ import { BrowserLink } from "./browser/BrowserLink";
 import "./styles/lib.css";
 import "./styles/tw.css";
 import { Vault } from "@iiif/helpers";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import "./web-component";
 
 export default {
   title: "IIIF Browser v2",
@@ -629,6 +630,45 @@ export const TestingCanvasCallbackContentState = () => {
         ),
         [],
       )}
+    </div>
+  );
+};
+
+export const WebComponentExample = () => {
+  const browser = useRef<any>(null);
+  const [resource, setResource] = useState<string | null>(null);
+
+  useEffect(() => {
+    browser.current.addEventListener("select", (e: any) => {
+      setResource(e.detail.resource.id);
+    });
+  }, []);
+
+  return (
+    <div className="flex flex-row gap-2 h-[90vh]">
+      <iiif-browser
+        ref={browser}
+        can-select-canvas={false}
+        enable-history={false}
+        container-class="flex flex-1 h-full"
+        class="w-[500px] h-full flex-col min-w-0 flex self-stretch"
+        collection="https://view.nls.uk/collections/7446/74466728.json"
+      />
+      <div className="w-full flex-1">
+        {resource ? (
+          <iframe
+            title="IIIF Viewer"
+            className="w-full h-full"
+            src={`https://theseusviewer.org/?iiif-content=${resource}`}
+          />
+        ) : (
+          <div className="p-8 flex items-center justify-center">
+            <span className="bg-blue-50 w-full text-center text-gray-400 p-8 rounded-lg">
+              Select a resource
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
