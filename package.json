@@ -82,6 +82,7 @@
   "devDependencies": {
     "@atlas-viewer/iiif-image-api": "^2.2.0",
     "@chromatic-com/storybook": "^3.2.4",
+    "@r2wc/react-to-web-component": "^2.0.4",
     "@storybook/addon-essentials": "^8.5.5",
     "@storybook/addon-interactions": "^8.5.5",
     "@storybook/addon-onboarding": "^8.5.5",
