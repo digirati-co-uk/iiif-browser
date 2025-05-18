@@ -1,26 +1,43 @@
-import { Button, GridList, GridListItem } from "react-aria-components";
+import { Button, GridList } from "react-aria-components";
 import { CanvasContext, LocaleString, useManifest } from "react-iiif-vault";
+import { twMerge } from "tailwind-merge";
 import invariant from "tiny-invariant";
-import { CanvasThumbnailImage } from "../components/CanvasThumbnailImage";
 import { LayoutSwitcher } from "../components/LayoutSwitcher";
+import { useLinkConfig, useSelectedActions } from "../context";
+import { useDragBox } from "../hooks/use-drag-box";
 import { usePaginateArray } from "../hooks/use-paginate-array";
 import { useLocalStorage } from "../utilities/use-local-storage";
 import { CanvasGridSnippet } from "./CanvasGridSnippet";
 import { CanvasListSnippet } from "./CanvasListSnippet";
-import { CanvasSnippet } from "./CanvasSnippet";
 
 export function ManifestItemList() {
   const manifest = useManifest();
+  const config = useLinkConfig();
   const [items, actions] = usePaginateArray(manifest?.items || [], 48);
+  const selectedActions = useSelectedActions();
   const [isListView, setIsListView] = useLocalStorage(
     "list-view-toggle-canvas",
     false,
   );
+  const { containerProps, refs, selectionBox } = useDragBox({
+    enabled: config.multiSelect,
+    onSelection: (toUpdate, isShiftKeyPressed) => {
+      const itemsToUpdate = toUpdate.map((key) => items[key]);
+      if (isShiftKeyPressed) {
+        for (const item of itemsToUpdate) {
+          selectedActions.toggleItemSelection(item);
+        }
+      } else {
+        selectedActions.replaceSelectedItems(itemsToUpdate);
+      }
+    },
+  });
 
   invariant(manifest);
 
   return (
-    <div className="p-2">
+    <div className={twMerge("p-2 relative")} {...containerProps}>
+      {selectionBox}
       <div ref={actions.topRef} />
       <LocaleString as="h1" className="text-2xl font-bold m-3 text-center">
         {manifest.label}
@@ -64,6 +81,7 @@ export function ManifestItemList() {
         </GridList>
       ) : (
         <GridList
+          ref={refs.gridList}
           className="grid grid-sm gap-0.5"
           selectionMode="multiple"
           layout="grid"
