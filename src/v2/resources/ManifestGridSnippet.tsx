@@ -1,4 +1,4 @@
-import { useManifest } from "react-iiif-vault";
+import { ManifestContext, useManifest } from "react-iiif-vault";
 import { ManifestThumbnailImage } from "../../components/ManifestThumbnailImage";
 import { CDNManifestThumbnail } from "../components/CDNManifestThumbnail";
 import { ResourceGridItem } from "./ResourceGridItem";
@@ -13,13 +13,15 @@ export function ManifestGridSnippet() {
     <ResourceGridItem
       resource={manifest}
       thumbnail={
-        <CDNManifestThumbnail
-          manifestId={manifest?.id || ""}
-          className="w-full h-full object-contain"
-          skip={!!manifestHasThumbnail}
-        >
-          <ManifestThumbnailImage />
-        </CDNManifestThumbnail>
+        <ManifestContext manifest={manifest.id}>
+          <CDNManifestThumbnail
+            manifestId={manifest?.id || ""}
+            className="w-full h-full object-contain"
+            skip={!!manifestHasThumbnail}
+          >
+            <ManifestThumbnailImage />
+          </CDNManifestThumbnail>
+        </ManifestContext>
       }
     />
   );
