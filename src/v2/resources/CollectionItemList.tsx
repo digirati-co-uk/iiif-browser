@@ -45,7 +45,7 @@ export function CollectionItemList({ id }: { id: string }) {
       </LocaleString>
 
       {actions.totalPages > 1 ? (
-        <div className="grid grid-cols-3 z-20 sticky left-0 right-0 top-2 bg-white p-4 rounded-full items-center mb-4 shadow">
+        <div className="grid grid-cols-3 z-30 sticky left-0 right-0 top-2 bg-white p-4 rounded-full items-center mb-4 shadow">
           <Button
             className="text-blue-600 hover:underline disabled:text-gray-300 text-start focus:outline-none px-4"
             onPress={actions.prevPage}

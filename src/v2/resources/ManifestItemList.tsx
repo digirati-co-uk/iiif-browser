@@ -28,7 +28,7 @@ export function ManifestItemList() {
       <LayoutSwitcher isListView={isListView} setIsListView={setIsListView} />
 
       {actions.totalPages > 1 ? (
-        <div className="grid grid-cols-3 sticky left-0 right-0 top-2 bg-white p-4 rounded-full items-center mb-4 shadow z-20">
+        <div className="grid grid-cols-3 sticky left-0 right-0 top-2 mt-2 bg-white p-4 rounded-full items-center mb-4 shadow z-30">
           <Button
             className="text-blue-600 hover:underline disabled:text-gray-300 text-start focus:outline-none px-4"
             onPress={actions.prevPage}
