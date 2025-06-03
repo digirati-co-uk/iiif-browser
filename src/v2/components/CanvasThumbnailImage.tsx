@@ -16,7 +16,8 @@ export function CanvasThumbnailImage() {
   return (
     <LazyLoadComponent>
       <img
-        className="w-full h-full object-contain"
+        draggable="false"
+        className="w-full h-full object-contain select-none"
         src={thumbnail?.id}
         alt=""
       />
