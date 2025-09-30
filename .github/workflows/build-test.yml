@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["22", "24"]
+        node: ["22"]
 
     name: Node ${{ matrix.node }} build
     steps:
@@ -49,10 +49,4 @@ jobs:
         run: pnpm pack
 
       - name: Rename package
-        run: mv iiif-browser-${{ env.VERSION }}.tgz iiif-browser-${{ env.VERSION }}-${{ env.GITHUB_SHA }}.tgz
-
-      - name: Archive npm package
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-preview-version
-          path: iiif-browser-${{ env.VERSION }}-${{ env.GITHUB_SHA }}.tgz
+        run: mv iiif-browser-${{ env.VERSION }}.tgz dist/package.tgz

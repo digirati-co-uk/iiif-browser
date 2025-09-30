@@ -54,7 +54,8 @@
     "typecheck": "tsc --noEmit",
     "prepack": "tsdown",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "preview-pkg": "pnpm pack --pack-destination storybook-static/",
+    "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
     "@atlas-viewer/atlas": "^2.3.7",
