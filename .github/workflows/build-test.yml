@@ -42,7 +42,7 @@ jobs:
 
       - name: Get version
         run: |
-          VERSION=$(npm version | jq -r '.iiif-browser')
+          VERSION=$(cat package.json | jq -r '.version')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: NPM Pack
