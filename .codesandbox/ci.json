@@ -1,4 +1,0 @@
-{
-  "sandboxes": ["vanilla-typescript", "vanilla"],
-  "node": "20"
-}

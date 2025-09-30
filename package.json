@@ -54,7 +54,7 @@
     "typecheck": "tsc --noEmit",
     "prepack": "tsdown",
     "storybook": "storybook dev -p 6006",
-    "preview-pkg": "pnpm pack --pack-destination storybook-static/",
+    "preview-pkg": "pnpm pack --pack-destination storybook-static/ && mv storybook-static/iiif-browser-*.tgz storybook-static/iiif-browser-latest.tgz",
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
