@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18", "20"]
+        node: ["22"]
 
     name: Node ${{ matrix.node }} build
     steps:
@@ -39,3 +39,14 @@ jobs:
 
       - run: pnpm i --frozen-lockfile
       - run: pnpm run build
+
+      - name: Get version
+        run: |
+          VERSION=$(cat package.json | jq -r '.version')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: NPM Pack
+        run: pnpm pack
+
+      - name: Rename package
+        run: mv iiif-browser-${{ env.VERSION }}.tgz dist/package.tgz
