@@ -1,5 +1,5 @@
 import cssPlugin from "esbuild-plugin-react18-css";
-import { type Options, defineConfig } from "tsup";
+import { type Options, defineConfig } from "tsdown";
 
 export default defineConfig((ctx) => {
   return {
@@ -11,9 +11,8 @@ export default defineConfig((ctx) => {
     },
 
     target: ["es2020"],
-    format: ["esm", "cjs", "iife"],
+    format: ["esm", "cjs"],
     esbuildPlugins: [cssPlugin()],
-    globalName: "IIIFBrowser",
     platform: "browser",
     minify: false,
     external: [

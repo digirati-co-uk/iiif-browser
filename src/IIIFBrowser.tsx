@@ -1,7 +1,7 @@
 import type { BoxStyle } from "@atlas-viewer/atlas";
 import type { Vault } from "@iiif/helpers/vault";
 import { useState } from "react";
-import { VaultProvider } from "react-iiif-vault";
+import { useExistingVault, VaultProvider } from "react-iiif-vault";
 import { ExplorerStoreProvider } from "./IIIFBrowser.store";
 import type {
   HistoryItem,
@@ -95,13 +95,14 @@ export function IIIFBrowser({
   hideBack,
   experimental_header,
 }: IIIFBrowserProps) {
+  const existingVault = useExistingVault(vault);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const canResetLast = allowRemoveEntry || entry?.type === "Text";
 
   return (
-    <VaultProvider vault={vault}>
+    <VaultProvider vault={existingVault}>
       <FilterProvider>
         <ExplorerStoreProvider
           entry={entry.type !== "Text" ? entry : undefined}
