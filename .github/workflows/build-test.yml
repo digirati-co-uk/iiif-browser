@@ -39,3 +39,20 @@ jobs:
 
       - run: pnpm i --frozen-lockfile
       - run: pnpm run build
+
+      - name: Get version
+        run: |
+          VERSION=$(npm version | jq -r '.iiif-browser')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: NPM Pack
+        run: pnpm pack
+
+      - name: Rename package
+        run: mv iiif-browser-${{ env.VERSION }}.tgz iiif-browser-${{ env.VERSION }}-${{ env.GITHUB_SHA }}.tgz
+
+      - name: Archive npm package
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-preview-version
+          path: iiif-browser-${{ env.VERSION }}-${{ env.GITHUB_SHA }}.tgz
