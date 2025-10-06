@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
 import { OutputContext, useCanvasOutputSelector, useMode } from "../context";
 import { CanvasControls } from "../components/CanvasControls";
+import { MediaControls } from "../components/MediaControls";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -50,10 +51,12 @@ export function ManifestCanvasViewer() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex w-full flex-1 min-h-0">
+      <div className="flex w-full flex-1 min-h-0 flex-col">
         <CanvasPanel.Viewer height={"auto"} mode={mode}>
           <CanvasPanel.RenderCanvas
+            strategies={["empty", "images", "media", "textual-content"]}
             renderViewerControls={() => <CanvasControls />}
+            renderMediaControls={() => <MediaControls />}
           >
             <OutputContext.Provider value={outputCtx}>
               <CurrentCanvasRefinement
