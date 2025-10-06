@@ -27,7 +27,7 @@ export function MediaControls() {
   const progressPercent = (duration && Number(duration) > 0) ? ((Number(progress) || 0) * 100) : 0;
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white  border-b border-gray-200 font-sans text-sm min-w-[400px]">
+    <div className="flex items-center gap-3 p-3 bg-white  border-b border-gray-300 font-sans text-sm min-w-[400px]">
       {/* Play/Pause Button */}
       <Button
         isDisabled={playRequested}

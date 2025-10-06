@@ -11,6 +11,7 @@ import { OutputContext, useCanvasOutputSelector, useMode } from "../context";
 import { CanvasControls } from "../components/CanvasControls";
 import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
 import { MediaControls } from "../components/MediaControls";
+import { CanvasThumbnailFallback } from "../components/CanvasThumbnailFallback";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -72,18 +73,21 @@ export function ManifestCanvasViewer() {
           </CanvasPanel.Viewer>
         </ModeProvider>
       </div>
-      <div className="flex-shrink-0 h-32 items-center flex">
-        <SequenceThumbnails
-          classes={{
-            container: "flex gap-1 overflow-x-auto items-center px-[50%]",
-            row: "flex gap-2 border border-gray-200 flex-none h-24 w-24 items-center justify-center rounded overflow-hidden p-1",
-            img: "max-h-24 max-w-24 object-contain h-full w-full",
-            selected: {
-              row: "flex gap-2 border border-blue-400 flex-none bg-blue-100 h-24 w-24 items-center justify-center rounded overflow-hidden p-1",
-            },
-          }}
-        />
-      </div>
+      {sequence.length > 1 ? (
+        <div className="flex-shrink-0 h-32 items-center flex">
+          <SequenceThumbnails
+            fallback={<CanvasThumbnailFallback />}
+            classes={{
+              container: "flex gap-1 overflow-x-auto items-center px-[50%]",
+              row: "flex gap-2 border border-gray-200 flex-none h-24 w-24 items-center justify-center rounded overflow-hidden p-1",
+              img: "max-h-24 max-w-24 object-contain h-full w-full",
+              selected: {
+                row: "flex gap-2 border border-blue-400 flex-none bg-blue-100 h-24 w-24 items-center justify-center rounded overflow-hidden p-1",
+              },
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

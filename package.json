@@ -87,6 +87,7 @@
   },
   "devDependencies": {
     "@atlas-viewer/iiif-image-api": "^2.2.2",
+    "@biomejs/biome": "2.2.5",
     "@chromatic-com/storybook": "^3.2.7",
     "@r2wc/react-to-web-component": "^2.1.0",
     "@storybook/addon-essentials": "^8.6.14",
