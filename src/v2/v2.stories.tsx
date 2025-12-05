@@ -14,15 +14,15 @@ export default {
 };
 
 export const Default = () => (
-  <>
+  <div className="">
     <div className="w-full h-[80vh] flex">
-      <IIIFBrowser debug />
+      <IIIFBrowser debug className="w-full h-[80vh] flex" />
     </div>
     <div className="flex">
       <div id="iiif-browser__debug-history" />
       <div id="iiif-browser__debug-selected" />
     </div>
-  </>
+  </div>
 );
 
 export const DefaultCustomButton = () => (

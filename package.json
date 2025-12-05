@@ -58,27 +58,32 @@
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
-    "@atlas-viewer/atlas": "^2.3.7",
-    "@iiif/helpers": "^1.5.3",
-    "@iiif/parser": "^2.2.4",
+    "@atlas-viewer/atlas": "^3.0.3",
+    "@iiif/helpers": "^1.5.7",
+    "@iiif/parser": "^2.2.8",
     "@iiif/presentation-3": "^2.2.3",
     "@iiif/presentation-3-normalized": "^0.9.7",
     "history": "^5.3.0",
     "minisearch": "^7.2.0",
     "mitt": "^3.0.1",
     "path-to-regexp": "^8.3.0",
-    "polygon-editor": "^0.0.6",
-    "react": "^18.3.1",
+    "polygon-editor": "^0.0.23",
+    "react": "^19.2.1",
     "react-accessible-dropdown-menu-hook": "4.0.0",
     "react-aria": "^3.43.2",
-    "react-aria-components": "^1.12.2",
-    "react-dom": "^18.3.1",
-    "react-iiif-vault": "^1.5.10",
+    "react-aria-components": "^1.13.0",
+    "react-dom": "^19.2.1",
+    "react-iiif-vault": "^2.0.7",
     "react-lazy-load-image-component": "^1.6.3",
     "react-router-dom": "^7.9.3",
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",
     "zustand": "^4.5.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-reconciler": "0.33.0"
+    }
   },
   "devDependencies": {
     "@atlas-viewer/iiif-image-api": "^2.2.2",
@@ -87,6 +92,10 @@
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-interactions": "^8.6.14",
     "@storybook/addon-onboarding": "^8.6.14",
+    "postcss-import": "^16.1.0",
+    "postcss-modules": "^6.0.1",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-postcss-modules": "^2.1.1",
     "@storybook/blocks": "^8.6.14",
     "@storybook/manager-api": "^8.6.14",
     "@storybook/react": "^8.6.14",

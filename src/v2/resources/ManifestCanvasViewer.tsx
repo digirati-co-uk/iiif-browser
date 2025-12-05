@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
 import { OutputContext, useCanvasOutputSelector, useMode } from "../context";
 import { CanvasControls } from "../components/CanvasControls";
+import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -51,18 +52,22 @@ export function ManifestCanvasViewer() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex w-full flex-1 min-h-0">
-        <CanvasPanel.Viewer height={"auto"} mode={mode}>
-          <CanvasPanel.RenderCanvas
-            renderViewerControls={() => <CanvasControls />}
-          >
-            <OutputContext.Provider value={outputCtx}>
-              <CurrentCanvasRefinement
-                editMode={editMode}
-                setEditMode={setEditMode}
-              />
-            </OutputContext.Provider>
-          </CanvasPanel.RenderCanvas>
-        </CanvasPanel.Viewer>
+        <ModeProvider mode={mode}>
+          <CanvasPanel.Viewer height={"auto"} mode={mode}>
+            <ModeContext.Provider value={mode}>
+              <CanvasPanel.RenderCanvas
+                renderViewerControls={() => <CanvasControls />}
+              >
+                  <OutputContext.Provider value={outputCtx}>
+                    <CurrentCanvasRefinement
+                      editMode={editMode}
+                      setEditMode={setEditMode}
+                    />
+                  </OutputContext.Provider>
+              </CanvasPanel.RenderCanvas>
+            </ModeContext.Provider>
+          </CanvasPanel.Viewer>
+        </ModeProvider>
       </div>
       <div className="flex-shrink-0 h-32 items-center flex">
         <SequenceThumbnails

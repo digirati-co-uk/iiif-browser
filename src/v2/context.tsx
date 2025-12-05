@@ -10,6 +10,7 @@ import {
 } from "react";
 import {
   VaultProvider,
+  useAtlasStore,
   useCollection,
   useExistingVault,
   useVault,
@@ -48,15 +49,17 @@ export const OutputContext = createContext<StoreApi<OutputStore> | null>(null);
 const BrowserConfigContext = createContext<BrowserStoreConfig | null>(null);
 const BrowserEventsContext = createContext<BrowserEmitter | null>(null);
 
-export const useMode = create<{
-  mode: ViewerMode;
-  setMode: (mode: ViewerMode) => void;
-  setEditMode: (editing: boolean) => void;
-}>((set) => ({
-  mode: "explore",
-  setMode: (mode) => set({ mode }),
-  setEditMode: (editing) => set({ mode: editing ? "sketch" : "explore" }),
-}));
+
+export function useMode() {
+  const store = useAtlasStore();
+  const [mode, changeMode] = useStore(store, m => [m.mode, m.changeMode]);
+
+  return {
+    mode,
+    setMode: changeMode,
+    setEditMode: (editing: boolean) => changeMode(editing ? "sketch" : "explore"),
+  }
+}
 
 export function useBrowserConfig() {
   const context = useContext(BrowserConfigContext);

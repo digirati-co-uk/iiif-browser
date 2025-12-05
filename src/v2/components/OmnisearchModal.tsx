@@ -48,6 +48,7 @@ export function OmnisearchModal({
   const { collectionSearchTagEnabled } = useUIConfig();
   const { isIndexing } = useSearchIndex();
   const inputRef = useRef<HTMLInputElement>(null);
+  const initialFocus = useRef(false);
   const results = useSearchResults();
   const getSearchResult = useGetSearchResult();
   const sourceFilter = useSearchSourceFilter();
@@ -60,10 +61,24 @@ export function OmnisearchModal({
       if (open === true) return;
       closeModal();
       wasLastOpen.current = true;
+      initialFocus.current = false;
       onClose?.();
     },
     [closeModal, onClose, wasLastOpen],
   );
+
+  const doSearch = (id: string) => {
+    const item = getSearchResult(id) || {
+      id: id,
+      resource: { id: id, type: "unknown" },
+      label: `Open ${id}`,
+      type: "resource",
+      source: "dynamic",
+    };
+    if (item) {
+      selectionAction(item);
+    }
+  };
 
   const selectionAction = useCallback(
     (result: SearchIndexItem) => {
@@ -83,10 +98,13 @@ export function OmnisearchModal({
       {/* What is visible when the modal is open */}
       <Popover
         className={twMerge(
-          "bg-white inset-0 flex flex-col overflow-hidden",
+          "inset-0 flex flex-col overflow-hidden",
           className,
         )}
-        UNSTABLE_portalContainer={container || undefined}
+        UNSTABLE_portalContainer={container}
+        style={{position: "absolute"}}
+        crossOffset={0}
+        containerPadding={0}
         shouldUpdatePosition={false}
       >
         <Dialog
@@ -101,8 +119,8 @@ export function OmnisearchModal({
             <div className="flex flex-1 flex-col overflow-hidden">
               {/* The header / search box itself. */}
               <div className="flex h-14 border-b shadow bg-gray-50">
-                <div className="w-11 ml-0.5 text-xl flex items-center justify-center text-slate-500">
-                  <SearchIcon className="not-sr-only" />
+                <div className="w-11 ml-0.5 text-xl flex items-center justify-center text-slate-500 ib-search-icon-offset">
+                  <SearchIcon className="not-sr-only bg-gray-50 rounded" />
                 </div>
 
                 <TextField
@@ -111,18 +129,26 @@ export function OmnisearchModal({
                 >
                   <Input
                     ref={inputRef}
-                    autoFocus
-                    key={location.pathname + location.search}
+                    // key={location.pathname + location.search}
                     className="p-1 relative flex-1 w-full h-full bg-transparent z-20 text-slate-600 focus:outline-none"
                     // value={search}
+                    autoFocus
                     onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        doSearch((e.target as any).value);
+                      }
                       // Close on esc
                       if (e.key === "Escape") {
                         closeModalAction();
                         wasLastOpen.current = true;
                       }
                     }}
-                    onFocus={(e) => e.target.select()}
+                    onFocus={(e) => {
+                      if (!initialFocus.current) {
+                        initialFocus.current = true;
+                        e.target.select()
+                      }
+                    }}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </TextField>
@@ -130,7 +156,7 @@ export function OmnisearchModal({
                 <Button
                   aria-label="Close Omnisearch"
                   onPress={() => closeModalAction()}
-                  className="text-2xl rounded focus:outline-none focus:bg-gray-200 flex-shrink-0 px-3 text-slate-500 hover:text-slate-700 m-1"
+                  className="text-2xl rounded bg-gray-50 focus:outline-none focus:bg-gray-200 flex-shrink-0 px-3 text-slate-500 hover:text-slate-700 m-1"
                 >
                   <CloseIcon />
                 </Button>
@@ -148,7 +174,7 @@ export function OmnisearchModal({
                     }
                   }
                 }}
-                className="flex-1 overflow-auto min-h-0 p-2 gap-2"
+                className="flex-1 overflow-auto min-h-0 p-2 gap-2 bg-white"
                 dependencies={[search, results, isIndexing]}
               >
                 {(maybeItem) => {
