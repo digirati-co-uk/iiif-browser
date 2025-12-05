@@ -101,7 +101,7 @@ export function OmnisearchModal({
           "inset-0 flex flex-col overflow-hidden",
           className,
         )}
-        UNSTABLE_portalContainer={container}
+        UNSTABLE_portalContainer={container || undefined}
         style={{position: "absolute"}}
         crossOffset={0}
         containerPadding={0}

@@ -1,7 +1,7 @@
 import cssPlugin from "esbuild-plugin-react18-css";
 import postcssImport from "postcss-import";
 import postcss from "rollup-plugin-postcss";
-import { type Options, defineConfig } from "tsdown";
+import { defineConfig } from "tsdown";
 
 export default defineConfig((ctx) => {
   return {
@@ -22,7 +22,7 @@ export default defineConfig((ctx) => {
       "@iiif/helpers",
     ],
     plugins: [
-      (postcss as any as typeof postcss.default)({
+      postcss({
         plugins: [postcssImport()],
         extract: "index.css",
       }),
