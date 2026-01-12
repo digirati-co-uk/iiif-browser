@@ -53,7 +53,7 @@ export function ManifestCanvasViewer() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex w-full flex-1 min-h-0">
+      <div className="flex w-full flex-1 min-h-0 flex-col">
         <ModeProvider mode={mode}>
           <CanvasPanel.Viewer height={"auto"} mode={mode}>
             <ModeContext.Provider value={mode}>
