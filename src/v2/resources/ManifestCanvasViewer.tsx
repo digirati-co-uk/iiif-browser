@@ -10,6 +10,7 @@ import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
 import { OutputContext, useCanvasOutputSelector, useMode } from "../context";
 import { CanvasControls } from "../components/CanvasControls";
 import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
+import { MediaControls } from "../components/MediaControls";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -56,7 +57,9 @@ export function ManifestCanvasViewer() {
           <CanvasPanel.Viewer height={"auto"} mode={mode}>
             <ModeContext.Provider value={mode}>
               <CanvasPanel.RenderCanvas
+                strategies={["empty", "images", "media", "textual-content"]}
                 renderViewerControls={() => <CanvasControls />}
+                renderMediaControls={() => <MediaControls />}
               >
                   <OutputContext.Provider value={outputCtx}>
                     <CurrentCanvasRefinement
