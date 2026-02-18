@@ -370,11 +370,25 @@ export function OmnisearchModal({
                                     </span>
                                   ) : null}
                                 </div>
-                                <div
-                                  className={`text-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
-                                >
-                                  {item.subLabel ?? item.id}
-                                </div>
+                                {isExternal && item.subLabel ? (
+                                  <div
+                                    className={`text-sm [&_mark]:bg-yellow-200 [&_mark]:text-black [&_mark]:rounded-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
+                                    dangerouslySetInnerHTML={{ __html: item.subLabel }}
+                                  />
+                                ) : (
+                                  <div
+                                    className={`text-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
+                                  >
+                                    {item.subLabel ?? item.id}
+                                  </div>
+                                )}
+                                {isExternal && item.type === "resource" && item.resource?.id ? (
+                                  <div
+                                    className={`text-xs font-mono truncate ${isFocused ? "opacity-70" : "opacity-40"}`}
+                                  >
+                                    {item.resource.id}
+                                  </div>
+                                ) : null}
                               </div>
                               <div className="flex items-center justify-end gap-4">
                                 <div
@@ -527,11 +541,25 @@ function GroupedMenu({
                               </span>
                             ) : null}
                           </div>
-                          <div
-                            className={`text-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
-                          >
-                            {item.subLabel ?? item.id}
-                          </div>
+                          {isExternal && item.subLabel ? (
+                            <div
+                              className={`text-sm [&_mark]:bg-yellow-200 [&_mark]:text-black [&_mark]:rounded-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
+                              dangerouslySetInnerHTML={{ __html: item.subLabel }}
+                            />
+                          ) : (
+                            <div
+                              className={`text-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
+                            >
+                              {item.subLabel ?? item.id}
+                            </div>
+                          )}
+                          {isExternal && item.type === "resource" && item.resource?.id ? (
+                            <div
+                              className={`text-xs font-mono truncate ${isFocused ? "opacity-70" : "opacity-40"}`}
+                            >
+                              {item.resource.id}
+                            </div>
+                          ) : null}
                         </div>
                         <div className="flex items-center justify-end gap-4">
                           <div

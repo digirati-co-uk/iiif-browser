@@ -16,7 +16,7 @@
  */
 export interface V2FilterState {
   /** e.g. 'manifest' | 'collection' | null for "any" */
-  resourceType?: 'manifest' | 'collection' | 'canvas' | string | null;
+  resourceType?: "manifest" | "collection" | "canvas" | string | null;
   /** Source filter from the omnibox (e.g. 'collection', 'history') */
   sourceFilter?: string | null;
   /** The ID of the currently loaded collection, if any */
@@ -29,7 +29,7 @@ export interface V2FilterState {
 // Search result model
 // ---------------------------------------------------------------------------
 
-export type V2SearchResultKind = 'within' | 'external';
+export type V2SearchResultKind = "within" | "external";
 
 /**
  * Unified internal result shape used by both within-collection search and
@@ -53,7 +53,7 @@ export interface V2SearchResult {
    */
   resourceId: string;
   /** IIIF resource type */
-  resourceType: 'manifest' | 'collection' | 'canvas' | 'annotation' | string;
+  resourceType: "manifest" | "collection" | "canvas" | "annotation" | string;
   /** Any extra data the adapter wishes to attach (for custom rendering, etc.) */
   metadata?: Record<string, unknown>;
 }
@@ -84,20 +84,37 @@ export interface V2ExternalSearchAdapter {
    * This function should handle its own error handling and return an empty
    * array (not throw) on failure so the omnibox degrades gracefully.
    */
-  search(
-    query: string,
-    options: V2ExternalSearchAdapterSearchOptions,
-  ): Promise<V2SearchResult[]>;
+  search(query: string, options: V2ExternalSearchAdapterSearchOptions): Promise<V2SearchResult[]>;
 }
 
 // ---------------------------------------------------------------------------
 // Typesense config
 // ---------------------------------------------------------------------------
 
+/**
+ * A single hit returned by the Typesense search API, including the document
+ * fields and any highlight snippets produced by the server.
+ */
+export interface V2TypesenseHit {
+  /** The raw document stored in the collection. */
+  document: Record<string, unknown>;
+  /**
+   * Per-field highlight information.  Each entry contains the matched field
+   * name and an HTML-snippet string with `<mark>` tags around matched tokens.
+   */
+  highlights?: Array<{
+    field: string;
+    /** HTML snippet with matched tokens wrapped in `<mark>` tags. */
+    snippet?: string;
+    matched_tokens?: string[];
+  }>;
+  text_match?: number;
+}
+
 export interface V2TypesenseConfig {
   host: string;
   port?: number;
-  protocol?: 'http' | 'https';
+  protocol?: "http" | "https";
   apiKey: string;
   collection: string;
   /**
@@ -108,8 +125,12 @@ export interface V2TypesenseConfig {
   /**
    * Optional custom mapper: convert a raw Typesense hit into a V2SearchResult.
    * When omitted a sensible default mapping is applied.
+   *
+   * The `hit` argument contains both the full `document` and any server-side
+   * `highlights` (snippets with `<mark>` tags around matched tokens).  Use
+   * `hit.highlights` to surface contextual match previews as the `summary`.
    */
-  mapHitToResult?(hit: Record<string, unknown>): V2SearchResult;
+  mapHitToResult?(hit: V2TypesenseHit): V2SearchResult;
   /**
    * Optional custom mapper: convert the current UI filter state into a
    * Typesense `filter_by` expression string.
@@ -123,10 +144,10 @@ export interface V2TypesenseConfig {
 // ---------------------------------------------------------------------------
 
 export type V2SearchCombinationMode =
-  | 'grouped'      // default – section headers for each source
-  | 'interleaved'  // round-robin merge
-  | 'externalFirst'
-  | 'withinFirst';
+  | "grouped" // default – section headers for each source
+  | "interleaved" // round-robin merge
+  | "externalFirst"
+  | "withinFirst";
 
 export interface V2SearchCombinationConfig {
   mode?: V2SearchCombinationMode;
@@ -179,10 +200,7 @@ export interface V2SearchConfig {
    */
   filterStrategy?: {
     passActiveFilters?: boolean;
-    mapFiltersToExternalQuery?(
-      filters: V2FilterState,
-      context: { searchText: string },
-    ): Record<string, unknown>;
+    mapFiltersToExternalQuery?(filters: V2FilterState, context: { searchText: string }): Record<string, unknown>;
   };
 
   /**
@@ -219,9 +237,9 @@ export interface NormalizedV2SearchConfig {
   combination: Required<V2SearchCombinationConfig>;
   filterStrategy: {
     passActiveFilters: boolean;
-    mapFiltersToExternalQuery?: V2SearchConfig['filterStrategy'] extends undefined
+    mapFiltersToExternalQuery?: V2SearchConfig["filterStrategy"] extends undefined
       ? never
-      : NonNullable<V2SearchConfig['filterStrategy']>['mapFiltersToExternalQuery'];
+      : NonNullable<V2SearchConfig["filterStrategy"]>["mapFiltersToExternalQuery"];
   };
   withinSectionLabel: string;
   externalSectionLabel: string;
@@ -233,14 +251,12 @@ export interface NormalizedV2SearchConfig {
  * Resolve raw `V2SearchConfig` (or undefined) into a fully-filled
  * `NormalizedV2SearchConfig` with all defaults applied.
  */
-export function normalizeV2SearchConfig(
-  raw: V2SearchConfig | undefined,
-): NormalizedV2SearchConfig {
+export function normalizeV2SearchConfig(raw: V2SearchConfig | undefined): NormalizedV2SearchConfig {
   return {
     enableWithinCollection: raw?.enableWithinCollection ?? true,
     enableExternal: raw?.enableExternal ?? false,
     combination: {
-      mode: raw?.combination?.mode ?? 'grouped',
+      mode: raw?.combination?.mode ?? "grouped",
       maxExternalResults: raw?.combination?.maxExternalResults ?? 10,
       maxWithinResults: raw?.combination?.maxWithinResults ?? 30,
     },
@@ -248,8 +264,8 @@ export function normalizeV2SearchConfig(
       passActiveFilters: raw?.filterStrategy?.passActiveFilters ?? true,
       mapFiltersToExternalQuery: raw?.filterStrategy?.mapFiltersToExternalQuery,
     },
-    withinSectionLabel: raw?.withinSectionLabel ?? 'In this collection',
-    externalSectionLabel: raw?.externalSectionLabel ?? 'Global results',
+    withinSectionLabel: raw?.withinSectionLabel ?? "In this collection",
+    externalSectionLabel: raw?.externalSectionLabel ?? "Global results",
     typesense: raw?.typesense,
     adapter: raw?.adapter,
   };

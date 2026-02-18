@@ -1529,15 +1529,16 @@ export const SearchTypesenseConfig = () => (
             per_page: 8,
           },
           mapHitToResult(hit) {
+            const doc = hit.document;
             return {
-              id: String(hit.id),
-              label: String(hit.label ?? hit.title ?? "Untitled resource"),
-              thumbnail: hit.thumbnail ? String(hit.thumbnail) : null,
-              summary: hit.summary ? String(hit.summary) : null,
+              id: String(doc.id),
+              label: String(doc.label ?? doc.title ?? "Untitled resource"),
+              thumbnail: doc.thumbnail ? String(doc.thumbnail) : null,
+              summary: hit.highlights?.map((h) => h.snippet?.trim()).filter(Boolean).join(" · ") ?? (doc.summary ? String(doc.summary) : null),
               kind: "external",
-              resourceId: String(hit.iiif_id ?? hit.id),
-              resourceType: String(hit.type ?? "manifest"),
-              metadata: hit,
+              resourceId: String(doc.iiif_id ?? doc.id),
+              resourceType: String(doc.type ?? "manifest"),
+              metadata: doc,
             };
           },
         },

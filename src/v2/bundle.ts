@@ -9,6 +9,7 @@ export type {
   V2ExternalSearchAdapterSearchOptions,
   V2FilterState,
   V2TypesenseConfig,
+  V2TypesenseHit,
   V2SearchCombinationMode,
   V2SearchCombinationConfig,
   NormalizedV2SearchConfig,
