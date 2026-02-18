@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from "react";
 import type { IIIFBrowserProps } from "./IIIFBrowser";
 import { OmnisearchModal } from "./components/OmnisearchModal";
 import { BrowserProvider, useLastUrl, useSearchBoxState } from "./context";
+import type { V2SearchConfig } from "./search/types";
 import type { SearchIndexItem } from "./stores/omnisearch-store";
 
 const uiConfigDefault: IIIFBrowserProps["ui"] = {
@@ -19,10 +20,12 @@ export function IIIFBrowserOmnisearch({
   navigation,
   output,
   debug,
+  search,
   className,
   children,
   onSelect,
 }: Omit<IIIFBrowserProps, "ui"> & {
+  search?: V2SearchConfig;
   className?: string;
   children: (ctx: RenderFunctionModalContext) => React.ReactNode;
   onSelect: (item: SearchIndexItem) => void;
@@ -35,6 +38,7 @@ export function IIIFBrowserOmnisearch({
       outputConfig={output}
       browserConfig={history}
       linkConfig={navigation}
+      searchConfig={search}
       debug={debug}
     >
       <OmnisearchModal

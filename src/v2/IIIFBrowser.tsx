@@ -1,6 +1,7 @@
 import "./index.css";
 import type { Vault } from "@iiif/helpers";
 import { type ReactNode, useMemo } from "react";
+import type { V2SearchConfig } from "./search/types";
 import { Route, Routes } from "react-router-dom";
 import { BrowserContainer } from "./browser/BrowserContainer";
 import { BrowserFooter } from "./browser/BrowserFooter";
@@ -62,6 +63,7 @@ export interface IIIFBrowserProps {
   };
   debug?: boolean;
   vault?: Vault;
+  search?: V2SearchConfig;
 }
 
 export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
@@ -90,6 +92,7 @@ export function IIIFBrowser({
   className,
   vault,
   innerClassName,
+  search,
 }: IIIFBrowserProps) {
   const allCustomPages = useDefaultPages(customPages);
 
@@ -100,6 +103,7 @@ export function IIIFBrowser({
       uiConfig={ui}
       browserConfig={history}
       linkConfig={navigation}
+      searchConfig={search}
       debug={debug}
     >
       <BrowserContainer className={className} innerClassName={innerClassName}>
