@@ -19,6 +19,8 @@ import { Router, useSearchParams } from "react-router-dom";
 import { type StoreApi, useStore } from "zustand";
 import { create } from "zustand";
 import type { DeepPartial, IIIFBrowserConfig } from "./IIIFBrowser";
+import type { NormalizedV2SearchConfig, V2SearchConfig } from "./search/types";
+import { normalizeV2SearchConfig } from "./search/types";
 import { type BrowserLinkConfig, isDomainAllowed } from "./browser/BrowserLink";
 import { type BrowserEmitter, createEmitter } from "./events";
 import {
@@ -48,6 +50,7 @@ const OmnisearchContext = createContext<StoreApi<OmnisearchStore> | null>(null);
 export const OutputContext = createContext<StoreApi<OutputStore> | null>(null);
 const BrowserConfigContext = createContext<BrowserStoreConfig | null>(null);
 const BrowserEventsContext = createContext<BrowserEmitter | null>(null);
+const SearchConfigContext = createContext<NormalizedV2SearchConfig | null>(null);
 
 
 export function useMode() {
@@ -348,12 +351,19 @@ export function useSelectedActions() {
   });
 }
 
+export function useSearchConfig(): NormalizedV2SearchConfig {
+  const ctx = useContext(SearchConfigContext);
+  // Return a safe default if called outside BrowserProvider (e.g. in tests).
+  return ctx ?? normalizeV2SearchConfig(undefined);
+}
+
 export function BrowserProvider({
   vault: customVault,
   uiConfig,
   browserConfig,
   linkConfig,
   outputConfig,
+  searchConfig,
   debug,
   children,
 }: {
@@ -362,6 +372,7 @@ export function BrowserProvider({
   browserConfig?: Partial<BrowserStoreConfig>;
   linkConfig?: Partial<BrowserLinkConfig>;
   outputConfig?: Partial<OutputConfig>;
+  searchConfig?: V2SearchConfig;
   debug?: boolean;
   children: React.ReactNode;
 }) {
@@ -374,6 +385,12 @@ export function BrowserProvider({
       createEmitter({
         debug: debug ?? false,
       }),
+    [],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
+  const normalizedSearchConfig = useMemo(
+    () => normalizeV2SearchConfig(searchConfig),
     [],
   );
 
@@ -627,7 +644,9 @@ export function BrowserProvider({
               <VaultProvider vault={vault}>
                 <StoreContext.Provider value={store}>
                   <OmnisearchContext.Provider value={omnisearchStore}>
-                    <CustomRouter basename="/">{children}</CustomRouter>
+                    <SearchConfigContext.Provider value={normalizedSearchConfig}>
+                      <CustomRouter basename="/">{children}</CustomRouter>
+                    </SearchConfigContext.Provider>
                   </OmnisearchContext.Provider>
                 </StoreContext.Provider>
               </VaultProvider>

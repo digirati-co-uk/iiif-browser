@@ -55,7 +55,7 @@ type BaseAction = {
   actionLabel?: string;
   keywords?: string[];
   showWhenEmpty?: boolean;
-  source: "dynamic" | "history" | "static" | "custom" | "collection";
+  source: "dynamic" | "history" | "static" | "custom" | "collection" | "external";
 };
 
 type SearchAction = BaseAction & {
