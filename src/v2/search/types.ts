@@ -115,6 +115,7 @@ export interface V2TypesenseConfig {
   host: string;
   port?: number;
   protocol?: "http" | "https";
+  path?: string;
   apiKey: string;
   collection: string;
   /**

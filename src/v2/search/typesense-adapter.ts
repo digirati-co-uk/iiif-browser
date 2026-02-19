@@ -131,7 +131,8 @@ function buildTypesenseUrl(config: V2TypesenseConfig): string {
   const protocol = config.protocol ?? "https";
   const port = config.port;
   const host = port ? `${config.host}:${port}` : config.host;
-  return `${protocol}://${host}/collections/${encodeURIComponent(config.collection)}/documents/search`;
+  const path = config.path ?? "";
+  return `${protocol}://${host}${path}/collections/${encodeURIComponent(config.collection)}/documents/search`;
 }
 
 // ---------------------------------------------------------------------------
