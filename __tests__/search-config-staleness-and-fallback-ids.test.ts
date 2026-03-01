@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
-import { createTypesenseAdapter } from "../src/v2/search/typesense-adapter";
+import { createTypesenseAdapter } from "../src/search/typesense-adapter";
 
 async function readRepoFile(relativePath: string): Promise<string> {
   return readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
@@ -8,10 +8,10 @@ async function readRepoFile(relativePath: string): Promise<string> {
 
 describe("search config staleness and fallback ids", () => {
   it("memoises search config based on its direct input", async () => {
-    const contextSource = await readRepoFile("src/v2/context.tsx");
+    const contextSource = await readRepoFile("src/context.tsx");
     expect(contextSource).toMatch(/normalizeV2SearchConfig\(searchConfig\),\s*\[searchConfig\]/m);
 
-    const modalSource = await readRepoFile("src/v2/components/OmnisearchModal.tsx");
+    const modalSource = await readRepoFile("src/components/OmnisearchModal.tsx");
     expect(modalSource).toMatch(/createExternalSearchAdapter\(searchConfig\),\s*\[searchConfig\]/m);
   });
 
