@@ -38,7 +38,7 @@
   "scripts": {
     "build": "tsdown",
     "start": "vite",
-    "dev": "tsdown src/v2/bundle.ts --watch",
+    "dev": "tsdown src/bundle.ts --watch",
     "lint": "publint",
     "test": "vitest",
     "typecheck": "tsc --noEmit",

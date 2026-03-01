@@ -8,7 +8,7 @@ export default defineConfig((ctx) => {
     dts: true,
 
     entry: {
-      index: "./src/v2/bundle.ts",
+      index: "./src/bundle.ts",
     },
     target: ["es2020"],
     format: ["esm", "cjs"],

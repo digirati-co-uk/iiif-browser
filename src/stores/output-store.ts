@@ -2,8 +2,8 @@ import type { BoxSelector, Vault } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/presentation-3";
 import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
-import { formats } from "../../formats";
-import { targets } from "../../targets";
+import { formats } from "../formats";
+import { targets } from "../targets";
 import {
   type BrowserLinkConfig,
   isDomainAllowed,

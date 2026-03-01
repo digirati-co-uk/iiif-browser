@@ -3,7 +3,7 @@ import type {
   OutputFormat,
   OutputTarget,
   OutputType,
-} from "../../IIIFBrowser.types";
+} from "../IIIFBrowser.types";
 import { BrowserOutput } from "../components/BrowserOutput";
 import { BrowserOutputActions } from "./BrowserOuputActions";
 import { BrowserOutputPreview } from "./BrowserOutputPreview";

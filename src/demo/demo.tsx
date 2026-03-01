@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { IIIFBrowser } from "../v2/bundle";
+import { IIIFBrowser } from "../bundle";
 
 const root = createRoot(document.getElementById("root")!);
 

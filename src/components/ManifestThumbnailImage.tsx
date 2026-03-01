@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useManifest, useVault } from "react-iiif-vault";
-import { useThumbnail } from "../hooks/use-thumbnail";
-import { DocumentIcon } from "../v2/icons/DocumentIcon";
 import { FolderIcon } from "./FolderIcon";
 import { Spinner } from "./Spinner";
+import { useThumbnail } from "../hooks/use-thumbnail";
+import { DocumentIcon } from "../icons/DocumentIcon";
 
 const blacklistFullLoadManifests = ["https://iiif.ub.uni-leipzig.de"];
 
@@ -33,7 +33,7 @@ export function ManifestThumbnailImage() {
   if (didFail || !thumbnail.thumbnail) {
     return (
       <div className="w-full h-full flex items-center justify-center text-3xl text-OnBaseText">
-        <DocumentIcon width="50%" height="50%" />
+        <DocumentIcon height="50%" width="50%" className="opacity-20" />
       </div>
     );
   }

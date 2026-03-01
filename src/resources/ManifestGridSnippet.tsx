@@ -1,5 +1,5 @@
 import { ManifestContext, useManifest } from "react-iiif-vault";
-import { ManifestThumbnailImage } from "../../components/ManifestThumbnailImage";
+import { ManifestThumbnailImage } from "../components/ManifestThumbnailImage";
 import { CDNManifestThumbnail } from "../components/CDNManifestThumbnail";
 import { ResourceGridItem } from "./ResourceGridItem";
 
