@@ -79,18 +79,48 @@ type BrowserLinkProps<ET extends React.ElementType = "span"> = {
   >;
 
 export function isDomainAllowed(link: string, allowedDomains: string[]) {
-  const allowed = false;
+  const parseAsHttpUrl = (value: string): URL | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const hasScheme = /^[a-z][a-z\d+\-.]*:/i.test(trimmed);
+    const url = new URL(hasScheme ? trimmed : `https://${trimmed}`);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+
+    return url;
+  };
+
+  let inputUrl: URL | null;
+  try {
+    inputUrl = parseAsHttpUrl(link);
+  } catch {
+    inputUrl = null;
+  }
+  if (!inputUrl) return false;
+
+  const inputHostname = inputUrl.hostname.toLowerCase();
+
   for (const domain of allowedDomains || []) {
-    const normalisedDomain = domain
-      .replace("https://", "")
-      .replace("http://", "");
-    const normalisedId = link.replace("https://", "").replace("http://", "");
-    if (normalisedId.startsWith(normalisedDomain)) {
+    let allowedUrl: URL | null;
+    try {
+      allowedUrl = parseAsHttpUrl(domain);
+    } catch {
+      allowedUrl = null;
+    }
+    if (!allowedUrl) continue;
+
+    const allowedHostname = allowedUrl.hostname.toLowerCase();
+    if (
+      inputHostname === allowedHostname ||
+      inputHostname.endsWith(`.${allowedHostname}`)
+    ) {
       return true;
     }
   }
 
-  return allowed;
+  return false;
 }
 
 export function BrowserLink<ET extends React.ElementType = "span">({
