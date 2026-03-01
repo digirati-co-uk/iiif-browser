@@ -29,8 +29,8 @@ import { useExternalSearch } from "../hooks/use-external-search";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { CloseIcon } from "../icons/CloseIcon";
 import { SearchIcon } from "../icons/SearchIcon";
-import { combineSearchResults, isExternalItem } from "../search/combine";
 import { createExternalSearchAdapter } from "../search/adapter-factory";
+import { combineSearchResults, isExternalItem } from "../search/combine";
 import type { SearchIndexItem } from "../stores/omnisearch-store";
 import { SearchResultIcon } from "./SearchResultIcon";
 
@@ -76,9 +76,10 @@ export function OmnisearchModal({
 
   const searchConfig = useSearchConfig();
 
-  // Resolve adapter once (treated as static config).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: adapter config is static
-  const adapter = useMemo(() => createExternalSearchAdapter(searchConfig), []);
+  const adapter = useMemo(
+    () => createExternalSearchAdapter(searchConfig),
+    [searchConfig],
+  );
 
   const {
     results: externalResults,
@@ -100,8 +101,14 @@ export function OmnisearchModal({
     const effectiveWithin = searchConfig.enableWithinCollection
       ? (withinResults ?? [])
       : [];
-    const effectiveExternal = searchConfig.enableExternal ? externalResults : [];
-    return combineSearchResults(effectiveWithin, effectiveExternal, searchConfig);
+    const effectiveExternal = searchConfig.enableExternal
+      ? externalResults
+      : [];
+    return combineSearchResults(
+      effectiveWithin,
+      effectiveExternal,
+      searchConfig,
+    );
   }, [withinResults, externalResults, searchConfig]);
 
   const isGrouped =
@@ -321,7 +328,12 @@ export function OmnisearchModal({
                       }
                     }}
                     className="p-2 gap-2"
-                    dependencies={[search, combined, isIndexing, externalResults]}
+                    dependencies={[
+                      search,
+                      combined,
+                      isIndexing,
+                      externalResults,
+                    ]}
                   >
                     {(maybeItem) => {
                       const item =
@@ -348,13 +360,18 @@ export function OmnisearchModal({
                               <div className="flex items-center">
                                 <SearchResultIcon
                                   item={item}
-                                  className={isFocused ? "opacity-100" : "opacity-50"}
+                                  className={
+                                    isFocused ? "opacity-100" : "opacity-50"
+                                  }
                                 />
                               </div>
                               <div className="flex-1 min-w-0 truncate select-none">
                                 <div className="flex items-center gap-2">
-                                  <strong className="truncate">{item.label}</strong>
-                                  {item.source === "collection" && showCollectionTag ? (
+                                  <strong className="truncate">
+                                    {item.label}
+                                  </strong>
+                                  {item.source === "collection" &&
+                                  showCollectionTag ? (
                                     <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
                                       current collection
                                     </span>
@@ -373,7 +390,9 @@ export function OmnisearchModal({
                                 {isExternal && item.subLabel ? (
                                   <div
                                     className={`text-sm [&_mark]:bg-yellow-200 [&_mark]:text-black [&_mark]:rounded-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
-                                    dangerouslySetInnerHTML={{ __html: item.subLabel }}
+                                    dangerouslySetInnerHTML={{
+                                      __html: item.subLabel,
+                                    }}
                                   />
                                 ) : (
                                   <div
@@ -382,7 +401,9 @@ export function OmnisearchModal({
                                     {item.subLabel ?? item.id}
                                   </div>
                                 )}
-                                {isExternal && item.type === "resource" && item.resource?.id ? (
+                                {isExternal &&
+                                item.type === "resource" &&
+                                item.resource?.id ? (
                                   <div
                                     className={`text-xs font-mono truncate ${isFocused ? "opacity-70" : "opacity-40"}`}
                                   >
@@ -525,7 +546,8 @@ function GroupedMenu({
                         <div className="flex-1 min-w-0 truncate select-none">
                           <div className="flex items-center gap-2">
                             <strong className="truncate">{item.label}</strong>
-                            {item.source === "collection" && showCollectionTag ? (
+                            {item.source === "collection" &&
+                            showCollectionTag ? (
                               <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
                                 current collection
                               </span>
@@ -544,7 +566,9 @@ function GroupedMenu({
                           {isExternal && item.subLabel ? (
                             <div
                               className={`text-sm [&_mark]:bg-yellow-200 [&_mark]:text-black [&_mark]:rounded-sm ${isFocused ? "opacity-100 underline" : "opacity-50"}`}
-                              dangerouslySetInnerHTML={{ __html: item.subLabel }}
+                              dangerouslySetInnerHTML={{
+                                __html: item.subLabel,
+                              }}
                             />
                           ) : (
                             <div
@@ -553,7 +577,9 @@ function GroupedMenu({
                               {item.subLabel ?? item.id}
                             </div>
                           )}
-                          {isExternal && item.type === "resource" && item.resource?.id ? (
+                          {isExternal &&
+                          item.type === "resource" &&
+                          item.resource?.id ? (
                             <div
                               className={`text-xs font-mono truncate ${isFocused ? "opacity-70" : "opacity-40"}`}
                             >

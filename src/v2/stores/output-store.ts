@@ -24,6 +24,35 @@ export type SelectedItem = {
   selector?: BoxSelector;
 };
 
+const typeNormalizationMap: Record<string, string> = {
+  manifest: "Manifest",
+  collection: "Collection",
+  canvas: "Canvas",
+};
+
+export function normalizeResourceType(type: string | null | undefined): string {
+  const value = (type || "").trim();
+  if (!value) {
+    return "unknown";
+  }
+
+  const normalized = typeNormalizationMap[value.toLowerCase()];
+  return normalized || value;
+}
+
+function normalizeIdentityInput(
+  input: SelectedItem | { id: string; type: string } | string,
+): SelectedItem | { id: string; type: string } {
+  if (typeof input === "string") {
+    return { id: input, type: "unknown" };
+  }
+
+  return {
+    ...input,
+    type: normalizeResourceType(input.type),
+  };
+}
+
 // This needs to track the following:
 // - Which items are selected
 // - When selected items are automatically selected on navigation
@@ -122,10 +151,7 @@ export function canNavigateItem(
   config: BrowserLinkConfig,
   vault: Vault,
 ) {
-  let input = _input;
-  if (typeof input === "string") {
-    input = { id: input, type: "unknown" };
-  }
+  const input = normalizeIdentityInput(_input);
 
   if (config.customCanNavigate) {
     try {
@@ -169,10 +195,7 @@ export function canSelectItem(
   config: BrowserLinkConfig,
   vault: Vault,
 ) {
-  let input = _input;
-  if (typeof input === "string") {
-    input = { id: input, type: "unknown" };
-  }
+  const input = normalizeIdentityInput(_input);
 
   if (config.customCanSelect) {
     try {
@@ -207,6 +230,33 @@ export function canSelectItem(
   return allowed;
 }
 
+export function isOutputSupportedForSelection(
+  outputTarget: OutputTarget,
+  selectedItems: SelectedItem[],
+) {
+  if (selectedItems.length === 0) {
+    return false;
+  }
+
+  if (outputTarget.supportedTypes.includes("All")) {
+    return true;
+  }
+
+  const uniqueTypes = new Set(selectedItems.map((item) => item.type));
+
+  if (selectedItems.length === 1) {
+    const onlyType = selectedItems[0]!.type;
+    return outputTarget.supportedTypes.includes(onlyType as any);
+  }
+
+  if (uniqueTypes.size !== 1) {
+    return false;
+  }
+
+  const [onlyType] = uniqueTypes;
+  return outputTarget.supportedTypes.includes(`${onlyType}List` as any);
+}
+
 export function createOutputStore(options: OutputStoreOptions) {
   const { output, emitter, linkConfig, vault } = options;
 
@@ -221,11 +271,15 @@ export function createOutputStore(options: OutputStoreOptions) {
     allOutputs: output,
     availableOutputs: output,
 
-    async runTargetAction(output: OutputTarget) {
+    async runTargetAction(outputTarget: OutputTarget) {
       const resources = get().selectedItems;
-      const format = output.format;
+      if (!isOutputSupportedForSelection(outputTarget, resources)) {
+        return;
+      }
+
+      const format = outputTarget.format;
       const chosenFormat = formats[format.type];
-      const template = targets[output.type];
+      const template = targets[outputTarget.type];
 
       const resource = resources.length === 1 ? resources[0] : resources;
 
@@ -234,7 +288,9 @@ export function createOutputStore(options: OutputStoreOptions) {
       }
 
       if (!chosenFormat || !template) {
-        throw new Error(`Unsupported output: ${format.type} / ${output.type}`);
+        throw new Error(
+          `Unsupported output: ${format.type} / ${outputTarget.type}`,
+        );
       }
 
       const formatted = await chosenFormat.format(
@@ -242,7 +298,12 @@ export function createOutputStore(options: OutputStoreOptions) {
         format as never,
         vault,
       );
-      await template.action(formatted, resource as any, output as any, vault);
+      await template.action(
+        formatted,
+        resource as any,
+        outputTarget as any,
+        vault,
+      );
     },
     replaceSelectedItems(items: Array<SelectedItem>): void {
       const selectedItems = items.filter(canSelect);
@@ -333,41 +394,9 @@ export function createOutputStore(options: OutputStoreOptions) {
       return;
     }
 
-    const availableOutputs = output.filter((output) => {
-      if (selectedItems.length === 1) {
-        const item = selectedItems[0]!;
-        // Handle cases for single items.
-        if (!output.supportedTypes.includes(item.type as any)) {
-          return false;
-        }
-
-        return true;
-      }
-
-      const uniqueTypes: string[] = [];
-      for (const item of selectedItems) {
-        if (uniqueTypes.includes(item.type)) {
-          continue;
-        }
-        uniqueTypes.push(item.type);
-      }
-
-      // Option 1: check for `${type}List`
-      if (uniqueTypes.length === 1) {
-        const uniqueType = uniqueTypes[0]!;
-        const typeList = `${uniqueType}List`;
-        if (!output.supportedTypes.includes(typeList as any)) {
-          return false;
-        }
-      }
-
-      // At the moment no way to support this. Maybe an "All" type, useful for callbacks.
-      if (output.supportedTypes.includes("All")) {
-        return true;
-      }
-
-      return true;
-    });
+    const availableOutputs = output.filter((outputTarget) =>
+      isOutputSupportedForSelection(outputTarget, selectedItems),
+    );
 
     store.setState({ availableOutputs });
   });

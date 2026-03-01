@@ -41,6 +41,7 @@ import {
   canNavigateItem,
   canSelectItem,
   createOutputStore,
+  normalizeResourceType,
 } from "./stores/output-store";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
@@ -182,16 +183,28 @@ export function useResolve() {
   const _resolve = useStore(store, (state) => state.resolve);
 
   return useCallback(
-    (...input: Parameters<typeof _resolve>) => {
-      let toCheck: any = input[0];
+    (
+      input: string | { id: string; type: string },
+      options?: Parameters<typeof _resolve>[1],
+    ) => {
+      let toCheck: { id: string; type: string } | string = input;
+      const url = typeof input === "string" ? input : input.id;
       if (typeof toCheck === "string") {
         const maybeResource = vault.get(toCheck);
         if (maybeResource) {
-          toCheck = { id: maybeResource.id, type: maybeResource.type };
+          toCheck = {
+            id: maybeResource.id,
+            type: normalizeResourceType(maybeResource.type),
+          };
         }
+      } else {
+        toCheck = {
+          id: toCheck.id,
+          type: normalizeResourceType(toCheck.type),
+        };
       }
       if (canResolve(toCheck)) {
-        _resolve(...input);
+        _resolve(url, options);
       }
     },
     [_resolve, canResolve, vault],
@@ -215,7 +228,16 @@ export function useIsPageLoading() {
 
 export function useCurrentRoute() {
   const store = useBrowserStoreContext();
-  return useStore(store, (state) => state.historyList[0]!);
+  return useStore(store, (state) =>
+    getActiveHistoryEntry(state.historyList, state.historyIndex),
+  );
+}
+
+export function getActiveHistoryEntry(
+  historyList: BrowserStore["historyList"],
+  historyIndex: number,
+) {
+  return historyList[historyIndex] ?? historyList[0]!;
 }
 
 export function useLoadingPage() {
@@ -388,10 +410,9 @@ export function BrowserProvider({
     [],
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const normalizedSearchConfig = useMemo(
     () => normalizeV2SearchConfig(searchConfig),
-    [],
+    [searchConfig],
   );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
@@ -588,7 +609,10 @@ export function BrowserProvider({
       createOmnisearchStore({
         vault,
         emitter,
-        initialRoute: store.getState().historyList[0]!,
+        initialRoute: getActiveHistoryEntry(
+          store.getState().historyList,
+          store.getState().historyIndex,
+        ),
         history: store.getState().history,
         initialHistory: store.getState().linearHistory,
         staticItems: [

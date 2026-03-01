@@ -29,6 +29,15 @@ interface TypesenseSearchResponse {
   search_time_ms?: number;
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "name" in error &&
+    (error as { name?: string }).name === "AbortError"
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Default hit → V2SearchResult mapper
 // ---------------------------------------------------------------------------
@@ -72,7 +81,7 @@ function summaryFromHighlights(highlights: TypesenseSearchHit["highlights"]): st
 function defaultMapHitToResult(hit: TypesenseSearchHit): V2SearchResult {
   const doc = hit.document;
 
-  const id = pickString(doc, ["id", "@id", "iiif_id", "iiifId"]) ?? String(Math.random());
+  const explicitId = pickString(doc, ["id", "@id", "iiif_id", "iiifId"]);
 
   const label = pickString(doc, ["label", "title", "name", "heading"]) ?? "Untitled resource";
 
@@ -84,7 +93,13 @@ function defaultMapHitToResult(hit: TypesenseSearchHit): V2SearchResult {
     pickString(doc, ["summary", "description", "snippet", "metadata.summary"]) ??
     null;
 
-  const resourceId = pickString(doc, ["iiif_id", "iiifId", "manifest_id", "manifestId", "id", "@id"]) ?? id;
+  const resourceId =
+    pickString(doc, ["iiif_id", "iiifId", "manifest_id", "manifestId", "id", "@id"]) ??
+    explicitId;
+  if (!resourceId) {
+    throw new Error("Typesense hit is missing an id/resource identifier");
+  }
+  const id = explicitId ?? `resource:${resourceId}`;
 
   const rawType = pickString(doc, ["type", "resource_type", "resourceType", "@type"]) ?? "";
   const resourceType = rawType.toLowerCase().includes("collection")
@@ -209,6 +224,7 @@ export function createTypesenseAdapter(config: V2TypesenseConfig): V2ExternalSea
 
         const response = await fetch(url, {
           method: "GET",
+          signal: options.signal,
           headers: {
             "X-TYPESENSE-API-KEY": config.apiKey,
             Accept: "application/json",
@@ -237,6 +253,9 @@ export function createTypesenseAdapter(config: V2TypesenseConfig): V2ExternalSea
           })
           .filter((r): r is V2SearchResult => r !== null);
       } catch (error) {
+        if (isAbortError(error) || options.signal.aborted) {
+          return [];
+        }
         console.warn("[iiif-browser] Typesense search error:", error);
         return [];
       }

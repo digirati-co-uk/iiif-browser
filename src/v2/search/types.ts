@@ -67,6 +67,11 @@ export interface V2ExternalSearchAdapterSearchOptions {
   filters: V2FilterState;
   /** Maximum number of results to return */
   limit: number;
+  /**
+   * Abort signal for cancelling in-flight requests when query/input changes.
+   * Adapters should forward this to underlying request clients where possible.
+   */
+  signal: AbortSignal;
   /** Additional context (e.g. language, current collection, etc.) */
   context?: Record<string, unknown>;
 }

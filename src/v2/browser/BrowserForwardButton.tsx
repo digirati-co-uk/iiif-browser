@@ -13,6 +13,13 @@ import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
+export function getForwardHistoryList(
+  historyList: ReturnType<typeof useHistoryList>,
+  historyIndex: number,
+) {
+  return historyList.slice(historyIndex + 1, historyIndex + 11);
+}
+
 export function BrowserForwardButton() {
   const history = useHistory();
   const historyList = useHistoryList();
@@ -25,7 +32,7 @@ export function BrowserForwardButton() {
     // To show:
     // [d, e]
 
-    return historyList.slice(historyIndex + 1, 10);
+    return getForwardHistoryList(historyList, historyIndex);
   }, [historyList, historyIndex]);
 
   return (

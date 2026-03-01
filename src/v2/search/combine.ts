@@ -20,6 +20,51 @@ import type {
 // V2SearchResult → SearchIndexItem adapter
 // ---------------------------------------------------------------------------
 
+function escapeHtmlChar(char: string): string {
+  switch (char) {
+    case '&':
+      return '&amp;';
+    case '<':
+      return '&lt;';
+    case '>':
+      return '&gt;';
+    case '"':
+      return '&quot;';
+    case "'":
+      return '&#39;';
+    default:
+      return char;
+  }
+}
+
+/**
+ * Sanitize external summary HTML to a strict allowlist of `<mark>` tags.
+ * Any other tag/attribute is escaped and rendered as text.
+ */
+export function sanitizeExternalSummaryHtml(input: string): string {
+  let output = '';
+
+  for (let i = 0; i < input.length; i++) {
+    const maybeOpenTag = input.slice(i, i + 6).toLowerCase();
+    if (maybeOpenTag === '<mark>') {
+      output += '<mark>';
+      i += 5;
+      continue;
+    }
+
+    const maybeCloseTag = input.slice(i, i + 7).toLowerCase();
+    if (maybeCloseTag === '</mark>') {
+      output += '</mark>';
+      i += 6;
+      continue;
+    }
+
+    output += escapeHtmlChar(input[i]!);
+  }
+
+  return output;
+}
+
 /**
  * Convert a `V2SearchResult` (returned by an external adapter) into a
  * `SearchIndexItem` so it can be rendered by the existing omnibox dropdown.
@@ -27,11 +72,15 @@ import type {
  * The result is typed as a `ResourceAction` with `source: 'external'`.
  */
 export function searchResultToIndexItem(result: V2SearchResult): SearchIndexItem {
+  const safeSubLabel = sanitizeExternalSummaryHtml(
+    result.summary ?? result.resourceId,
+  );
+
   return {
     id: `external:${result.id}`,
     type: 'resource',
     label: result.label,
-    subLabel: result.summary ?? result.resourceId,
+    subLabel: safeSubLabel,
     source: 'external',
     resource: {
       id: result.resourceId,

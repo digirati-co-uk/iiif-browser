@@ -57,6 +57,14 @@ export interface UseExternalSearchResult {
   error: unknown;
 }
 
+export function canApplyExternalSearchResponse(
+  signal: AbortSignal,
+  requestId: number,
+  latestRequestId: number,
+): boolean {
+  return !signal.aborted && requestId === latestRequestId;
+}
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -75,6 +83,7 @@ export function useExternalSearch({
 
   // Track the abort controller for the in-flight request so we can cancel it.
   const abortRef = useRef<AbortController | null>(null);
+  const latestRequestIdRef = useRef(0);
 
   // Keep a stable reference to context so it doesn't invalidate the effect.
   const contextRef = useRef(context);
@@ -92,6 +101,7 @@ export function useExternalSearch({
   const runSearch = useCallback(
     async (searchQuery: string, signal: AbortSignal) => {
       if (!adapter) return;
+      const requestId = ++latestRequestIdRef.current;
 
       setIsLoading(true);
       setError(null);
@@ -100,20 +110,21 @@ export function useExternalSearch({
         const data = await adapter.search(searchQuery, {
           filters: filtersRef.current,
           limit,
+          signal,
           context: contextRef.current,
         });
 
         // If the request was superseded while in flight, ignore the results.
-        if (signal.aborted) return;
+        if (!canApplyExternalSearchResponse(signal, requestId, latestRequestIdRef.current)) return;
 
         setResults(data);
       } catch (err) {
-        if (signal.aborted) return;
+        if (!canApplyExternalSearchResponse(signal, requestId, latestRequestIdRef.current)) return;
         console.warn('[iiif-browser] External search error:', err);
         setError(err);
         setResults([]);
       } finally {
-        if (!signal.aborted) {
+        if (canApplyExternalSearchResponse(signal, requestId, latestRequestIdRef.current)) {
           setIsLoading(false);
         }
       }
