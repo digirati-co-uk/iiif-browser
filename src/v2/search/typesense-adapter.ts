@@ -29,6 +29,15 @@ interface TypesenseSearchResponse {
   search_time_ms?: number;
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "name" in error &&
+    (error as { name?: string }).name === "AbortError"
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Default hit → V2SearchResult mapper
 // ---------------------------------------------------------------------------
@@ -209,6 +218,7 @@ export function createTypesenseAdapter(config: V2TypesenseConfig): V2ExternalSea
 
         const response = await fetch(url, {
           method: "GET",
+          signal: options.signal,
           headers: {
             "X-TYPESENSE-API-KEY": config.apiKey,
             Accept: "application/json",
@@ -237,6 +247,9 @@ export function createTypesenseAdapter(config: V2TypesenseConfig): V2ExternalSea
           })
           .filter((r): r is V2SearchResult => r !== null);
       } catch (error) {
+        if (isAbortError(error) || options.signal.aborted) {
+          return [];
+        }
         console.warn("[iiif-browser] Typesense search error:", error);
         return [];
       }
