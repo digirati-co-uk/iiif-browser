@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { isDomainAllowed } from "../src/browser/BrowserLink";
-import { sanitizeExternalSummaryHtml, searchResultToIndexItem } from "../src/search/combine";
-import type { V2SearchResult } from "../src/search/types";
+import { isDomainAllowed } from "../src/v2/browser/BrowserLink";
+import { sanitizeExternalSummaryHtml, searchResultToIndexItem } from "../src/v2/search/combine";
+import type { V2SearchResult } from "../src/v2/search/types";
 
 describe("external search safety", () => {
   it("sanitizes external summary HTML safely", () => {

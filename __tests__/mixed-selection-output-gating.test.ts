@@ -1,8 +1,8 @@
 import { Vault } from "@iiif/helpers";
 import mitt from "mitt";
 import { describe, expect, it } from "vitest";
-import type { BrowserLinkConfig } from "../src/browser/BrowserLink";
-import { createOutputStore, type OutputTarget, type SelectedItem } from "../src/stores/output-store";
+import type { BrowserLinkConfig } from "../src/v2/browser/BrowserLink";
+import { createOutputStore, type OutputTarget, type SelectedItem } from "../src/v2/stores/output-store";
 
 function createConfig(overrides: Partial<BrowserLinkConfig> = {}): BrowserLinkConfig {
   return {

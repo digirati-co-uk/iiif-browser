@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getForwardHistoryList } from "../src/browser/BrowserForwardButton";
-import { getActiveHistoryEntry } from "../src/context";
-import { createEmitter } from "../src/events";
+import { getForwardHistoryList } from "../src/v2/browser/BrowserForwardButton";
+import { getActiveHistoryEntry } from "../src/v2/context";
+import { createEmitter } from "../src/v2/events";
 import {
   createBrowserStore,
   type BrowserStoreConfig,
   type HistoryItem,
-} from "../src/stores/browser-store";
+} from "../src/v2/stores/browser-store";
 
 const baseConfig: Omit<BrowserStoreConfig, "initialHistory" | "initialHistoryCursor"> = {
   historyLimit: 100,

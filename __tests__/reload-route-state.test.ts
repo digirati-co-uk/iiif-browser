@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createEmitter } from "../src/events";
-import { getReloadRequest } from "../src/browser/BrowserReloadButton";
+import { createEmitter } from "../src/v2/events";
+import { getReloadRequest } from "../src/v2/browser/BrowserReloadButton";
 import {
   createBrowserStore,
   type BrowserStoreConfig,
   type HistoryItem,
-} from "../src/stores/browser-store";
+} from "../src/v2/stores/browser-store";
 
 function createHistoryItem(route: string, url: string): HistoryItem {
   return {
