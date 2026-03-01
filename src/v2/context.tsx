@@ -215,7 +215,16 @@ export function useIsPageLoading() {
 
 export function useCurrentRoute() {
   const store = useBrowserStoreContext();
-  return useStore(store, (state) => state.historyList[0]!);
+  return useStore(store, (state) =>
+    getActiveHistoryEntry(state.historyList, state.historyIndex),
+  );
+}
+
+export function getActiveHistoryEntry(
+  historyList: BrowserStore["historyList"],
+  historyIndex: number,
+) {
+  return historyList[historyIndex] ?? historyList[0]!;
 }
 
 export function useLoadingPage() {
@@ -588,7 +597,10 @@ export function BrowserProvider({
       createOmnisearchStore({
         vault,
         emitter,
-        initialRoute: store.getState().historyList[0]!,
+        initialRoute: getActiveHistoryEntry(
+          store.getState().historyList,
+          store.getState().historyIndex,
+        ),
         history: store.getState().history,
         initialHistory: store.getState().linearHistory,
         staticItems: [

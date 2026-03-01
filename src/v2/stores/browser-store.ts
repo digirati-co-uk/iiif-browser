@@ -23,6 +23,10 @@ import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
 import { selectorFromXYWH } from "../utilities/selector-from-xywh";
 
+type IndexedHistory = History & {
+  index?: number;
+};
+
 // Things the store needs to do:
 // - Handle conversion of URLs to Routes
 // - Keep track of which resources are loaded.
@@ -957,10 +961,14 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     let newIndex = currentIndex;
 
     if (r.action === Action.Pop) {
-      // Find the target item in the history list
-      const historyIndex = newHistoryList.findIndex(
-        (item) => item.route === locationUrl,
-      );
+      // When duplicate routes exist, prefer the memory-history stack index.
+      const stackIndex = (history as IndexedHistory).index;
+      const historyIndex =
+        typeof stackIndex === "number" &&
+        stackIndex >= 0 &&
+        stackIndex < newHistoryList.length
+          ? stackIndex
+          : newHistoryList.findIndex((item) => item.route === locationUrl);
 
       if (historyIndex !== -1) {
         newIndex = historyIndex;
