@@ -9,7 +9,6 @@ export default defineConfig((ctx) => {
 
     entry: {
       index: "./src/v2/bundle.ts",
-      v1: "./src/index.ts",
     },
     target: ["es2020"],
     format: ["esm", "cjs"],
