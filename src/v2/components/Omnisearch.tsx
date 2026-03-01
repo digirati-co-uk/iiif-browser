@@ -58,7 +58,10 @@ export function Omnisearch() {
     (result: SearchIndexItem) => {
       if (result) {
         if (result.type === "resource") {
-          resolve(result.resource.id);
+          resolve({
+            id: result.resource.id,
+            type: result.resource.type,
+          });
         }
         if (result.type === "action") {
           result.action();

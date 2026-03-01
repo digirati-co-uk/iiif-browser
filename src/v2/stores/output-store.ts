@@ -24,6 +24,35 @@ export type SelectedItem = {
   selector?: BoxSelector;
 };
 
+const typeNormalizationMap: Record<string, string> = {
+  manifest: "Manifest",
+  collection: "Collection",
+  canvas: "Canvas",
+};
+
+export function normalizeResourceType(type: string | null | undefined): string {
+  const value = (type || "").trim();
+  if (!value) {
+    return "unknown";
+  }
+
+  const normalized = typeNormalizationMap[value.toLowerCase()];
+  return normalized || value;
+}
+
+function normalizeIdentityInput(
+  input: SelectedItem | { id: string; type: string } | string,
+): SelectedItem | { id: string; type: string } {
+  if (typeof input === "string") {
+    return { id: input, type: "unknown" };
+  }
+
+  return {
+    ...input,
+    type: normalizeResourceType(input.type),
+  };
+}
+
 // This needs to track the following:
 // - Which items are selected
 // - When selected items are automatically selected on navigation
@@ -122,10 +151,7 @@ export function canNavigateItem(
   config: BrowserLinkConfig,
   vault: Vault,
 ) {
-  let input = _input;
-  if (typeof input === "string") {
-    input = { id: input, type: "unknown" };
-  }
+  const input = normalizeIdentityInput(_input);
 
   if (config.customCanNavigate) {
     try {
@@ -169,10 +195,7 @@ export function canSelectItem(
   config: BrowserLinkConfig,
   vault: Vault,
 ) {
-  let input = _input;
-  if (typeof input === "string") {
-    input = { id: input, type: "unknown" };
-  }
+  const input = normalizeIdentityInput(_input);
 
   if (config.customCanSelect) {
     try {

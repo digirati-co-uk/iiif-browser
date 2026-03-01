@@ -41,6 +41,7 @@ import {
   canNavigateItem,
   canSelectItem,
   createOutputStore,
+  normalizeResourceType,
 } from "./stores/output-store";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
@@ -182,16 +183,28 @@ export function useResolve() {
   const _resolve = useStore(store, (state) => state.resolve);
 
   return useCallback(
-    (...input: Parameters<typeof _resolve>) => {
-      let toCheck: any = input[0];
+    (
+      input: string | { id: string; type: string },
+      options?: Parameters<typeof _resolve>[1],
+    ) => {
+      let toCheck: { id: string; type: string } | string = input;
+      const url = typeof input === "string" ? input : input.id;
       if (typeof toCheck === "string") {
         const maybeResource = vault.get(toCheck);
         if (maybeResource) {
-          toCheck = { id: maybeResource.id, type: maybeResource.type };
+          toCheck = {
+            id: maybeResource.id,
+            type: normalizeResourceType(maybeResource.type),
+          };
         }
+      } else {
+        toCheck = {
+          id: toCheck.id,
+          type: normalizeResourceType(toCheck.type),
+        };
       }
       if (canResolve(toCheck)) {
-        _resolve(...input);
+        _resolve(url, options);
       }
     },
     [_resolve, canResolve, vault],

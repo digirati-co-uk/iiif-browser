@@ -78,6 +78,26 @@ type BrowserLinkProps<ET extends React.ElementType = "span"> = {
     "href" | "children" | "onClick" | "resource"
   >;
 
+export function getBrowserLinkResource(
+  inputResource: {
+    id: string;
+    type: string;
+    parent?: { id: string; type: string };
+  },
+  parent?: { id: string; type: string },
+) {
+  return {
+    ...inputResource,
+    parent:
+      inputResource.parent && !parent
+        ? {
+            id: inputResource.parent.id,
+            type: inputResource.parent.type,
+          }
+        : parent,
+  };
+}
+
 export function isDomainAllowed(link: string, allowedDomains: string[]) {
   const parseAsHttpUrl = (value: string): URL | null => {
     const trimmed = value.trim();
@@ -146,19 +166,10 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   const parent = useMemo(() => {
     if (!inputParent) return undefined;
     return { id: inputParent.id, type: inputParent.type };
-  }, [inputParent]);
+  }, [inputParent?.id, inputParent?.type]);
   const resource = useMemo(
-    () => ({
-      ...inputResource,
-      parent:
-        (inputResource as any).parent && !parent
-          ? {
-              id: (inputResource as any).parent.id,
-              type: (inputResource as any).parent.type,
-            }
-          : parent,
-    }),
-    [],
+    () => getBrowserLinkResource(inputResource, parent),
+    [inputResource, parent],
   );
 
   const onAction = useCallback(() => {
