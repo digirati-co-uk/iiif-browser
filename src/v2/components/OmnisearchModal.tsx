@@ -76,9 +76,10 @@ export function OmnisearchModal({
 
   const searchConfig = useSearchConfig();
 
-  // Resolve adapter once (treated as static config).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: adapter config is static
-  const adapter = useMemo(() => createExternalSearchAdapter(searchConfig), []);
+  const adapter = useMemo(
+    () => createExternalSearchAdapter(searchConfig),
+    [searchConfig],
+  );
 
   const {
     results: externalResults,

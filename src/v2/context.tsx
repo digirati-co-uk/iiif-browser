@@ -410,10 +410,9 @@ export function BrowserProvider({
     [],
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const normalizedSearchConfig = useMemo(
     () => normalizeV2SearchConfig(searchConfig),
-    [],
+    [searchConfig],
   );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {

@@ -81,7 +81,7 @@ function summaryFromHighlights(highlights: TypesenseSearchHit["highlights"]): st
 function defaultMapHitToResult(hit: TypesenseSearchHit): V2SearchResult {
   const doc = hit.document;
 
-  const id = pickString(doc, ["id", "@id", "iiif_id", "iiifId"]) ?? String(Math.random());
+  const explicitId = pickString(doc, ["id", "@id", "iiif_id", "iiifId"]);
 
   const label = pickString(doc, ["label", "title", "name", "heading"]) ?? "Untitled resource";
 
@@ -93,7 +93,13 @@ function defaultMapHitToResult(hit: TypesenseSearchHit): V2SearchResult {
     pickString(doc, ["summary", "description", "snippet", "metadata.summary"]) ??
     null;
 
-  const resourceId = pickString(doc, ["iiif_id", "iiifId", "manifest_id", "manifestId", "id", "@id"]) ?? id;
+  const resourceId =
+    pickString(doc, ["iiif_id", "iiifId", "manifest_id", "manifestId", "id", "@id"]) ??
+    explicitId;
+  if (!resourceId) {
+    throw new Error("Typesense hit is missing an id/resource identifier");
+  }
+  const id = explicitId ?? `resource:${resourceId}`;
 
   const rawType = pickString(doc, ["type", "resource_type", "resourceType", "@type"]) ?? "";
   const resourceType = rawType.toLowerCase().includes("collection")
