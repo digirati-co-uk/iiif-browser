@@ -8,16 +8,9 @@ import {
   canSelectItem,
   normalizeResourceType,
 } from "../src/v2/stores/output-store";
+import { describe, expect, it } from "vitest";
 
-function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message);
-  }
-}
-
-function createConfig(
-  overrides: Partial<BrowserLinkConfig> = {},
-): BrowserLinkConfig {
+function createConfig(overrides: Partial<BrowserLinkConfig> = {}): BrowserLinkConfig {
   return {
     allowNavigationToBuiltInPages: true,
     onlyAllowedDomains: false,
@@ -46,88 +39,69 @@ function createConfig(
 
 const vault = new Vault();
 
-{
-  assert(
-    normalizeResourceType("manifest") === "Manifest",
-    "Expected manifest to normalize to Manifest",
-  );
-  assert(
-    normalizeResourceType("collection") === "Collection",
-    "Expected collection to normalize to Collection",
-  );
-  assert(
-    normalizeResourceType("canvas") === "Canvas",
-    "Expected canvas to normalize to Canvas",
-  );
-}
-
-{
-  const manifestBlocked = createConfig({ canNavigateToManifest: false });
-  assert(
-    !canNavigateItem(
-      { id: "https://example.org/manifest/1", type: "manifest" },
-      manifestBlocked,
-      vault,
-    ),
-    "Expected manifest navigation to be blocked even when external type is lowercase",
-  );
-
-  const manifestAllowed = createConfig({ canNavigateToManifest: true });
-  assert(
-    canNavigateItem(
-      { id: "https://example.org/manifest/1", type: "manifest" },
-      manifestAllowed,
-      vault,
-    ),
-    "Expected manifest navigation when manifest navigation is enabled",
-  );
-}
-
-{
-  const canvasBlocked = createConfig({ canSelectCanvas: false });
-  assert(
-    !canSelectItem(
-      { id: "https://example.org/canvas/1", type: "canvas" },
-      canvasBlocked,
-      vault,
-    ),
-    "Expected canvas selection to be blocked even when external type is lowercase",
-  );
-
-  const canvasAllowed = createConfig({ canSelectCanvas: true });
-  assert(
-    canSelectItem(
-      { id: "https://example.org/canvas/1", type: "canvas" },
-      canvasAllowed,
-      vault,
-    ),
-    "Expected canvas selection when canvas selection is enabled",
-  );
-}
-
-{
-  const embeddedParent = getBrowserLinkResource({
-    id: "https://example.org/canvas/1",
-    type: "Canvas",
-    parent: { id: "https://example.org/manifest/1", type: "Manifest" },
+describe("search resource identity", () => {
+  it("normalizes resource types", () => {
+    expect(normalizeResourceType("manifest")).toBe("Manifest");
+    expect(normalizeResourceType("collection")).toBe("Collection");
+    expect(normalizeResourceType("canvas")).toBe("Canvas");
   });
-  assert(
-    embeddedParent.parent?.id === "https://example.org/manifest/1",
-    "Expected embedded parent identity to be preserved",
-  );
 
-  const overrideParent = getBrowserLinkResource(
-    {
+  it("respects manifest navigation allow-listing", () => {
+    const manifestBlocked = createConfig({ canNavigateToManifest: false });
+    expect(
+      canNavigateItem(
+        { id: "https://example.org/manifest/1", type: "manifest" },
+        manifestBlocked,
+        vault,
+      ),
+    ).toBe(false);
+
+    const manifestAllowed = createConfig({ canNavigateToManifest: true });
+    expect(
+      canNavigateItem(
+        { id: "https://example.org/manifest/1", type: "manifest" },
+        manifestAllowed,
+        vault,
+      ),
+    ).toBe(true);
+  });
+
+  it("respects canvas selection allow-listing", () => {
+    const canvasBlocked = createConfig({ canSelectCanvas: false });
+    expect(
+      canSelectItem(
+        { id: "https://example.org/canvas/1", type: "canvas" },
+        canvasBlocked,
+        vault,
+      ),
+    ).toBe(false);
+
+    const canvasAllowed = createConfig({ canSelectCanvas: true });
+    expect(
+      canSelectItem(
+        { id: "https://example.org/canvas/1", type: "canvas" },
+        canvasAllowed,
+        vault,
+      ),
+    ).toBe(true);
+  });
+
+  it("preserves embedded parent identity and applies overrides", () => {
+    const embeddedParent = getBrowserLinkResource({
       id: "https://example.org/canvas/1",
       type: "Canvas",
       parent: { id: "https://example.org/manifest/1", type: "Manifest" },
-    },
-    { id: "https://example.org/manifest/2", type: "Manifest" },
-  );
-  assert(
-    overrideParent.parent?.id === "https://example.org/manifest/2",
-    "Expected explicit parent prop to override embedded parent identity",
-  );
-}
+    });
+    expect(embeddedParent.parent?.id).toBe("https://example.org/manifest/1");
 
-console.log("search-navigation-resource-identity tests passed");
+    const overrideParent = getBrowserLinkResource(
+      {
+        id: "https://example.org/canvas/1",
+        type: "Canvas",
+        parent: { id: "https://example.org/manifest/1", type: "Manifest" },
+      },
+      { id: "https://example.org/manifest/2", type: "Manifest" },
+    );
+    expect(overrideParent.parent?.id).toBe("https://example.org/manifest/2");
+  });
+});
