@@ -8,11 +8,11 @@ import type {
   OutputFormat,
   OutputTarget,
   OutputType,
-} from "../../IIIFBrowser.types";
-import { getOutputType } from "../../IIIFBrowser.utils";
-import { ComboButton } from "../../components/ComboButton";
-import { formats } from "../../formats";
-import { targets } from "../../targets";
+} from "../IIIFBrowser.types";
+import { getOutputType } from "../IIIFBrowser.utils";
+import { ComboButton } from "./ComboButton";
+import { formats } from "../formats";
+import { targets } from "../targets";
 import { useCurrentRoute, useHistory } from "../context";
 import { useRouteResource } from "../hooks/use-route-resource";
 

@@ -33,23 +33,12 @@
         "default": "./dist/index.js"
       }
     },
-    "./v1": {
-      "require": {
-        "types": "./dist/v1.d.ts",
-        "default": "./dist/v1.cjs"
-      },
-      "import": {
-        "types": "./dist/v1.d.ts",
-        "default": "./dist/v1.js"
-      }
-    },
-    "./dist/index.css": "./dist/index.css",
-    "./dist/v1.css": "./dist/v1.css"
+    "./dist/index.css": "./dist/index.css"
   },
   "scripts": {
     "build": "tsdown",
     "start": "vite",
-    "dev": "tsdown src/index.ts --watch",
+    "dev": "tsdown src/bundle.ts --watch",
     "lint": "publint",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
