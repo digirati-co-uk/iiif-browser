@@ -1,9 +1,10 @@
 import {
   type BoxSelector,
-  Vault,
+  createThumbnailHelper,
   expandTarget,
   getValue,
   parseSelector,
+  Vault,
 } from "@iiif/helpers";
 import { isImageService } from "@iiif/parser/image-3";
 import { upgrade } from "@iiif/parser/upgrader";
@@ -16,7 +17,7 @@ import type {
   CollectionNormalized,
   ManifestNormalized,
 } from "@iiif/presentation-3-normalized";
-import { Action, type History, createMemoryHistory } from "history";
+import { Action, createMemoryHistory, type History } from "history";
 import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
@@ -71,9 +72,9 @@ export type BrowserStore = {
     path: string,
     search: string,
   ): [
-    string | null,
-    null | { id: string; type: string; label?: InternationalString },
-  ];
+      string | null,
+      null | { id: string; type: string; label?: InternationalString },
+    ];
 
   // Omnibar state.
   omnibarValue: string;
@@ -109,6 +110,7 @@ export type HistoryItem = {
     type?: string;
     label?: InternationalString;
   };
+  thumbnail?: string;
   timestamp?: string | null;
 };
 
@@ -187,9 +189,9 @@ function getLocalStorageHistory(
 
     return foundHistory.history.length === 0
       ? {
-          history: defaultHistory,
-          cursor: 0,
-        }
+        history: defaultHistory,
+        cursor: 0,
+      }
       : foundHistory;
   } catch (error) {
     //
@@ -244,13 +246,13 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
   const nonEmptyInitialHistory =
     initialHistory.length === 0
       ? [
-          {
-            resource: null,
-            route: "/",
-            url: "iiif://home",
-            timestamp: new Date().toISOString(),
-          },
-        ]
+        {
+          resource: null,
+          route: "/",
+          url: "iiif://home",
+          timestamp: new Date().toISOString(),
+        },
+      ]
       : initialHistory;
 
   if (!restoreFromLocalStorage) {
@@ -902,14 +904,14 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           currentPage.url === "iiif://home"
             ? [currentPage]
             : [
-                currentPage,
-                {
-                  resource: null,
-                  route: "/",
-                  url: "iiif://home",
-                  timestamp: new Date().toISOString(),
-                },
-              ];
+              currentPage,
+              {
+                resource: null,
+                route: "/",
+                url: "iiif://home",
+                timestamp: new Date().toISOString(),
+              },
+            ];
         set({
           historyList: newHistory,
           linearHistory: newHistory,
@@ -965,8 +967,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       const stackIndex = (history as IndexedHistory).index;
       const historyIndex =
         typeof stackIndex === "number" &&
-        stackIndex >= 0 &&
-        stackIndex < newHistoryList.length
+          stackIndex >= 0 &&
+          stackIndex < newHistoryList.length
           ? stackIndex
           : newHistoryList.findIndex((item) => item.route === locationUrl);
 
@@ -1008,6 +1010,21 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         },
         timestamp: new Date().toISOString(),
       };
+
+      // Cache a thumbnail URL for manifests while the resource is in the vault.
+      if (resource?.type === "Manifest") {
+        const vaultRef = vault.get(resolved as any);
+        if (vaultRef) {
+          createThumbnailHelper(vault)
+            .getBestThumbnailAtSize(vaultRef, { width: 256, height: 256 }, false)
+            .then((result) => {
+              if (result.best?.id) {
+                historyItem.thumbnail = result.best.id;
+              }
+            })
+            .catch(() => { /* ignore */ });
+        }
+      }
 
       switch (r.action) {
         case Action.Push: {

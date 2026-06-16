@@ -8,6 +8,7 @@ import type { BrowserLinkConfig } from "./browser/BrowserLink";
 import { BrowserWindow } from "./browser/BrowserWindow";
 import { Debug } from "./components/Debug";
 import { RouterSwitch } from "./components/RouterSwitch";
+import { WindowErrorBoundary } from "./components/WindowErrorBoundary";
 import { BrowserProvider } from "./context";
 import { NotFoundPage } from "./routes/404";
 import AboutPage from "./routes/AboutPage";
@@ -110,7 +111,9 @@ export function IIIFBrowser({
         <BrowserHeader />
 
         <BrowserWindow>
-          <RouterSwitch routes={allCustomPages} />
+          <WindowErrorBoundary>
+            <RouterSwitch routes={allCustomPages} />
+          </WindowErrorBoundary>
         </BrowserWindow>
         <BrowserFooter
           // onSelect={onSelect}
