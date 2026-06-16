@@ -2,12 +2,12 @@ import { Vault } from "@iiif/helpers";
 import {
   type BrowserLinkConfig,
   getBrowserLinkResource,
-} from "../src/v2/browser/BrowserLink";
+} from "../src/browser/BrowserLink";
 import {
   canNavigateItem,
   canSelectItem,
   normalizeResourceType,
-} from "../src/v2/stores/output-store";
+} from "../src/stores/output-store";
 import { describe, expect, it } from "vitest";
 
 function createConfig(overrides: Partial<BrowserLinkConfig> = {}): BrowserLinkConfig {

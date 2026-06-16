@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { canApplyExternalSearchResponse } from "../src/v2/hooks/use-external-search";
-import type { V2ExternalSearchAdapter } from "../src/v2/search/types";
-import { createTypesenseAdapter } from "../src/v2/search/typesense-adapter";
+import { canApplyExternalSearchResponse } from "../src/hooks/use-external-search";
+import type { V2ExternalSearchAdapter } from "../src/search/types";
+import { createTypesenseAdapter } from "../src/search/typesense-adapter";
 
 describe("external search abort", () => {
   it("forwards an AbortSignal into adapter search options", async () => {

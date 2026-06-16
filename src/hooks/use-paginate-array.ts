@@ -1,0 +1,82 @@
+import { useCallback, useMemo, useRef } from "react";
+import { useHistory, useSearchParams, useUIConfig } from "../context";
+
+export type PaginatedActions = ReturnType<typeof usePaginateArray>[1];
+
+export function usePaginateArray<T>(array: T[], pageSize: number) {
+  const topRef = useRef<HTMLDivElement | null>(null);
+  const [searchParams] = useSearchParams();
+  const history = useHistory();
+  const uiConfig = useUIConfig();
+  const currentPage = Number.parseInt(searchParams.get("page") || "1", 10);
+  const totalPages = Math.ceil(array.length / pageSize);
+
+  const setCurrentPage = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        const next = new URLSearchParams(searchParams);
+        next.set("page", page.toString());
+        const navigate =
+          uiConfig.paginationNavigationType === "push"
+            ? history.push.bind(history)
+            : history.replace.bind(history);
+        navigate({ search: next.toString() });
+        topRef.current?.scrollIntoView({
+          behavior: "instant",
+          inline: "start",
+          block: "nearest",
+        });
+      }
+    },
+    [history, searchParams, totalPages, uiConfig.paginationNavigationType],
+  );
+
+  const paginatedArray = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return array.slice(startIndex, endIndex);
+  }, [array, currentPage, pageSize]);
+
+  const actions = useMemo(() => {
+    // Actions.
+    function nextPage() {
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    }
+
+    function goToPage(page: number) {
+      if (page >= 1 && page <= totalPages) {
+        setCurrentPage(page);
+      }
+    }
+
+    function goToFirstPage() {
+      setCurrentPage(1);
+    }
+
+    function goToLastPage() {
+      setCurrentPage(totalPages);
+    }
+
+    return {
+      currentPage,
+      totalPages,
+      nextPage,
+      prevPage,
+      pageSize,
+      goToPage,
+      goToFirstPage,
+      goToLastPage,
+      topRef,
+    };
+  }, [currentPage, pageSize, totalPages, setCurrentPage]);
+
+  return [paginatedArray, actions] as const;
+}
