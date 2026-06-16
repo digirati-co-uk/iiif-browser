@@ -176,7 +176,14 @@ export function useSearchParams(): [
         typeof updater === "function"
           ? updater(new URLSearchParams(loc.search))
           : updater;
-      history.replace({ ...loc, search: next.toString() });
+      const nextSearch = next.toString();
+      history.replace({
+        ...loc,
+        search:
+          nextSearch && !nextSearch.startsWith("?")
+            ? `?${nextSearch}`
+            : nextSearch,
+      });
     },
     [history],
   );
@@ -193,7 +200,15 @@ export function useNavigate() {
     (to: { search: string } | string, options?: { replace?: boolean }) => {
       const loc = locationRef.current;
       const target =
-        typeof to === "string" ? to : { ...loc, search: to.search };
+        typeof to === "string"
+          ? to
+          : {
+              ...loc,
+              search:
+                to.search && !to.search.startsWith("?")
+                  ? `?${to.search}`
+                  : to.search,
+            };
       if (options?.replace) {
         history.replace(target);
       } else {

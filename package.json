@@ -48,9 +48,9 @@
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
-    "@atlas-viewer/atlas": "^3.0.3",
-    "@iiif/helpers": "^1.5.7",
-    "@iiif/parser": "^2.2.8",
+    "@atlas-viewer/atlas": "^3.1.1",
+    "@iiif/helpers": "^1.5.9",
+    "@iiif/parser": "^2.2.10",
     "@iiif/presentation-3": "^2.2.3",
     "@iiif/presentation-3-normalized": "^0.9.7",
     "history": "^5.3.0",
@@ -58,12 +58,12 @@
     "mitt": "^3.0.1",
     "path-to-regexp": "^8.3.0",
     "polygon-editor": "^0.0.23",
-    "react": "^19.2.1",
+    "react": "^19.2.7",
     "react-accessible-dropdown-menu-hook": "4.0.0",
     "react-aria": "^3.43.2",
     "react-aria-components": "^1.13.0",
-    "react-dom": "^19.2.1",
-    "react-iiif-vault": "^2.0.7",
+    "react-dom": "^19.2.7",
+    "react-iiif-vault": "^2.0.11",
     "react-lazy-load-image-component": "^1.6.3",
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",
@@ -71,7 +71,8 @@
   },
   "pnpm": {
     "overrides": {
-      "react-reconciler": "0.33.0"
+      "react-reconciler": "0.33.0",
+      "@atlas-viewer/atlas": "^3.1.1"
     }
   },
   "devDependencies": {
