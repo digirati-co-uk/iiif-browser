@@ -1,3 +1,4 @@
+import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
 import { useContext, useEffect, useState } from "react";
 import {
   CanvasPanel,
@@ -5,13 +6,16 @@ import {
   useManifest,
   useSimpleViewer,
 } from "react-iiif-vault";
-import { useNavigate } from "react-router-dom";
-import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
-import { OutputContext, useCanvasOutputSelector, useMode } from "../context";
 import { CanvasControls } from "../components/CanvasControls";
-import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
-import { MediaControls } from "../components/MediaControls";
 import { CanvasThumbnailFallback } from "../components/CanvasThumbnailFallback";
+import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
+import { MediaControls } from "../components/MediaControls";
+import {
+  OutputContext,
+  useCanvasOutputSelector,
+  useMode,
+  useNavigate,
+} from "../context";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -62,12 +66,12 @@ export function ManifestCanvasViewer() {
                 renderViewerControls={() => <CanvasControls />}
                 renderMediaControls={() => <MediaControls />}
               >
-                  <OutputContext.Provider value={outputCtx}>
-                    <CurrentCanvasRefinement
-                      editMode={editMode}
-                      setEditMode={setEditMode}
-                    />
-                  </OutputContext.Provider>
+                <OutputContext.Provider value={outputCtx}>
+                  <CurrentCanvasRefinement
+                    editMode={editMode}
+                    setEditMode={setEditMode}
+                  />
+                </OutputContext.Provider>
               </CanvasPanel.RenderCanvas>
             </ModeContext.Provider>
           </CanvasPanel.Viewer>

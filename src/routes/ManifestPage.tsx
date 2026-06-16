@@ -5,8 +5,7 @@ import {
   useManifest,
   useVault,
 } from "react-iiif-vault";
-import { useSearchParams } from "react-router-dom";
-import { useHistory } from "../context";
+import { useHistory, useSearchParams } from "../context";
 import { ManifestCanvasViewer } from "../resources/ManifestCanvasViewer";
 import { ManifestItemList } from "../resources/ManifestItemList";
 

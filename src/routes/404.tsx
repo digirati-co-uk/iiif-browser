@@ -1,6 +1,9 @@
-import { useSearchParams } from "react-router-dom";
-import { useBrowserStoreContext, useLastUrl } from "../context";
 import { useStore } from "zustand";
+import {
+  useBrowserStoreContext,
+  useLastUrl,
+  useSearchParams,
+} from "../context";
 
 export function NotFoundPage() {
   const store = useBrowserStoreContext();
@@ -46,4 +49,4 @@ export function NotFoundPage() {
       )}
     </div>
   );
-};
+}

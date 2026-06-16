@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useCollection, useVault } from "react-iiif-vault";
-import { useSearchParams } from "react-router-dom";
-import { useHistory } from "../context";
+import { useHistory, useSearchParams } from "../context";
 import { CollectionItemList } from "../resources/CollectionItemList";
 
 export function CollectionPage() {

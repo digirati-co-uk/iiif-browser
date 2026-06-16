@@ -1,14 +1,13 @@
 import "./index.css";
 import type { Vault } from "@iiif/helpers";
 import { type ReactNode, useMemo } from "react";
-import type { V2SearchConfig } from "./search/types";
-import { Route, Routes } from "react-router-dom";
 import { BrowserContainer } from "./browser/BrowserContainer";
 import { BrowserFooter } from "./browser/BrowserFooter";
 import { BrowserHeader } from "./browser/BrowserHeader";
 import type { BrowserLinkConfig } from "./browser/BrowserLink";
 import { BrowserWindow } from "./browser/BrowserWindow";
 import { Debug } from "./components/Debug";
+import { RouterSwitch } from "./components/RouterSwitch";
 import { BrowserProvider } from "./context";
 import { NotFoundPage } from "./routes/404";
 import AboutPage from "./routes/AboutPage";
@@ -18,6 +17,7 @@ import { Homepage } from "./routes/Homepage";
 import { ImageServicePage } from "./routes/ImageServicePage";
 import { LoadingPage } from "./routes/LoadingPage";
 import { ManifestPage } from "./routes/ManifestPage";
+import type { V2SearchConfig } from "./search/types";
 import type { BrowserStoreConfig } from "./stores/browser-store";
 import type { OutputTarget } from "./stores/output-store";
 
@@ -110,11 +110,7 @@ export function IIIFBrowser({
         <BrowserHeader />
 
         <BrowserWindow>
-          <Routes>
-            {allCustomPages.map(([path, element]) => (
-              <Route key={path} path={path} element={element} />
-            ))}
-          </Routes>
+          <RouterSwitch routes={allCustomPages} />
         </BrowserWindow>
         <BrowserFooter
           // onSelect={onSelect}

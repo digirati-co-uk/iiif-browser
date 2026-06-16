@@ -1,10 +1,10 @@
-import { useSearchParams } from "react-router-dom";
+import { BrowserOutput } from "../components/BrowserOutput";
+import { useSearchParams } from "../context";
 import type {
   OutputFormat,
   OutputTarget,
   OutputType,
 } from "../IIIFBrowser.types";
-import { BrowserOutput } from "../components/BrowserOutput";
 import { BrowserOutputActions } from "./BrowserOuputActions";
 import { BrowserOutputPreview } from "./BrowserOutputPreview";
 

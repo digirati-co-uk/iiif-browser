@@ -1,5 +1,5 @@
 import { useVaultSelector } from "react-iiif-vault";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "../context";
 
 export function useRouteResource() {
   const location = useLocation();

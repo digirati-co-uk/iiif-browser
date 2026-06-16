@@ -1,5 +1,4 @@
-import { useSearchParams } from "react-router-dom";
-import { useLoadResource } from "../context";
+import { useLoadResource, useSearchParams } from "../context";
 import { ReloadIcon } from "../icons/ReloadIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 

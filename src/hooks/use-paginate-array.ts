@@ -1,21 +1,26 @@
 import { useCallback, useMemo, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useHistory, useSearchParams, useUIConfig } from "../context";
 
 export type PaginatedActions = ReturnType<typeof usePaginateArray>[1];
 
 export function usePaginateArray<T>(array: T[], pageSize: number) {
   const topRef = useRef<HTMLDivElement | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const history = useHistory();
+  const uiConfig = useUIConfig();
   const currentPage = Number.parseInt(searchParams.get("page") || "1", 10);
   const totalPages = Math.ceil(array.length / pageSize);
 
   const setCurrentPage = useCallback(
     (page: number) => {
       if (page >= 1 && page <= totalPages) {
-        setSearchParams((prev) => {
-          prev.set("page", page.toString());
-          return prev;
-        });
+        const next = new URLSearchParams(searchParams);
+        next.set("page", page.toString());
+        const navigate =
+          uiConfig.paginationNavigationType === "push"
+            ? history.push.bind(history)
+            : history.replace.bind(history);
+        navigate({ search: next.toString() });
         topRef.current?.scrollIntoView({
           behavior: "instant",
           inline: "start",
@@ -23,7 +28,7 @@ export function usePaginateArray<T>(array: T[], pageSize: number) {
         });
       }
     },
-    [setSearchParams, totalPages],
+    [history, searchParams, totalPages, uiConfig.paginationNavigationType],
   );
 
   const paginatedArray = useMemo(() => {

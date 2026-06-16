@@ -1,7 +1,7 @@
 import { usePress } from "react-aria";
 import { useCanvas, useManifest } from "react-iiif-vault";
-import { useNavigate } from "react-router-dom";
 import { CanvasThumbnailImage } from "../components/CanvasThumbnailImage";
+import { useNavigate } from "../context";
 
 export function CanvasSnippet() {
   const manifest = useManifest()!;

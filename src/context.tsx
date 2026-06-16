@@ -1,5 +1,5 @@
 import type { ViewerMode } from "@atlas-viewer/atlas";
-import { type Vault, getValue } from "@iiif/helpers";
+import { getValue, type Vault } from "@iiif/helpers";
 import {
   createContext,
   useCallback,
@@ -9,39 +9,37 @@ import {
   useRef,
 } from "react";
 import {
-  VaultProvider,
   useAtlasStore,
   useCollection,
   useExistingVault,
   useVault,
+  VaultProvider,
 } from "react-iiif-vault";
-import { Router, useSearchParams } from "react-router-dom";
-import { type StoreApi, useStore } from "zustand";
-import { create } from "zustand";
+import { create, type StoreApi, useStore } from "zustand";
+import { type BrowserLinkConfig, isDomainAllowed } from "./browser/BrowserLink";
+import { type BrowserEmitter, createEmitter } from "./events";
 import type { DeepPartial, IIIFBrowserConfig } from "./IIIFBrowser";
 import type { NormalizedV2SearchConfig, V2SearchConfig } from "./search/types";
 import { normalizeV2SearchConfig } from "./search/types";
-import { type BrowserLinkConfig, isDomainAllowed } from "./browser/BrowserLink";
-import { type BrowserEmitter, createEmitter } from "./events";
 import {
   type BrowserStore,
   type BrowserStoreConfig,
   createBrowserStore,
 } from "./stores/browser-store";
 import {
+  createOmnisearchStore,
   type OmnisearchStore,
   SearchIndexItem,
-  createOmnisearchStore,
 } from "./stores/omnisearch-store";
 import {
-  type OutputConfig,
-  type OutputStore,
-  type OutputTarget,
-  OutputType,
   canNavigateItem,
   canSelectItem,
   createOutputStore,
   normalizeResourceType,
+  type OutputConfig,
+  type OutputStore,
+  type OutputTarget,
+  OutputType,
 } from "./stores/output-store";
 
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
@@ -51,18 +49,20 @@ const OmnisearchContext = createContext<StoreApi<OmnisearchStore> | null>(null);
 export const OutputContext = createContext<StoreApi<OutputStore> | null>(null);
 const BrowserConfigContext = createContext<BrowserStoreConfig | null>(null);
 const BrowserEventsContext = createContext<BrowserEmitter | null>(null);
-const SearchConfigContext = createContext<NormalizedV2SearchConfig | null>(null);
-
+const SearchConfigContext = createContext<NormalizedV2SearchConfig | null>(
+  null,
+);
 
 export function useMode() {
   const store = useAtlasStore();
-  const [mode, changeMode] = useStore(store, m => [m.mode, m.changeMode]);
+  const [mode, changeMode] = useStore(store, (m) => [m.mode, m.changeMode]);
 
   return {
     mode,
     setMode: changeMode,
-    setEditMode: (editing: boolean) => changeMode(editing ? "sketch" : "explore"),
-  }
+    setEditMode: (editing: boolean) =>
+      changeMode(editing ? "sketch" : "explore"),
+  };
 }
 
 export function useBrowserConfig() {
@@ -145,6 +145,63 @@ export function useCurrentCollection() {
   const url = searchParams.get("id");
 
   return useCollection({ id: url! });
+}
+
+export function useLocation() {
+  const store = useBrowserStoreContext();
+  return useStore(store, (state) => state.router.location);
+}
+
+export function useSearchParams(): [
+  URLSearchParams,
+  (
+    updater: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams),
+  ) => void,
+] {
+  const store = useBrowserStoreContext();
+  const location = useStore(store, (state) => state.router.location);
+  const history = useStore(store, (state) => state.history);
+  const params = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
+  const locationRef = useRef(location);
+  locationRef.current = location;
+  const setParams = useCallback(
+    (
+      updater: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams),
+    ) => {
+      const loc = locationRef.current;
+      const next =
+        typeof updater === "function"
+          ? updater(new URLSearchParams(loc.search))
+          : updater;
+      history.replace({ ...loc, search: next.toString() });
+    },
+    [history],
+  );
+  return [params, setParams];
+}
+
+export function useNavigate() {
+  const store = useBrowserStoreContext();
+  const history = useStore(store, (state) => state.history);
+  const location = useStore(store, (state) => state.router.location);
+  const locationRef = useRef(location);
+  locationRef.current = location;
+  return useCallback(
+    (to: { search: string } | string, options?: { replace?: boolean }) => {
+      const loc = locationRef.current;
+      const target =
+        typeof to === "string" ? to : { ...loc, search: to.search };
+      if (options?.replace) {
+        history.replace(target);
+      } else {
+        history.push(target);
+      }
+    },
+    [history],
+  );
 }
 
 export function useHistory() {
@@ -668,8 +725,10 @@ export function BrowserProvider({
               <VaultProvider vault={vault}>
                 <StoreContext.Provider value={store}>
                   <OmnisearchContext.Provider value={omnisearchStore}>
-                    <SearchConfigContext.Provider value={normalizedSearchConfig}>
-                      <CustomRouter basename="/">{children}</CustomRouter>
+                    <SearchConfigContext.Provider
+                      value={normalizedSearchConfig}
+                    >
+                      {children}
                     </SearchConfigContext.Provider>
                   </OmnisearchContext.Provider>
                 </StoreContext.Provider>
@@ -679,27 +738,5 @@ export function BrowserProvider({
         </BrowserConfigContext.Provider>
       </BrowserEventsContext.Provider>
     </UIConfigContext.Provider>
-  );
-}
-
-function CustomRouter({
-  basename,
-  children,
-}: {
-  basename: string;
-  children: React.ReactNode;
-}) {
-  const history = useHistory();
-  const { action, location } = useHistoryRouter();
-
-  return (
-    <Router
-      navigationType={action}
-      basename={basename}
-      navigator={history}
-      location={location}
-    >
-      {children}
-    </Router>
   );
 }

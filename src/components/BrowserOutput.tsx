@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { LocaleString, useVault, useVaultSelector } from "react-iiif-vault";
-import { useSearchParams } from "react-router-dom";
 import invariant from "tiny-invariant";
 import { useStore } from "zustand";
+import { useCurrentRoute, useHistory, useSearchParams } from "../context";
+import { formats } from "../formats";
+import { useRouteResource } from "../hooks/use-route-resource";
 import type {
   HistoryItem,
   OutputFormat,
@@ -10,11 +12,8 @@ import type {
   OutputType,
 } from "../IIIFBrowser.types";
 import { getOutputType } from "../IIIFBrowser.utils";
-import { ComboButton } from "./ComboButton";
-import { formats } from "../formats";
 import { targets } from "../targets";
-import { useCurrentRoute, useHistory } from "../context";
-import { useRouteResource } from "../hooks/use-route-resource";
+import { ComboButton } from "./ComboButton";
 
 interface ExplorerOutputProps {
   /**

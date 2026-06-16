@@ -1,9 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { ImageService } from "react-iiif-vault";
-import { useSearchParams } from "react-router-dom";
 import { CanvasControls } from "../components/CanvasControls";
 import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
-import { OutputContext, useBrowserEmitter, useMode } from "../context";
+import {
+  OutputContext,
+  useBrowserEmitter,
+  useMode,
+  useSearchParams,
+} from "../context";
 
 export function ImageServicePage() {
   const [searchParams] = useSearchParams();
@@ -33,7 +37,7 @@ export function ImageServicePage() {
           mode={editMode ? "sketch" : "explore"}
           renderViewerControls={() => <CanvasControls />}
           className="flex-1"
-          // @ts-ignore
+          // @ts-expect-error
           height={"auto"}
         >
           <OutputContext.Provider value={outputCtx}>

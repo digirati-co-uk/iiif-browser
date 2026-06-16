@@ -1,5 +1,4 @@
-import { useLocation } from "react-router-dom";
-import { useLastUrl, useResolve } from "../context";
+import { useLastUrl, useLocation, useResolve } from "../context";
 import { HomeIcon } from "../icons/HomeIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
