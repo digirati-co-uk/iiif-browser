@@ -19,7 +19,10 @@ import type {
 } from "@iiif/presentation-3-normalized";
 import { Action, createMemoryHistory, type History } from "history";
 import { createStore } from "zustand/vanilla";
-import { getIIIFResourceFromDigitalCollection } from "../digital-collections";
+import {
+  type DigitalCollectionResource,
+  getIIIFResourceFromDigitalCollection,
+} from "../digital-collections";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
@@ -334,7 +337,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
   let requestAbortController: AbortController | undefined;
   const digitalCollectionResourceCache = new Map<
     string,
-    Promise<{ id: string; type: "Manifest" | "Collection" } | null>
+    Promise<DigitalCollectionResource | null>
   >();
 
   const fixedRoutes = routes.filter((route) => route.type === "fixed");
@@ -555,6 +558,41 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         if (abortController.signal.aborted) {
           return;
         }
+
+        if (resolvedDigitalCollectionResource?.resource) {
+          const route = resourceRoutes.find(
+            (route) => route.resource === resolvedDigitalCollectionResource.type,
+          );
+          if (!route) {
+            return browserResourceError(
+              url,
+              `Unsupported Resource type: ${resolvedDigitalCollectionResource.type}`,
+              true,
+            );
+          }
+
+          vault.loadSync(
+            resolvedDigitalCollectionResource.resource.id,
+            resolvedDigitalCollectionResource.resource,
+          );
+
+          const newSearchParams =
+            options?.searchParams || new URLSearchParams();
+          newSearchParams.set("id", resolvedDigitalCollectionResource.id);
+          const searchParamsString = newSearchParams.toString();
+
+          if (abortController === requestAbortController) {
+            requestAbortController = undefined;
+          }
+          browserSuccess(
+            url,
+            resolvedDigitalCollectionResource.resource,
+            viewSource,
+          );
+          history.replace(`${route.url}?${searchParamsString}`, { parent });
+          return;
+        }
+
         const resourceUrl = resolvedDigitalCollectionResource?.id || url;
 
         const urlToFetch = beforeFetchUrl

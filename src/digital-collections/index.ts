@@ -1,15 +1,15 @@
 import { leedsDigitalCollection } from "./leeds-ac-uk";
-import type { DigitalCollection } from "./types";
+import type { DigitalCollection, DigitalCollectionResource } from "./types";
 
 export { leedsDigitalCollection, leedsDigitalCollections } from "./leeds-ac-uk";
-export type { DigitalCollection } from "./types";
+export type { DigitalCollection, DigitalCollectionResource } from "./types";
 
 export const digitalCollections: DigitalCollection[] = [leedsDigitalCollection];
 
 export async function getIIIFResourceFromDigitalCollection(
   url: string,
   options?: { requestInitOptions?: RequestInit },
-): Promise<{ id: string; type: "Manifest" | "Collection" } | null> {
+): Promise<DigitalCollectionResource | null> {
   for (const collection of digitalCollections) {
     if (await collection.supported(url)) {
       return collection.toIIIF(url, options);
