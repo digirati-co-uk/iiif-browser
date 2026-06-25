@@ -302,6 +302,33 @@ export const CustomHomeButton = () => (
   </>
 );
 
+export const LeedsDigitalCollection = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        history={{
+          localStorageKey: "leeds-digital-collection",
+          restoreFromLocalStorage: false,
+          saveToLocalStorage: false,
+          initialHistory: [
+            {
+              url: "https://explore.library.leeds.ac.uk/special-collections-explore/372659/horae_beatae_mariae_virginis",
+              resource: null,
+              route:
+                "/loading?id=https://explore.library.leeds.ac.uk/special-collections-explore/372659/horae_beatae_mariae_virginis",
+            },
+          ],
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const DisallowedResources = () => (
   <>
     <div className="w-full h-[80vh] flex">

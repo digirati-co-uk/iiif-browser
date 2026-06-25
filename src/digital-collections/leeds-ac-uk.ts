@@ -43,12 +43,12 @@ export const leedsDigitalCollection: DigitalCollection = {
     }
   },
 
-  async toIIIF(url: string) {
+  async toIIIF(url: string, options) {
     if (!this.supported(url)) {
       return null;
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, options?.requestInitOptions);
 
     if (!response.ok) {
       return null;

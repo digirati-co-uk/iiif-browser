@@ -19,6 +19,7 @@ import type {
 } from "@iiif/presentation-3-normalized";
 import { Action, createMemoryHistory, type History } from "history";
 import { createStore } from "zustand/vanilla";
+import { getIIIFResourceFromDigitalCollection } from "../digital-collections";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
@@ -522,10 +523,24 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return;
         }
 
-        const urlToFetch = beforeFetchUrl ? await beforeFetchUrl(url) : url;
-        const response = await fetch(urlToFetch, {
+        const fetchOptions = {
           signal: abortController.signal,
           ...(requestInitOptions || {}),
+        };
+        const digitalCollectionResource =
+          await getIIIFResourceFromDigitalCollection(url, {
+            requestInitOptions: fetchOptions,
+          });
+        if (abortController.signal.aborted) {
+          return;
+        }
+        const resourceUrl = digitalCollectionResource?.id || url;
+
+        const urlToFetch = beforeFetchUrl
+          ? await beforeFetchUrl(resourceUrl)
+          : resourceUrl;
+        const response = await fetch(urlToFetch, {
+          ...fetchOptions,
         });
         // Ignore if aborted.
         if (abortController.signal.aborted) {
@@ -561,9 +576,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
         // Add json parsing hook.
 
-        if (json.id !== url) {
+        if (json.id !== resourceUrl) {
           // Could be a fork, manually patch it.
-          json.id = url;
+          json.id = resourceUrl;
         }
 
         if (isImageService(json)) {

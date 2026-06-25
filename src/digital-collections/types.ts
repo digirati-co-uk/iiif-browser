@@ -8,5 +8,6 @@ export type DigitalCollection = {
   supported(url: string): boolean | Promise<boolean>;
   toIIIF(
     url: string,
+    options?: { requestInitOptions?: RequestInit },
   ): Promise<{ id: string; type: "Manifest" | "Collection" } | null>;
 };

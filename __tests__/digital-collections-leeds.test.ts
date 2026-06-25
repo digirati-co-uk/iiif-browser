@@ -51,7 +51,7 @@ describe("Leeds digital collection", () => {
         id: manifestUrl,
         type: "Manifest",
       });
-      expect(fetchSpy).toHaveBeenCalledWith(leedsUrl);
+      expect(fetchSpy).toHaveBeenCalledWith(leedsUrl, undefined);
     } finally {
       fetchSpy.mockRestore();
     }

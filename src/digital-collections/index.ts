@@ -8,10 +8,11 @@ export const digitalCollections: DigitalCollection[] = [leedsDigitalCollection];
 
 export async function getIIIFResourceFromDigitalCollection(
   url: string,
+  options?: { requestInitOptions?: RequestInit },
 ): Promise<{ id: string; type: "Manifest" | "Collection" } | null> {
   for (const collection of digitalCollections) {
     if (await collection.supported(url)) {
-      return collection.toIIIF(url);
+      return collection.toIIIF(url, options);
     }
   }
 
