@@ -97,6 +97,18 @@ describe("browser digital collections", () => {
         manifestUrl,
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
+
+      await store.getState().loadResource(leedsUrl);
+
+      const leedsFetches = fetchSpy.mock.calls.filter(
+        ([input]) => String(input) === leedsUrl,
+      );
+      const manifestFetches = fetchSpy.mock.calls.filter(
+        ([input]) => String(input) === manifestUrl,
+      );
+
+      expect(leedsFetches).toHaveLength(1);
+      expect(manifestFetches).toHaveLength(2);
     } finally {
       fetchSpy.mockRestore();
     }

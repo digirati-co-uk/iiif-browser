@@ -332,6 +332,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     Object.keys(options.collectionUrlMapping || {}).length > 0;
 
   let requestAbortController: AbortController | undefined;
+  const digitalCollectionResourceCache = new Map<
+    string,
+    Promise<{ id: string; type: "Manifest" | "Collection" } | null>
+  >();
 
   const fixedRoutes = routes.filter((route) => route.type === "fixed");
   const resourceRoutes = routes.filter((route) => route.type === "resource");
@@ -527,14 +531,31 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           signal: abortController.signal,
           ...(requestInitOptions || {}),
         };
-        const digitalCollectionResource =
-          await getIIIFResourceFromDigitalCollection(url, {
+        let digitalCollectionResource =
+          digitalCollectionResourceCache.get(url);
+        if (!digitalCollectionResource) {
+          digitalCollectionResource = getIIIFResourceFromDigitalCollection(url, {
             requestInitOptions: fetchOptions,
-          });
+          })
+            .then((resource) => {
+              if (!resource) {
+                digitalCollectionResourceCache.delete(url);
+              }
+
+              return resource;
+            })
+            .catch((error) => {
+              digitalCollectionResourceCache.delete(url);
+              throw error;
+            });
+          digitalCollectionResourceCache.set(url, digitalCollectionResource);
+        }
+        const resolvedDigitalCollectionResource =
+          await digitalCollectionResource;
         if (abortController.signal.aborted) {
           return;
         }
-        const resourceUrl = digitalCollectionResource?.id || url;
+        const resourceUrl = resolvedDigitalCollectionResource?.id || url;
 
         const urlToFetch = beforeFetchUrl
           ? await beforeFetchUrl(resourceUrl)
