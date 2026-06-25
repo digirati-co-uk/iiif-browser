@@ -33,6 +33,16 @@
         "default": "./dist/index.js"
       }
     },
+    "./digital-collections": {
+      "require": {
+        "types": "./dist/digital-collections.d.cts",
+        "default": "./dist/digital-collections.cjs"
+      },
+      "import": {
+        "types": "./dist/digital-collections.d.ts",
+        "default": "./dist/digital-collections.js"
+      }
+    },
     "./dist/index.css": "./dist/index.css"
   },
   "scripts": {
