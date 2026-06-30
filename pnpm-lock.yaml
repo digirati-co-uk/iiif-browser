@@ -55,8 +55,8 @@ importers:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
       react-iiif-vault:
-        specifier: ^2.0.14
-        version: 2.0.14(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^2.0.15
+        version: 2.0.15(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react-lazy-load-image-component:
         specifier: ^1.6.3
         version: 1.6.3(react@19.2.7)
@@ -3978,8 +3978,8 @@ packages:
     peerDependencies:
       react: '>=16.13.1'
 
-  react-iiif-vault@2.0.14:
-    resolution: {integrity: sha512-y0Yx8Qw5eiZuIFVf3zaEQT/UDXQ2eRm3AYmWK5bsO8nwrtP8tvPW75a9EQ7RTwM3UEy8JeBOyoDJjQzubmKv/g==}
+  react-iiif-vault@2.0.15:
+    resolution: {integrity: sha512-ZH9KPSUR7ec6CYKV2QSuHqV4knoATWvWBvLenlegiFMY6t9ywEldEkRo4sOL7mwXbaELOTZtlbO161uXRKy/Mw==}
     peerDependencies:
       '@atlas-viewer/atlas': 3.2.1
       react: ^18.2.0 || ^19.2.0
@@ -9132,7 +9132,7 @@ snapshots:
       '@babel/runtime': 7.28.4
       react: 19.2.7
 
-  react-iiif-vault@2.0.14(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  react-iiif-vault@2.0.15(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@atlas-viewer/atlas': 3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
       '@floating-ui/react': 0.27.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

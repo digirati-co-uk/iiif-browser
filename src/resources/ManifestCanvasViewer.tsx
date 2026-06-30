@@ -1,5 +1,5 @@
 import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
-import { useContext, useEffect, useId, useState } from "react";
+import { useContext, useEffect, useId } from "react";
 import {
   CanvasPanel,
   SequenceThumbnails,
@@ -22,6 +22,7 @@ import {
 import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { MultiImageIcon } from "../icons/MultiImageIcon";
+import { useLocalStorage } from "../utilities/use-local-storage";
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -39,7 +40,10 @@ export function ManifestCanvasViewer() {
   const location = useLocation();
   const { mode, setEditMode } = useMode();
   const editMode = mode === "sketch";
-  const [showThumbnails, setShowThumbnails] = useState(true);
+  const [showThumbnails, setShowThumbnails] = useLocalStorage(
+    "iiif-browser:show-thumbnails",
+    true,
+  );
   const thumbnailStripId = useId();
 
   const current = sequence[currentSequenceIndex];
