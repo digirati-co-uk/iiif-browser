@@ -716,9 +716,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     return {
       vault,
       history,
-      lastUrl: initialPage.url,
+      lastUrl: initialPage?.url,
       browserState: "IDLE",
-      omnibarValue: initialPage.url,
+      omnibarValue: initialPage?.url,
       historyList: savedHistory,
       linearHistory,
       historyIndex: initialIndex, // Initialize with index 0
@@ -1234,7 +1234,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
   emitter.on("ready", () => {
     // Dispatch the initial page.
-    history.replace(initialPage.route);
+    history.replace(initialPage?.route);
   });
 
   return store;

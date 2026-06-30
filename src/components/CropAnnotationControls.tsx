@@ -21,10 +21,10 @@ export function CropAnnotationControls() {
   }
 
   return (
-    <div className="svg-tools-container animate-fadeIn">
+    <div className="flex items-center gap-1 rounded-md border border-gray-300 bg-white/95 p-1 text-sm text-gray-900 shadow-lg backdrop-blur">
       {mode !== "sketch" && (
         <Button
-          className="svg-tools-button"
+          className="rounded-sm px-3 py-1.5 font-medium transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onPress={() => {
             changeMode("sketch");
           }}
@@ -33,7 +33,10 @@ export function CropAnnotationControls() {
         </Button>
       )}
 
-      <Button className="svg-tools-button" onPress={save}>
+      <Button
+        className="rounded-sm bg-blue-600 px-3 py-1.5 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+        onPress={save}
+      >
         Save
       </Button>
     </div>

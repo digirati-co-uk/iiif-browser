@@ -2,20 +2,17 @@ import { useCallback } from "react";
 import { Button, Toolbar } from "react-aria-components";
 import {
   type AnnotationResponse,
-  BoxSelector,
   useCanvas,
   useRequestAnnotation,
   useViewerPreset,
 } from "react-iiif-vault";
 import {
-  useBrowserConfig,
   useCanvasOutputRotation,
   useCanvasOutputSelector,
   useLinkConfig,
   useMode,
   useRefineSelectedItem,
   useSetRotation,
-  useUIConfig,
 } from "../context";
 import { CropIcon } from "../icons/CropIcon";
 import { DeleteForeverIcon } from "../icons/DeleteForeverIcon";
@@ -64,7 +61,7 @@ export function CanvasControls({ id }: { id?: string }) {
     <Toolbar className="absolute bottom-0 flex gap-1 p-2 z-50">
       <Button
         className={canvasButton.c(
-          "disabled:opacity-40 bg-white/80 hover:bg-white/100 text-black text-2xl flex gap-2 items-center px-2 py-1 rounded-sm",
+          "disabled:opacity-40 bg-white/90 hover:bg-white text-black text-2xl flex gap-2 items-center px-2 py-1 rounded border border-gray-300 shadow-sm transition",
         )}
         onPress={() => preset?.runtime.world.zoomTo(0.75)}
       >
