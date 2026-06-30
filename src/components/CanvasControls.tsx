@@ -2,15 +2,18 @@ import { Button, Toolbar } from "react-aria-components";
 import { BoxSelector, useCanvas, useViewerPreset } from "react-iiif-vault";
 import {
   useBrowserConfig,
+  useCanvasOutputRotation,
   useCanvasOutputSelector,
   useLinkConfig,
   useMode,
   useRefineSelectedItem,
+  useSetRotation,
   useUIConfig,
 } from "../context";
 import { CropIcon } from "../icons/CropIcon";
 import { DeleteForeverIcon } from "../icons/DeleteForeverIcon";
 import { HandIcon } from "../icons/HandIcon";
+import { HomeIcon } from "../icons/HomeIcon";
 import { MinusIcon } from "../icons/MinusIcon";
 import { PlusIcon } from "../icons/PlusIcon";
 import { ReloadIcon } from "../icons/ReloadIcon";
@@ -20,7 +23,9 @@ export function CanvasControls({ id }: { id?: string }) {
   const canvas = useCanvas();
   const preset = useViewerPreset();
   const { canCropImage } = useLinkConfig();
+  const setRotation = useSetRotation();
   const { mode, setEditMode } = useMode();
+  const rotation = useCanvasOutputRotation(canvas);
   const canvasOutputSelector = useCanvasOutputSelector(canvas);
   const refine = useRefineSelectedItem();
   const editMode = mode === "sketch";
@@ -45,6 +50,14 @@ export function CanvasControls({ id }: { id?: string }) {
       <Button
         className={canvasButton.v()}
         onPress={() => preset?.runtime.world.goHome()}
+      >
+        <HomeIcon />
+      </Button>
+      <Button
+        className={canvasButton.v()}
+        onPress={() => {
+          setRotation(id || canvas?.id || "", (rotation + 90) % 360);
+        }}
       >
         <ReloadIcon />
       </Button>

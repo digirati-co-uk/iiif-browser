@@ -2,13 +2,13 @@ import type { BoxSelector, Vault } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/presentation-3";
 import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
-import { formats } from "../formats";
-import { targets } from "../targets";
 import {
   type BrowserLinkConfig,
   isDomainAllowed,
 } from "../browser/BrowserLink";
 import type { BrowserEvents } from "../events";
+import { formats } from "../formats";
+import { targets } from "../targets";
 
 export type SelectedItem = {
   id: string;
@@ -22,6 +22,7 @@ export type SelectedItem = {
     thumbnail?: string;
   };
   selector?: BoxSelector;
+  rotation?: number;
 };
 
 const typeNormalizationMap: Record<string, string> = {
@@ -73,6 +74,7 @@ export interface OutputStore {
   resetSelection(): void;
   runTargetAction(target: OutputTarget): void;
   refineSelectedItem(id: string, refinement: BoxSelector | null): void;
+  setRotation(id: string, rotation: number): void;
 }
 
 export type OutputType =
@@ -94,13 +96,13 @@ type OutputFormat =
   | { type: "json"; pretty?: boolean }
   | { type: "image-service" }
   | {
-      type: "custom";
-      format: (
-        resource: SelectedItem,
-        parent: SelectedItem | null,
-        vault: Vault,
-      ) => any;
-    }
+    type: "custom";
+    format: (
+      resource: SelectedItem,
+      parent: SelectedItem | null,
+      vault: Vault,
+    ) => any;
+  }
   | { type: "url"; resolvable?: boolean };
 
 export type OutputTarget = {
@@ -115,17 +117,17 @@ export type OutputTargetTypes =
   | { type: "callback"; cb: (resource: any) => void }
   | { type: "clipboard" }
   | {
-      type: "input";
-      separator?: string;
-      el: { current: null | HTMLInputElement };
-    }
+    type: "input";
+    separator?: string;
+    el: { current: null | HTMLInputElement };
+  }
   | {
-      type: "open-new-window";
-      urlPattern?: string;
-      target?: string;
-      features?: string;
-      cb?: (resource: any, window: Window | null) => void;
-    };
+    type: "open-new-window";
+    urlPattern?: string;
+    target?: string;
+    features?: string;
+    cb?: (resource: any, window: Window | null) => void;
+  };
 
 export type OutputConfig = OutputTarget[];
 
@@ -144,6 +146,7 @@ type OutputStoreEvents = {
   "output.reset-selection": undefined;
   "output.selection-change": undefined;
   "output.refine-selected-item": SelectedItem;
+  "output.set-rotation": SelectedItem;
 };
 
 export function canNavigateItem(
@@ -342,6 +345,20 @@ export function createOutputStore(options: OutputStoreOptions) {
       if (get().selectedItems.length === 0) {
         get().resetSelection();
       }
+    },
+
+    setRotation(id: string, rotation: number) {
+      const item = get().selectedItems.find((i) => i.id === id);
+      if (!item) return;
+      set({
+        selectedItems: [
+          ...get().selectedItems.filter((i) => i.id !== id),
+          { ...item, rotation },
+        ],
+        wasManuallySelected: true,
+      });
+      emitter.emit("output.set-rotation", item);
+      emitter.emit("output.selection-change");
     },
 
     refineSelectedItem(id: string, refinement: BoxSelector | null): void {

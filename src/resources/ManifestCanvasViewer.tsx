@@ -12,6 +12,7 @@ import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
 import { MediaControls } from "../components/MediaControls";
 import {
   OutputContext,
+  useCanvasOutputRotation,
   useCanvasOutputSelector,
   useMode,
   useNavigate,
@@ -28,6 +29,7 @@ export function ManifestCanvasViewer() {
   const current = sequence[currentSequenceIndex];
   const canvas = items[current[0]];
   const currentCanvasSelector = useCanvasOutputSelector(canvas);
+  const rotation = useCanvasOutputRotation(canvas);
   const xywh = currentCanvasSelector
     ? [
         ~~currentCanvasSelector.spatial.x,
@@ -65,6 +67,7 @@ export function ManifestCanvasViewer() {
                 strategies={["empty", "images", "media", "textual-content"]}
                 renderViewerControls={() => <CanvasControls />}
                 renderMediaControls={() => <MediaControls />}
+                rotation={rotation}
               >
                 <OutputContext.Provider value={outputCtx}>
                   <CurrentCanvasRefinement
