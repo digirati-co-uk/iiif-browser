@@ -520,6 +520,7 @@ export function BrowserProvider({
       forwardButton: true,
       bookmarkButton: false,
       showFilterButton: false,
+      showManifestMetadata: true,
       buttonClassName: "",
       collectionPaginationSize: 25,
       manifestPaginationSize: 25,

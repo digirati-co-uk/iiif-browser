@@ -44,6 +44,7 @@ export interface IIIFBrowserConfig {
   portalIcons: boolean;
   homeLink: string;
   showFilterButton: boolean;
+  showManifestMetadata: boolean;
   collectionSearchTagEnabled: boolean;
   buttonClassName: string;
 }
