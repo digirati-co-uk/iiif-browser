@@ -15,6 +15,7 @@ import {
   OutputContext,
   useCanvasOutputRotation,
   useCanvasOutputSelector,
+  useLocation,
   useMode,
   useNavigate,
 } from "../context";
@@ -35,6 +36,7 @@ export function ManifestCanvasViewer() {
     previousCanvas,
   } = useSimpleViewer();
   const navigate = useNavigate();
+  const location = useLocation();
   const { mode, setEditMode } = useMode();
   const editMode = mode === "sketch";
   const [showThumbnails, setShowThumbnails] = useState(true);
@@ -58,18 +60,24 @@ export function ManifestCanvasViewer() {
       const search = new URLSearchParams();
       search.set("id", manifest.id);
       search.set("canvas", canvas.id);
-      if (currentCanvasSelector) {
+      if (xywh) {
         search.set("xywh", xywh);
+      }
+      const nextSearch = search.toString();
+      const currentSearch = location.search.replace(/^\?/, "");
+
+      if (nextSearch === currentSearch) {
+        return;
       }
 
       navigate(
         {
-          search: search.toString(),
+          search: nextSearch,
         },
         { replace: true },
       );
     }
-  }, [canvas, currentCanvasSelector, manifest.id, navigate, xywh]);
+  }, [canvas, location.search, manifest.id, navigate, xywh]);
 
   return (
     <div className="flex h-full flex-col">

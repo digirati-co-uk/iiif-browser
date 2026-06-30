@@ -258,18 +258,22 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
         },
       ]
       : initialHistory;
+  const initialHistoryIndex = Math.min(
+    Math.max(initialHistoryCursor, 0),
+    nonEmptyInitialHistory.length - 1,
+  );
 
   if (!restoreFromLocalStorage) {
     const history = createMemoryHistory({
       initialEntries: nonEmptyInitialHistory.map((item) => item.route),
-      initialIndex: initialHistoryCursor,
+      initialIndex: initialHistoryIndex,
     });
     return [
       history,
       {
         savedHistory: nonEmptyInitialHistory,
-        initialIndex: initialHistoryCursor,
-        initialPage: nonEmptyInitialHistory[initialHistoryCursor]!,
+        initialIndex: initialHistoryIndex,
+        initialPage: nonEmptyInitialHistory[initialHistoryIndex]!,
         linearHistory: [],
       },
     ];
@@ -285,19 +289,23 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
   const linearHistory = getLocalStorageLinearHistory(nonEmptyInitialHistory, {
     key: `${localStorageKey}_linear`,
   });
-  const initialPage = savedHistory[initialIndex]!;
+  const savedInitialIndex = Math.min(
+    Math.max(initialIndex, 0),
+    savedHistory.length - 1,
+  );
+  const initialPage = savedHistory[savedInitialIndex]!;
   const initialEntries = savedHistory.map((item) => item.route);
 
   const history = createMemoryHistory({
     initialEntries,
-    initialIndex,
+    initialIndex: savedInitialIndex,
   });
 
   return [
     history,
     {
       savedHistory,
-      initialIndex,
+      initialIndex: savedInitialIndex,
       initialPage,
       linearHistory,
     },
@@ -716,9 +724,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     return {
       vault,
       history,
-      lastUrl: initialPage?.url,
+      lastUrl: initialPage.url,
       browserState: "IDLE",
-      omnibarValue: initialPage?.url,
+      omnibarValue: initialPage.url,
       historyList: savedHistory,
       linearHistory,
       historyIndex: initialIndex, // Initialize with index 0
@@ -1234,7 +1242,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
   emitter.on("ready", () => {
     // Dispatch the initial page.
-    history.replace(initialPage?.route);
+    history.replace(initialPage.route);
   });
 
   return store;
