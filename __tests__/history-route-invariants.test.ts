@@ -3,12 +3,15 @@ import { getForwardHistoryList } from "../src/browser/BrowserForwardButton";
 import { getActiveHistoryEntry } from "../src/context";
 import { createEmitter } from "../src/events";
 import {
-  createBrowserStore,
   type BrowserStoreConfig,
+  createBrowserStore,
   type HistoryItem,
 } from "../src/stores/browser-store";
 
-const baseConfig: Omit<BrowserStoreConfig, "initialHistory" | "initialHistoryCursor"> = {
+const baseConfig: Omit<
+  BrowserStoreConfig,
+  "initialHistory" | "initialHistoryCursor"
+> = {
   historyLimit: 100,
   restoreFromLocalStorage: false,
   saveToLocalStorage: false,
