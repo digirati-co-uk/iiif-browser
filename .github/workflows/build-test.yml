@@ -50,3 +50,5 @@ jobs:
 
       - name: Rename package
         run: mv iiif-browser-${{ env.VERSION }}.tgz dist/package.tgz
+
+      - run: pnpm dlx pkg-pr-new publish

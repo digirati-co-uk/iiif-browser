@@ -1,5 +1,12 @@
+import { useCallback } from "react";
 import { Button, Toolbar } from "react-aria-components";
-import { BoxSelector, useCanvas, useViewerPreset } from "react-iiif-vault";
+import {
+  type AnnotationResponse,
+  BoxSelector,
+  useCanvas,
+  useRequestAnnotation,
+  useViewerPreset,
+} from "react-iiif-vault";
 import {
   useBrowserConfig,
   useCanvasOutputRotation,
@@ -18,6 +25,7 @@ import { MinusIcon } from "../icons/MinusIcon";
 import { PlusIcon } from "../icons/PlusIcon";
 import { ReloadIcon } from "../icons/ReloadIcon";
 import { paste } from "../utilities/paste-util";
+import { CropAnnotationControls } from "./CropAnnotationControls";
 
 export function CanvasControls({ id }: { id?: string }) {
   const canvas = useCanvas();
@@ -30,6 +38,27 @@ export function CanvasControls({ id }: { id?: string }) {
   const refine = useRefineSelectedItem();
   const editMode = mode === "sketch";
   const canvasButton = paste();
+  const t = useRequestAnnotation();
+
+  const saveAnnotationResponse = useCallback(
+    (resp: AnnotationResponse | null) => {
+      if (!resp?.cancelled && resp?.boundingBox) {
+        if (id) {
+          refine(id, {
+            type: "BoxSelector",
+            spatial: resp.boundingBox,
+          });
+        } else if (canvas) {
+          refine(canvas.id, {
+            type: "BoxSelector",
+            spatial: resp.boundingBox,
+          });
+        }
+      }
+      setEditMode(false);
+    },
+    [id, canvas, refine, setEditMode],
+  );
 
   return (
     <Toolbar className="absolute bottom-0 flex gap-1 p-2 z-50">
@@ -61,12 +90,21 @@ export function CanvasControls({ id }: { id?: string }) {
       >
         <ReloadIcon />
       </Button>
+
       {canCropImage ? (
         <>
           <Button
             className={canvasButton.v()}
             isDisabled={editMode && !canvasOutputSelector}
-            onPress={() => setEditMode(!editMode)}
+            onPress={() =>
+              t
+                .requestAnnotation({
+                  type: "box",
+                  selector: canvasOutputSelector?.spatial!,
+                  annotationPopup: <CropAnnotationControls />,
+                })
+                .then(saveAnnotationResponse)
+            }
           >
             {canvasOutputSelector ? (
               <span className="text-sm">
