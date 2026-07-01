@@ -93,15 +93,16 @@ export function CanvasControls({ id }: { id?: string }) {
           <Button
             className={canvasButton.v()}
             isDisabled={editMode && !canvasOutputSelector}
-            onPress={() =>
-              t
+            onPress={() => {
+              const selector = canvasOutputSelector?.spatial;
+              return t
                 .requestAnnotation({
                   type: "box",
-                  selector: canvasOutputSelector?.spatial!,
+                  ...(selector ? { selector } : {}),
                   annotationPopup: <CropAnnotationControls />,
                 })
-                .then(saveAnnotationResponse)
-            }
+                .then(saveAnnotationResponse);
+            }}
           >
             {canvasOutputSelector ? (
               <span className="text-sm">

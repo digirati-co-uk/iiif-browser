@@ -350,14 +350,15 @@ export function createOutputStore(options: OutputStoreOptions) {
     setRotation(id: string, rotation: number) {
       const item = get().selectedItems.find((i) => i.id === id);
       if (!item) return;
+      const updatedItem = { ...item, rotation };
       set({
         selectedItems: [
           ...get().selectedItems.filter((i) => i.id !== id),
-          { ...item, rotation },
+          updatedItem,
         ],
         wasManuallySelected: true,
       });
-      emitter.emit("output.set-rotation", item);
+      emitter.emit("output.set-rotation", updatedItem);
       emitter.emit("output.selection-change");
     },
 

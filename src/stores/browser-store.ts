@@ -538,12 +538,28 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return;
         }
 
-        const fetchOptions = {
-          signal: abortController.signal,
+        const fetchOptions: RequestInit = {
           ...(requestInitOptions || {}),
+          signal: abortController.signal,
         };
-        let digitalCollectionResource =
-          digitalCollectionResourceCache.get(url);
+
+        let digitalCollectionResource = digitalCollectionResourceCache.get(url);
+
+        // If we cached an in-flight promise from a previous request and that request was
+        // aborted, recreate the promise for this request instead of reusing it.
+        if (digitalCollectionResource) {
+          try {
+            await digitalCollectionResource;
+          } catch (error: any) {
+            if (error?.name === "AbortError") {
+              digitalCollectionResourceCache.delete(url);
+              digitalCollectionResource = undefined;
+            } else {
+              throw error;
+            }
+          }
+        }
+
         if (!digitalCollectionResource) {
           digitalCollectionResource = getIIIFResourceFromDigitalCollection(url, {
             requestInitOptions: fetchOptions,
@@ -561,8 +577,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             });
           digitalCollectionResourceCache.set(url, digitalCollectionResource);
         }
-        const resolvedDigitalCollectionResource =
-          await digitalCollectionResource;
+        const resolvedDigitalCollectionResource = await digitalCollectionResource;
         if (abortController.signal.aborted) {
           return;
         }

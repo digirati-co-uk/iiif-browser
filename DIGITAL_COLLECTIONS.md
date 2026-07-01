@@ -92,4 +92,4 @@ https://iiif.library.leeds.ac.uk/presentation/cc/gz49bmf8
 
 However, we should only do that if there is `/imu/img/iiif.png` IIIF logo inside the card.
 
-These search results pages can return multiple results, so the result will be a virutal IIIF Collection.
+These search results pages can return multiple results, so the result will be a virtual IIIF Collection.
