@@ -6,15 +6,15 @@ settings:
 
 overrides:
   react-reconciler: 0.33.0
-  '@atlas-viewer/atlas': ^3.1.1
+  '@atlas-viewer/atlas': 3.2.1
 
 importers:
 
   .:
     dependencies:
       '@atlas-viewer/atlas':
-        specifier: ^3.1.1
-        version: 3.1.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
+        specifier: 3.2.1
+        version: 3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
       '@iiif/helpers':
         specifier: ^1.5.9
         version: 1.5.9(@iiif/parser@2.2.10)
@@ -36,9 +36,6 @@ importers:
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
-      path-to-regexp:
-        specifier: ^8.3.0
-        version: 8.3.0
       polygon-editor:
         specifier: ^0.0.23
         version: 0.0.23
@@ -58,8 +55,8 @@ importers:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
       react-iiif-vault:
-        specifier: ^2.0.11
-        version: 2.0.11(@atlas-viewer/atlas@3.1.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^2.0.15
+        version: 2.0.15(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react-lazy-load-image-component:
         specifier: ^1.6.3
         version: 1.6.3(react@19.2.7)
@@ -133,6 +130,9 @@ importers:
       esbuild-plugin-umd-wrapper:
         specifier: ^2.0.3
         version: 2.0.3
+      path-to-regexp:
+        specifier: ^8.3.0
+        version: 8.3.0
       postcss:
         specifier: ^8.5.6
         version: 8.5.6
@@ -191,8 +191,8 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@atlas-viewer/atlas@3.1.1':
-    resolution: {integrity: sha512-PqREjEfssP46ObaZJozYAHRUZfrtP7ntSb8M/OkVypDU+XQAmreEELUy3VFABxYRHkSeeqLbDdz/iA+RmSqqSg==}
+  '@atlas-viewer/atlas@3.2.1':
+    resolution: {integrity: sha512-J14L/ih7MdXen0aMxBwQy1TD6phCI1Bv8MInLa/PkZSOlHtyUsdXaWbdx0F8RuYxj3j55qkQ4yQcHTjJD5fNjg==}
     peerDependencies:
       react: '>=17.0'
       react-dom: '>=17.0'
@@ -3978,10 +3978,10 @@ packages:
     peerDependencies:
       react: '>=16.13.1'
 
-  react-iiif-vault@2.0.11:
-    resolution: {integrity: sha512-+NAbEVGeTmICk+Wa0eexkyZwWzKrZ26SVe0YE7ac9q0p1wGYInEbqUwSLlmt06SvRDfnym8vFz387ftI5xSn+g==}
+  react-iiif-vault@2.0.15:
+    resolution: {integrity: sha512-ZH9KPSUR7ec6CYKV2QSuHqV4knoATWvWBvLenlegiFMY6t9ywEldEkRo4sOL7mwXbaELOTZtlbO161uXRKy/Mw==}
     peerDependencies:
-      '@atlas-viewer/atlas': ^3.1.1
+      '@atlas-viewer/atlas': 3.2.1
       react: ^18.2.0 || ^19.2.0
       react-dom: ^18.2.0 || ^19.2.0
 
@@ -4579,7 +4579,7 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@atlas-viewer/atlas@3.1.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)':
+  '@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@atlas-viewer/dna': 0.5.0
       '@atlas-viewer/iiif-image-api': 2.2.2
@@ -9132,9 +9132,9 @@ snapshots:
       '@babel/runtime': 7.28.4
       react: 19.2.7
 
-  react-iiif-vault@2.0.11(@atlas-viewer/atlas@3.1.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  react-iiif-vault@2.0.15(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
-      '@atlas-viewer/atlas': 3.1.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
+      '@atlas-viewer/atlas': 3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
       '@floating-ui/react': 0.27.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@iiif/helpers': 1.5.9(@iiif/parser@2.2.10)
       '@iiif/parser': 2.2.10

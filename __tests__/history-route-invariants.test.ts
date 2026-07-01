@@ -3,12 +3,15 @@ import { getForwardHistoryList } from "../src/browser/BrowserForwardButton";
 import { getActiveHistoryEntry } from "../src/context";
 import { createEmitter } from "../src/events";
 import {
-  createBrowserStore,
   type BrowserStoreConfig,
+  createBrowserStore,
   type HistoryItem,
 } from "../src/stores/browser-store";
 
-const baseConfig: Omit<BrowserStoreConfig, "initialHistory" | "initialHistoryCursor"> = {
+const baseConfig: Omit<
+  BrowserStoreConfig,
+  "initialHistory" | "initialHistoryCursor"
+> = {
   historyLimit: 100,
   restoreFromLocalStorage: false,
   saveToLocalStorage: false,
@@ -58,6 +61,37 @@ describe("history route invariants", () => {
 
     expect(getActiveHistoryEntry(historyItems, 2).route).toBe("/history");
     expect(getActiveHistoryEntry(historyItems, 999).route).toBe("/");
+  });
+
+  it("clamps an out-of-range initial history cursor", () => {
+    const store = createBrowserStore({
+      emitter: createEmitter({}),
+      ...baseConfig,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 1,
+    });
+
+    expect(store.getState().historyIndex).toBe(0);
+    expect(store.getState().lastUrl).toBe("iiif://home");
+  });
+
+  it("applies the configured initial page when ready", () => {
+    const emitter = createEmitter({});
+    const store = createBrowserStore({
+      emitter,
+      ...baseConfig,
+      initialHistory: [
+        createHistoryItem("/", "iiif://home"),
+        createHistoryItem("/about", "iiif://about"),
+      ],
+      initialHistoryCursor: 1,
+    });
+
+    emitter.emit("ready");
+
+    expect(store.getState().router.location.pathname).toBe("/about");
+    expect(store.getState().historyIndex).toBe(1);
+    expect(store.getState().lastUrl).toBe("iiif://about");
   });
 
   it("returns forward entries in nearest order with a maximum size", () => {
