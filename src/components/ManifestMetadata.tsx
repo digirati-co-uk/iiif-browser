@@ -11,7 +11,7 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
   if (!hasContent) return null;
 
   return (
-    <details className="absolute left-2 top-2 z-[60] bg-white max-h-[calc(100%-50px)] max-w-[280px] overflow-y-auto rounded-md border border-gray-300 bg-white/85 text-sm text-gray-800 shadow-sm backdrop-blur open:flex open:w-[280px] open:flex-col open:shadow-lg">
+    <details className="absolute left-2 top-2 z-[60] bg-white max-h-[calc(100%-60px)] max-w-[280px] overflow-y-auto rounded-md border border-gray-300 bg-white/85 text-sm text-gray-800 shadow-sm backdrop-blur open:flex open:w-[280px] open:flex-col open:shadow-lg">
       <summary className="sticky top-0 py-2 px-3 bg-white cursor-pointer select-none font-medium text-gray-900">
         Manifest information
       </summary>
