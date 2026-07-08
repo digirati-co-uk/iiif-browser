@@ -19,6 +19,10 @@ import type {
 } from "@iiif/presentation-3-normalized";
 import { Action, createMemoryHistory, type History } from "history";
 import { createStore } from "zustand/vanilla";
+import {
+  type DigitalCollectionResource,
+  getIIIFResourceFromDigitalCollection,
+} from "../digital-collections";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
@@ -254,18 +258,22 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
         },
       ]
       : initialHistory;
+  const initialHistoryIndex = Math.min(
+    Math.max(initialHistoryCursor, 0),
+    nonEmptyInitialHistory.length - 1,
+  );
 
   if (!restoreFromLocalStorage) {
     const history = createMemoryHistory({
       initialEntries: nonEmptyInitialHistory.map((item) => item.route),
-      initialIndex: initialHistoryCursor,
+      initialIndex: initialHistoryIndex,
     });
     return [
       history,
       {
         savedHistory: nonEmptyInitialHistory,
-        initialIndex: initialHistoryCursor,
-        initialPage: nonEmptyInitialHistory[initialHistoryCursor]!,
+        initialIndex: initialHistoryIndex,
+        initialPage: nonEmptyInitialHistory[initialHistoryIndex]!,
         linearHistory: [],
       },
     ];
@@ -281,19 +289,23 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
   const linearHistory = getLocalStorageLinearHistory(nonEmptyInitialHistory, {
     key: `${localStorageKey}_linear`,
   });
-  const initialPage = savedHistory[initialIndex]!;
+  const savedInitialIndex = Math.min(
+    Math.max(initialIndex, 0),
+    savedHistory.length - 1,
+  );
+  const initialPage = savedHistory[savedInitialIndex]!;
   const initialEntries = savedHistory.map((item) => item.route);
 
   const history = createMemoryHistory({
     initialEntries,
-    initialIndex,
+    initialIndex: savedInitialIndex,
   });
 
   return [
     history,
     {
       savedHistory,
-      initialIndex,
+      initialIndex: savedInitialIndex,
       initialPage,
       linearHistory,
     },
@@ -331,6 +343,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     Object.keys(options.collectionUrlMapping || {}).length > 0;
 
   let requestAbortController: AbortController | undefined;
+  const digitalCollectionResourceCache = new Map<
+    string,
+    Promise<DigitalCollectionResource | null>
+  >();
 
   const fixedRoutes = routes.filter((route) => route.type === "fixed");
   const resourceRoutes = routes.filter((route) => route.type === "resource");
@@ -522,10 +538,91 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           return;
         }
 
-        const urlToFetch = beforeFetchUrl ? await beforeFetchUrl(url) : url;
-        const response = await fetch(urlToFetch, {
-          signal: abortController.signal,
+        const fetchOptions: RequestInit = {
           ...(requestInitOptions || {}),
+          signal: abortController.signal,
+        };
+
+        let digitalCollectionResource = digitalCollectionResourceCache.get(url);
+
+        // If we cached an in-flight promise from a previous request and that request was
+        // aborted, recreate the promise for this request instead of reusing it.
+        if (digitalCollectionResource) {
+          try {
+            await digitalCollectionResource;
+          } catch (error: any) {
+            if (error?.name === "AbortError") {
+              digitalCollectionResourceCache.delete(url);
+              digitalCollectionResource = undefined;
+            } else {
+              throw error;
+            }
+          }
+        }
+
+        if (!digitalCollectionResource) {
+          digitalCollectionResource = getIIIFResourceFromDigitalCollection(url, {
+            requestInitOptions: fetchOptions,
+          })
+            .then((resource) => {
+              if (!resource) {
+                digitalCollectionResourceCache.delete(url);
+              }
+
+              return resource;
+            })
+            .catch((error) => {
+              digitalCollectionResourceCache.delete(url);
+              throw error;
+            });
+          digitalCollectionResourceCache.set(url, digitalCollectionResource);
+        }
+        const resolvedDigitalCollectionResource = await digitalCollectionResource;
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        if (resolvedDigitalCollectionResource?.resource) {
+          const route = resourceRoutes.find(
+            (route) => route.resource === resolvedDigitalCollectionResource.type,
+          );
+          if (!route) {
+            return browserResourceError(
+              url,
+              `Unsupported Resource type: ${resolvedDigitalCollectionResource.type}`,
+              true,
+            );
+          }
+
+          vault.loadSync(
+            resolvedDigitalCollectionResource.resource.id,
+            resolvedDigitalCollectionResource.resource,
+          );
+
+          const newSearchParams =
+            options?.searchParams || new URLSearchParams();
+          newSearchParams.set("id", resolvedDigitalCollectionResource.id);
+          const searchParamsString = newSearchParams.toString();
+
+          if (abortController === requestAbortController) {
+            requestAbortController = undefined;
+          }
+          browserSuccess(
+            url,
+            resolvedDigitalCollectionResource.resource,
+            viewSource,
+          );
+          history.replace(`${route.url}?${searchParamsString}`, { parent });
+          return;
+        }
+
+        const resourceUrl = resolvedDigitalCollectionResource?.id || url;
+
+        const urlToFetch = beforeFetchUrl
+          ? await beforeFetchUrl(resourceUrl)
+          : resourceUrl;
+        const response = await fetch(urlToFetch, {
+          ...fetchOptions,
         });
         // Ignore if aborted.
         if (abortController.signal.aborted) {
@@ -561,9 +658,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
         // Add json parsing hook.
 
-        if (json.id !== url) {
+        if (json.id !== resourceUrl) {
           // Could be a fork, manually patch it.
-          json.id = url;
+          json.id = resourceUrl;
         }
 
         if (isImageService(json)) {

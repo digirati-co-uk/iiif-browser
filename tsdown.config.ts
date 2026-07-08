@@ -3,12 +3,13 @@ import postcssImport from "postcss-import";
 import postcss from "rollup-plugin-postcss";
 import { defineConfig } from "tsdown";
 
-export default defineConfig((ctx) => {
+export default defineConfig((_ctx) => {
   return {
     dts: true,
 
     entry: {
       index: "./src/bundle.ts",
+      "digital-collections": "./src/digital-collections/index.ts",
     },
     target: ["es2020"],
     format: ["esm", "cjs"],

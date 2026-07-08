@@ -65,6 +65,16 @@ function createCanvasTarget(
   parent: Reference,
 ) {
   let selector = "";
+
+  let bodySelector: any;
+
+  if (ref.rotation) {
+    bodySelector = {
+      type: "ImageApiSelector",
+      rotation: `${ref.rotation}`,
+    };
+  }
+
   if (ref.selector && ref.selector.type === "BoxSelector") {
     selector = `#xywh=${[
       ref.selector.spatial.x,
@@ -85,11 +95,13 @@ function createCanvasTarget(
           type: "Manifest",
         },
       ],
+      selector: bodySelector,
     };
   } else {
     return {
       id: resource.id + selector,
       type: "Canvas",
+      selector: bodySelector,
     };
   }
 }

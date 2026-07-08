@@ -408,6 +408,21 @@ export function useRefineSelectedItem() {
   return useStore(store, (state) => state.refineSelectedItem);
 }
 
+export function useSetRotation() {
+  const store = useOutputStore();
+  return useStore(store, (state) => state.setRotation);
+}
+
+export function useCanvasOutputRotation(canvas?: { id?: string } | null) {
+  const store = useOutputStore();
+  return (
+    useStore(
+      store,
+      (s) => s.selectedItems.find((item) => item.id === canvas?.id)?.rotation,
+    ) || 0
+  );
+}
+
 export function useCanvasOutputSelector(canvas?: { id?: string } | null) {
   const store = useOutputStore();
   return useStore(
@@ -505,6 +520,7 @@ export function BrowserProvider({
       forwardButton: true,
       bookmarkButton: false,
       showFilterButton: false,
+      showManifestMetadata: true,
       buttonClassName: "",
       collectionPaginationSize: 25,
       manifestPaginationSize: 25,

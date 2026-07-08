@@ -5,7 +5,8 @@ import {
   useManifest,
   useVault,
 } from "react-iiif-vault";
-import { useHistory, useSearchParams } from "../context";
+import { ManifestMetadata } from "../components/ManifestMetadata";
+import { useHistory, useSearchParams, useUIConfig } from "../context";
 import { ManifestCanvasViewer } from "../resources/ManifestCanvasViewer";
 import { ManifestItemList } from "../resources/ManifestItemList";
 
@@ -15,12 +16,17 @@ export function ManifestPage() {
   const canvas = searchParams.get("canvas") as string;
   const vault = useVault();
   const history = useHistory();
+  const { showManifestMetadata } = useUIConfig();
   const viewSource = searchParams.get("view-source") === "true";
   const manifest = useManifest({ id });
+  const presentationManifest = useMemo(
+    () => (manifest ? vault.toPresentation3(manifest as any) : null),
+    [vault, manifest],
+  );
   const source = useMemo(() => {
-    if (!viewSource || !manifest) return null;
-    return vault.toPresentation3(manifest as any);
-  }, [vault, manifest, viewSource]);
+    if (!viewSource || !presentationManifest) return null;
+    return presentationManifest;
+  }, [presentationManifest, viewSource]);
 
   useEffect(() => {
     if (!manifest) {
@@ -40,17 +46,24 @@ export function ManifestPage() {
 
   return (
     <ManifestContext manifest={manifest.id}>
-      {canvas ? (
-        <SimpleViewerProvider
-          manifest={id}
-          startCanvas={canvas}
-          pagingEnabled={false}
-        >
-          <ManifestCanvasViewer />
-        </SimpleViewerProvider>
-      ) : (
-        <ManifestItemList />
-      )}
+      <div className="relative flex h-full min-h-0 flex-col">
+        {showManifestMetadata ? (
+          <ManifestMetadata manifest={presentationManifest} />
+        ) : null}
+        <div className="min-h-0 flex-1">
+          {canvas ? (
+            <SimpleViewerProvider
+              manifest={id}
+              startCanvas={canvas}
+              pagingEnabled={false}
+            >
+              <ManifestCanvasViewer />
+            </SimpleViewerProvider>
+          ) : (
+            <ManifestItemList />
+          )}
+        </div>
+      </div>
     </ManifestContext>
   );
 }

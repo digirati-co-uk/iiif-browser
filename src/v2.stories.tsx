@@ -302,6 +302,60 @@ export const CustomHomeButton = () => (
   </>
 );
 
+export const LeedsDigitalCollection = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        history={{
+          localStorageKey: "leeds-digital-collection",
+          restoreFromLocalStorage: false,
+          saveToLocalStorage: false,
+          initialHistory: [
+            {
+              url: "https://explore.library.leeds.ac.uk/special-collections-explore/372659/horae_beatae_mariae_virginis",
+              resource: null,
+              route:
+                "/loading?id=https://explore.library.leeds.ac.uk/special-collections-explore/372659/horae_beatae_mariae_virginis",
+            },
+          ],
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
+export const LeedsDigitalCollectionSearchResults = () => (
+  <>
+    <div className="w-full h-[80vh] flex">
+      <IIIFBrowser
+        debug
+        history={{
+          localStorageKey: "leeds-digital-collection-search-results",
+          restoreFromLocalStorage: false,
+          saveToLocalStorage: false,
+          initialHistory: [
+            {
+              url: "https://explore.library.leeds.ac.uk/special-collections-explore?&cct=25664f81ebfa3da5b4c251780ad28b0b35a1a02caaf909df871d67820c87b986&displayMedia=image&displayOption=grid&resultLength=60&resultStart=1",
+              resource: null,
+              route:
+                "/loading?id=https%3A%2F%2Fexplore.library.leeds.ac.uk%2Fspecial-collections-explore%3F%26cct%3D25664f81ebfa3da5b4c251780ad28b0b35a1a02caaf909df871d67820c87b986%26displayMedia%3Dimage%26displayOption%3Dgrid%26resultLength%3D60%26resultStart%3D1",
+            },
+          ],
+        }}
+      />
+    </div>
+    <div className="flex">
+      <div id="iiif-browser__debug-history" />
+      <div id="iiif-browser__debug-selected" />
+    </div>
+  </>
+);
+
 export const DisallowedResources = () => (
   <>
     <div className="w-full h-[80vh] flex">
