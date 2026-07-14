@@ -58,7 +58,7 @@
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
-    "@atlas-viewer/atlas": "^3.2.1",
+    "@atlas-viewer/atlas": "^3.2.2",
     "@iiif/helpers": "^1.5.9",
     "@iiif/parser": "^2.2.10",
     "@iiif/presentation-3": "^2.2.3",
@@ -77,12 +77,6 @@
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",
     "zustand": "^4.5.7"
-  },
-  "pnpm": {
-    "overrides": {
-      "react-reconciler": "0.33.0",
-      "@atlas-viewer/atlas": "3.2.1"
-    }
   },
   "devDependencies": {
     "path-to-regexp": "^8.3.0",
