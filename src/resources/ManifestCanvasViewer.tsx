@@ -84,7 +84,7 @@ export function ManifestCanvasViewer() {
   }, [canvas, location.search, manifest.id, navigate, xywh]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col w-full">
       <div className="group relative flex w-full flex-1 min-h-0 flex-col">
         <ModeProvider mode={mode}>
           <CanvasPanel.Viewer height={"auto"} mode={mode}>
