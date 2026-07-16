@@ -10,6 +10,7 @@ export default defineConfig((_ctx) => {
     entry: {
       index: "./src/bundle.ts",
       "digital-collections": "./src/digital-collections/index.ts",
+      mdxeditor: "./src/mdxeditor/index.tsx",
     },
     target: ["es2020"],
     format: ["esm", "cjs"],
@@ -20,6 +21,7 @@ export default defineConfig((_ctx) => {
       // -
       "@iiif/parser",
       "@iiif/helpers",
+      "@mdxeditor/editor",
     ],
     plugins: [
       postcss({

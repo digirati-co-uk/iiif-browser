@@ -253,3 +253,43 @@ export default function App() {
 This example demonstrates how to configure the IIIF Browser with custom UI
 options, history settings, navigation behavior, and output targets. Adjust the
 configuration options to suit your specific requirements.
+
+## MDXEditor plugin
+
+`@mdxeditor/editor` is an optional peer dependency. Install it in the app that
+uses the integration, then add the plugin and toolbar button:
+
+```tsx
+import {
+  MDXEditor,
+  toolbarPlugin,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
+import "iiif-browser/dist/index.css";
+import {
+  iiifBrowserPlugin,
+  InsertIIIFBrowser,
+} from "iiif-browser/mdxeditor";
+
+<MDXEditor
+  markdown="Choose an image"
+  plugins={[
+    iiifBrowserPlugin({
+      image: { width: 1200 },
+      canvasSnippet: true,
+      browserProps: {
+        ui: { buttonClassName: "my-iiif-action" },
+        navigation: { canSelectManifest: false },
+      },
+    }),
+    toolbarPlugin({
+      toolbarContents: () => <InsertIIIFBrowser />,
+    }),
+  ]}
+/>
+```
+
+The default action inserts an Image API `<img />`. Width, height, rotation,
+crop, format, and quality can be configured; `canvasSnippet` adds a Markdown
+image and caption action. Pass normal `IIIFBrowser` options through
+`browserProps`, and modal classes, styles, title, and labels through `dialog`.
