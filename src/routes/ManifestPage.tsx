@@ -50,7 +50,7 @@ export function ManifestPage() {
         {showManifestMetadata ? (
           <ManifestMetadata manifest={presentationManifest} />
         ) : null}
-        <div className="min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 w-full flex-col">
           {canvas ? (
             <SimpleViewerProvider
               manifest={id}

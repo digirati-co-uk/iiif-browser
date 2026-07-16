@@ -5,16 +5,16 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@atlas-viewer/atlas': 3.2.3
   react-reconciler: 0.33.0
-  '@atlas-viewer/atlas': 3.2.1
 
 importers:
 
   .:
     dependencies:
       '@atlas-viewer/atlas':
-        specifier: 3.2.1
-        version: 3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
+        specifier: 3.2.3
+        version: 3.2.3(@iiif/helpers@1.5.9(@iiif/parser@2.2.10))(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
       '@iiif/helpers':
         specifier: ^1.5.9
         version: 1.5.9(@iiif/parser@2.2.10)
@@ -56,7 +56,7 @@ importers:
         version: 19.2.7(react@19.2.7)
       react-iiif-vault:
         specifier: ^2.0.15
-        version: 2.0.15(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 2.0.15(@atlas-viewer/atlas@3.2.3(@iiif/helpers@1.5.9(@iiif/parser@2.2.10))(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react-lazy-load-image-component:
         specifier: ^1.6.3
         version: 1.6.3(react@19.2.7)
@@ -124,6 +124,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@6.3.6(@types/node@25.3.3)(jiti@2.6.0)(less@4.4.1)(sass@1.93.2)(stylus@0.62.0)(yaml@2.8.1))
+      autoprefixer:
+        specifier: ^10.5.2
+        version: 10.5.2(postcss@8.5.6)
       esbuild-plugin-react18-css:
         specifier: ^0.0.2
         version: 0.0.2
@@ -191,9 +194,10 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@atlas-viewer/atlas@3.2.1':
-    resolution: {integrity: sha512-J14L/ih7MdXen0aMxBwQy1TD6phCI1Bv8MInLa/PkZSOlHtyUsdXaWbdx0F8RuYxj3j55qkQ4yQcHTjJD5fNjg==}
+  '@atlas-viewer/atlas@3.2.3':
+    resolution: {integrity: sha512-7o28II8v5T/0IM78H0OiI6gyS2x+MM6ShukBKb8hlM4RzZ+WWINrsMWc6vLhmDKpVQ8UJ7wk5MezFFUpp8qILw==}
     peerDependencies:
+      '@iiif/helpers': '>=1.1.0'
       react: '>=17.0'
       react-dom: '>=17.0'
       react-native: '*'
@@ -2726,8 +2730,8 @@ packages:
     resolution: {integrity: sha512-6t10qk83GOG8p0vKmaCr8eiilZwO171AvbROMtvvNiwrTly62t+7XkA8RdIIVbpMhCASAsxgAzdRSwh6nw/5Dg==}
     engines: {node: '>=4'}
 
-  autoprefixer@10.4.21:
-    resolution: {integrity: sha512-O+A6LWV5LDHSJD3LjHYoNi4VLsj/Whi7k6zG12xTYaU4cQ8oxQGckXNX8cRHK5yOZ/ppVHe0ZBXGzSV9jXdVbQ==}
+  autoprefixer@10.5.2:
+    resolution: {integrity: sha512-rD5t5DwOjJdmSORcTq64j8MawTC+tbQ+HHqjR4NDumamy/ambn1UJrlKL+KdwujWxMkFjPM3pPHOEA9tl4767Q==}
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
     peerDependencies:
@@ -2739,6 +2743,11 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
+
+  baseline-browser-mapping@2.10.43:
+    resolution: {integrity: sha512-AjYpR78kDWAY3Efj+cDTFH9t9SCoL7OoTp1BOb0mQV7S+6CiLwnWM3FyxhJtdPufDFKzmCSFoUncKjWgJEZTCQ==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
 
   baseline-browser-mapping@2.8.9:
     resolution: {integrity: sha512-hY/u2lxLrbecMEWSB0IpGzGyDyeoMFQhCvZd2jGFSE5I17Fh01sYUBPCJtkWERw7zrac9+cIghxm/ytJa2X8iA==}
@@ -2776,6 +2785,11 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
+  browserslist@4.28.6:
+    resolution: {integrity: sha512-FQBYNK15VMslhLHpA7+n+n1GOlF1kId2xcCg7/j95f24AOF6VDYMNH4mFxF7KuaTdv627faazpOAjFzMrfJOUw==}
+    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
+    hasBin: true
+
   cac@6.7.14:
     resolution: {integrity: sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==}
     engines: {node: '>=8'}
@@ -2805,6 +2819,9 @@ packages:
 
   caniuse-lite@1.0.30001746:
     resolution: {integrity: sha512-eA7Ys/DGw+pnkWWSE/id29f2IcPHVoE8wxtvE5JdvD2V28VTDPy1yEeo11Guz0sJ4ZeGRcm3uaTcAqK1LXaphA==}
+
+  caniuse-lite@1.0.30001805:
+    resolution: {integrity: sha512-52noaS3DubycKSXaU30TwPGIp+POyQSUVa5jBEq3vkRkY0kjyb3LQgvhU6WGyCcyXqVLWO0Cw0Q6BSdD0kUfVA==}
 
   chai@5.3.3:
     resolution: {integrity: sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==}
@@ -3026,6 +3043,9 @@ packages:
   electron-to-chromium@1.5.227:
     resolution: {integrity: sha512-ITxuoPfJu3lsNWUi2lBM2PaBPYgH3uqmxut5vmBxgYvyI4AlJ6P3Cai1O76mOrkJCBzq0IxWg/NtqOrpu/0gKA==}
 
+  electron-to-chromium@1.5.389:
+    resolution: {integrity: sha512-cEto7aeOqBfU1D+c5py5pE+ooscKE75JifxLBdFUZsqAxRS6y7kebtxAZvICszSl05gPjYHDTjY+lXpyGvpJbg==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -3144,8 +3164,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  fraction.js@4.3.7:
-    resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
+  fraction.js@5.3.4:
+    resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
 
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
@@ -3507,12 +3527,12 @@ packages:
   node-releases@2.0.21:
     resolution: {integrity: sha512-5b0pgg78U3hwXkCM8Z9b2FJdPZlr9Psr9V2gQPESdGHqbntyFJKFW4r5TeWGFzafGY3hzs1JC62VEQMbl1JFkw==}
 
+  node-releases@2.0.51:
+    resolution: {integrity: sha512-wRNIrw4DmVLKQlbgOMdkMx27Wrpzes2hh5Jtbi2bjPd+4wJstWIqP5A+lscnqbm0xxmT5Bpg8Lec5ItEBwx6BQ==}
+    engines: {node: '>=18'}
+
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
-    engines: {node: '>=0.10.0'}
-
-  normalize-range@0.1.2:
-    resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}
     engines: {node: '>=0.10.0'}
 
   normalize-url@6.1.0:
@@ -3981,7 +4001,7 @@ packages:
   react-iiif-vault@2.0.15:
     resolution: {integrity: sha512-ZH9KPSUR7ec6CYKV2QSuHqV4knoATWvWBvLenlegiFMY6t9ywEldEkRo4sOL7mwXbaELOTZtlbO161uXRKy/Mw==}
     peerDependencies:
-      '@atlas-viewer/atlas': 3.2.1
+      '@atlas-viewer/atlas': 3.2.3
       react: ^18.2.0 || ^19.2.0
       react-dom: ^18.2.0 || ^19.2.0
 
@@ -4012,15 +4032,6 @@ packages:
     resolution: {integrity: sha512-BeR0hj/5qqTc2+zxzBSQZMky6MmqwOtKseU3CSmcjKR5uXerej2QY34v2d+cdz11PoeVfAdWLX+qjM/UdZkUUg==}
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  react-use-measure@2.1.7:
-    resolution: {integrity: sha512-KrvcAo13I/60HpwGO5jpW7E9DfusKyLPLvuHlUyP5zqnmAPhNc6qTRjUQrdTADl0lpPpDVU2/Gg51UlOGHXbdg==}
-    peerDependencies:
-      react: '>=16.13'
-      react-dom: '>=16.13'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
 
   react@19.2.7:
     resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
@@ -4410,6 +4421,12 @@ packages:
     peerDependencies:
       browserslist: '>= 4.21.0'
 
+  update-browserslist-db@1.2.3:
+    resolution: {integrity: sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w==}
+    hasBin: true
+    peerDependencies:
+      browserslist: '>= 4.21.0'
+
   use-sync-external-store@1.5.0:
     resolution: {integrity: sha512-Rb46I4cGGVBmjamjphe8L/UnvJD+uPPtTkNvX5mZgqdbavhI4EbgIWJiIHXJ8bc/i9EQGPRh4DwEURJ552Do0A==}
     peerDependencies:
@@ -4423,6 +4440,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   vite@6.3.6:
@@ -4579,16 +4597,14 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)':
+  '@atlas-viewer/atlas@3.2.3(@iiif/helpers@1.5.9(@iiif/parser@2.2.10))(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@atlas-viewer/dna': 0.5.0
       '@atlas-viewer/iiif-image-api': 2.2.2
       '@iiif/helpers': 1.5.9(@iiif/parser@2.2.10)
-      '@iiif/parser': 2.2.10
       '@iiif/presentation-3': 2.2.3
       react: 19.2.7
       react-reconciler: 0.33.0(react@19.2.7)
-      react-use-measure: 2.1.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       scheduler: 0.27.0
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
@@ -7801,12 +7817,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  autoprefixer@10.4.21(postcss@8.5.6):
+  autoprefixer@10.5.2(postcss@8.5.6):
     dependencies:
-      browserslist: 4.26.2
-      caniuse-lite: 1.0.30001746
-      fraction.js: 4.3.7
-      normalize-range: 0.1.2
+      browserslist: 4.28.6
+      caniuse-lite: 1.0.30001805
+      fraction.js: 5.3.4
       picocolors: 1.1.1
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
@@ -7816,6 +7831,8 @@ snapshots:
       possible-typed-array-names: 1.1.0
 
   balanced-match@1.0.2: {}
+
+  baseline-browser-mapping@2.10.43: {}
 
   baseline-browser-mapping@2.8.9: {}
 
@@ -7853,6 +7870,14 @@ snapshots:
       node-releases: 2.0.21
       update-browserslist-db: 1.1.3(browserslist@4.26.2)
 
+  browserslist@4.28.6:
+    dependencies:
+      baseline-browser-mapping: 2.10.43
+      caniuse-lite: 1.0.30001805
+      electron-to-chromium: 1.5.389
+      node-releases: 2.0.51
+      update-browserslist-db: 1.2.3(browserslist@4.28.6)
+
   cac@6.7.14: {}
 
   call-bind-apply-helpers@1.0.2:
@@ -7884,6 +7909,8 @@ snapshots:
       lodash.uniq: 4.5.0
 
   caniuse-lite@1.0.30001746: {}
+
+  caniuse-lite@1.0.30001805: {}
 
   chai@5.3.3:
     dependencies:
@@ -8100,6 +8127,8 @@ snapshots:
 
   electron-to-chromium@1.5.227: {}
 
+  electron-to-chromium@1.5.389: {}
+
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -8125,7 +8154,7 @@ snapshots:
 
   esbuild-plugin-react18-css@0.0.2:
     dependencies:
-      autoprefixer: 10.4.21(postcss@8.5.6)
+      autoprefixer: 10.5.2(postcss@8.5.6)
       postcss: 8.5.6
       postcss-modules: 6.0.1(postcss@8.5.6)
       sass: 1.93.2
@@ -8251,7 +8280,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  fraction.js@4.3.7: {}
+  fraction.js@5.3.4: {}
 
   fs.realpath@1.0.0:
     optional: true
@@ -8593,9 +8622,9 @@ snapshots:
 
   node-releases@2.0.21: {}
 
-  normalize-path@3.0.0: {}
+  node-releases@2.0.51: {}
 
-  normalize-range@0.1.2: {}
+  normalize-path@3.0.0: {}
 
   normalize-url@6.1.0: {}
 
@@ -9132,9 +9161,9 @@ snapshots:
       '@babel/runtime': 7.28.4
       react: 19.2.7
 
-  react-iiif-vault@2.0.15(@atlas-viewer/atlas@3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  react-iiif-vault@2.0.15(@atlas-viewer/atlas@3.2.3(@iiif/helpers@1.5.9(@iiif/parser@2.2.10))(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
-      '@atlas-viewer/atlas': 3.2.1(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
+      '@atlas-viewer/atlas': 3.2.3(@iiif/helpers@1.5.9(@iiif/parser@2.2.10))(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7)
       '@floating-ui/react': 0.27.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@iiif/helpers': 1.5.9(@iiif/parser@2.2.10)
       '@iiif/parser': 2.2.10
@@ -9202,12 +9231,6 @@ snapshots:
   react-timeago@8.3.0(react@19.2.7):
     dependencies:
       react: 19.2.7
-
-  react-use-measure@2.1.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
-    dependencies:
-      react: 19.2.7
-    optionalDependencies:
-      react-dom: 19.2.7(react@19.2.7)
 
   react@19.2.7: {}
 
@@ -9679,6 +9702,12 @@ snapshots:
   update-browserslist-db@1.1.3(browserslist@4.26.2):
     dependencies:
       browserslist: 4.26.2
+      escalade: 3.2.0
+      picocolors: 1.1.1
+
+  update-browserslist-db@1.2.3(browserslist@4.28.6):
+    dependencies:
+      browserslist: 4.28.6
       escalade: 3.2.0
       picocolors: 1.1.1
 
