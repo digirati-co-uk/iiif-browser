@@ -265,7 +265,7 @@ import {
   toolbarPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import "iiif-browser/dist/index.css";
+import "iiif-browser/mdx-plugins.css";
 import {
   iiifBrowserPlugin,
   InsertIIIFBrowser,

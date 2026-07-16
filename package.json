@@ -53,6 +53,7 @@
       "import": "./dist/mdxeditor-snippet.js",
       "default": "./dist/mdxeditor-snippet.js"
     },
+    "./mdx-plugins.css": "./dist/mdx-plugins.css",
     "./dist/index.css": "./dist/index.css"
   },
   "scripts": {

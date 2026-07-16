@@ -3,6 +3,7 @@ import {
   getImageServices,
   type RegionParameter,
 } from "@atlas-viewer/iiif-image-api";
+import "../mdx-plugins.css";
 import type { Vault } from "@iiif/helpers";
 import { createPaintingAnnotationsHelper, getValue } from "@iiif/helpers";
 import {
@@ -460,13 +461,16 @@ function IIIFBrowserDialog() {
           ) : screen === "browser" ? (
             <div
               className={classNames(
-                "iiif-browser-mdx-browser",
+                "iiif-browser-mdx-browser iiif-browser",
                 config.dialog?.browserClassName,
               )}
             >
               <IIIFBrowser
                 {...browserProps}
-                className={browserProps.className ?? "h-full w-full"}
+                className={
+                  browserProps.className ??
+                  "h-full w-full border-none border-t rounded-none"
+                }
                 navigation={{
                   canCropImage: true,
                   multiSelect: false,

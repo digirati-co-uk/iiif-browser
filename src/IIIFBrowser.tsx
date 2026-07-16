@@ -1,4 +1,3 @@
-import "./index.css";
 import type { Vault } from "@iiif/helpers";
 import { type ReactNode, useMemo } from "react";
 import { BrowserContainer } from "./browser/BrowserContainer";
