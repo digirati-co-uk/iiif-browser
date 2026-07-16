@@ -48,6 +48,11 @@
       "import": "./dist/mdxeditor.js",
       "default": "./dist/mdxeditor.js"
     },
+    "./mdxeditor-snippet": {
+      "types": "./dist/mdxeditor-snippet.d.ts",
+      "import": "./dist/mdxeditor-snippet.js",
+      "default": "./dist/mdxeditor-snippet.js"
+    },
     "./dist/index.css": "./dist/index.css"
   },
   "scripts": {

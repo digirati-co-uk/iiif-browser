@@ -1,15 +1,26 @@
-import { getImageServices } from "@atlas-viewer/iiif-image-api";
+import {
+  canonicalServiceUrl,
+  getImageServices,
+  type RegionParameter,
+} from "@atlas-viewer/iiif-image-api";
 import type { Vault } from "@iiif/helpers";
 import { createPaintingAnnotationsHelper, getValue } from "@iiif/helpers";
 import {
   activeEditor$,
-  addComposerChild$,
   ButtonWithTooltip,
   Cell,
+  closeImageDialog$,
+  createActiveEditorSubscription$,
+  type EditingImageDialogState,
+  ImageNode,
+  type InactiveImageDialogState,
+  imageDialogState$,
   imagePlugin,
   insertMarkdown$,
+  type NewImageDialogState,
   type RealmPlugin,
   realmPlugin,
+  saveImage$,
   useCellValue,
   usePublisher,
 } from "@mdxeditor/editor";
@@ -22,18 +33,41 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  Modal as AriaModal,
+  Dialog,
+  Heading,
+  ModalOverlay,
+} from "react-aria-components";
 import { IIIFBrowser, type IIIFBrowserProps } from "../IIIFBrowser";
+import { IIIFPluginLogo } from "../icons/IIIFPluginLogos";
+import {
+  createIIIFRequest,
+  fullSizeRequest,
+  getImageCapabilities,
+  type IIIFImageInfo,
+  type IIIFImageRequest,
+  imageApiVersion,
+  imageRequestUrl,
+  imageServiceId,
+  parseIIIFImageUrl,
+  requestAtWidth,
+} from "./image-api";
 
 type ImageQuality = "default" | "color" | "gray" | "bitonal";
 type ImageFormat = "jpg" | "png" | "webp" | "tif" | "gif" | "jp2" | "pdf";
+type ImageInfoCache = Map<string, Promise<IIIFImageInfo>>;
 
 export interface IIIFImageOptions {
   actionLabel?: string;
+  selectLabel?: string;
   width?: number;
   height?: number;
   rotation?: number;
   quality?: ImageQuality;
   format?: ImageFormat;
+  /** Image request pixels per rendered CSS pixel after MDXEditor resizing. */
+  resizeMultiplier?: number | false;
 }
 
 export interface CanvasSnippetOptions {
@@ -41,6 +75,8 @@ export interface CanvasSnippetOptions {
 }
 
 export interface IIIFBrowserPluginParams {
+  /** Built-in toolbar icon. Defaults to the image stack. */
+  icon?: "stack" | "add";
   /** Every IIIF Browser option except its plugin-owned output actions. */
   browserProps?: Omit<IIIFBrowserProps, "output">;
   /** Configure Image API output, or set to false to hide the image action. */
@@ -49,10 +85,12 @@ export interface IIIFBrowserPluginParams {
   canvasSnippet?: boolean | CanvasSnippetOptions;
   dialog?: {
     title?: ReactNode;
+    optionsTitle?: ReactNode;
     closeLabel?: string;
     className?: string;
     style?: CSSProperties;
     browserClassName?: string;
+    optionsClassName?: string;
   };
 }
 
@@ -64,6 +102,7 @@ export type IIIFSelectedResource = {
     type: string;
     spatial: { x: number; y: number; width: number; height: number };
   };
+  rotation?: number;
 };
 
 type Selection = {
@@ -71,27 +110,98 @@ type Selection = {
   vault: Vault;
 };
 
+type Draft = {
+  request: IIIFImageRequest;
+  label: string;
+};
+
 const config$ = Cell<IIIFBrowserPluginParams>({});
 const dialogOpen$ = Cell(false);
+const infoCache$ = Cell<ImageInfoCache>(new Map());
 
 const plugin = realmPlugin<IIIFBrowserPluginParams>({
   init(realm, params) {
     realm.pub(config$, params ?? {});
-    realm.pub(addComposerChild$, IIIFBrowserDialog);
+    realm.pub(infoCache$, new Map());
+    realm.pub(createActiveEditorSubscription$, (editor) => {
+      const scheduled = new Map<string, string>();
+      return editor.registerNodeTransform(ImageNode, (node) => {
+        const config = realm.getValue(config$);
+        const configuredMultiplier =
+          config.image === false
+            ? false
+            : (config.image?.resizeMultiplier ?? 2);
+        const multiplier =
+          configuredMultiplier === false
+            ? false
+            : configuredMultiplier > 0
+              ? configuredMultiplier
+              : 2;
+        const width = node.getWidth();
+        const request = parseIIIFImageUrl(node.getSrc());
+        if (multiplier === false || typeof width !== "number" || !request) {
+          return;
+        }
+
+        const key = node.getKey();
+        const signature = `${node.getSrc()}|${width}|${multiplier}`;
+        if (scheduled.get(key) === signature) return;
+        scheduled.set(key, signature);
+
+        const serviceId = imageServiceId(request);
+        void loadImageInfo(
+          realm.getValue(infoCache$),
+          serviceId,
+          config.browserProps?.history?.requestInitOptions,
+        )
+          .then((info) => {
+            editor.update(() => {
+              const latest = node.getLatest();
+              const latestRequest = parseIIIFImageUrl(latest.getSrc());
+              const latestWidth = latest.getWidth();
+              if (
+                !latest.isAttached() ||
+                !latestRequest ||
+                typeof latestWidth !== "number"
+              ) {
+                return;
+              }
+              const capabilities = getImageCapabilities(
+                info,
+                latestRequest.region,
+              );
+              if (
+                !capabilities.customSize ||
+                isListedSize(latestRequest, capabilities.sizes)
+              ) {
+                return;
+              }
+              const resized = requestAtWidth(
+                latestRequest,
+                latestWidth * multiplier,
+                capabilities,
+              );
+              const src = imageRequestUrl(resized, info);
+              if (src !== latest.getSrc()) latest.setSrc(src);
+            });
+          })
+          .catch(() => undefined)
+          .finally(() => {
+            if (scheduled.get(key) === signature) scheduled.delete(key);
+          });
+      });
+    });
   },
   update(realm, params) {
     realm.pub(config$, params ?? {});
   },
 });
 
-/**
- * Adds the IIIF Browser dialog and the image visitors needed for inserted
- * Markdown/MDX image nodes.
- */
+/** Adds the IIIF Browser dialog and MDXEditor's image support. */
 export function iiifBrowserPlugin(
   params: IIIFBrowserPluginParams = {},
 ): RealmPlugin {
-  const images = imagePlugin();
+  const images = imagePlugin({ ImageDialog: IIIFBrowserDialog });
   const browser = plugin(params);
 
   return {
@@ -118,9 +228,10 @@ export interface InsertIIIFBrowserProps
 /** Toolbar button used inside MDXEditor's toolbarPlugin contents. */
 export function InsertIIIFBrowser({
   label = "Insert IIIF image",
-  children = <span aria-hidden="true">IIIF</span>,
+  children,
   ...props
 }: InsertIIIFBrowserProps) {
+  const config = useCellValue(config$);
   const setOpen = usePublisher(dialogOpen$);
 
   return (
@@ -133,7 +244,7 @@ export function InsertIIIFBrowser({
         if (!event.defaultPrevented) setOpen(true);
       }}
     >
-      {children}
+      {children ?? <IIIFPluginLogo icon={config.icon ?? "stack"} />}
     </ButtonWithTooltip>
   );
 }
@@ -141,34 +252,60 @@ export function InsertIIIFBrowser({
 function IIIFBrowserDialog() {
   const config = useCellValue(config$);
   const activeEditor = useCellValue(activeEditor$);
-  const open = useCellValue(dialogOpen$);
-  const setOpen = usePublisher(dialogOpen$);
+  const insertOpen = useCellValue(dialogOpen$);
+  const imageDialog = useCellValue(imageDialogState$);
+  const infoCache = useCellValue(infoCache$);
+  const setInsertOpen = usePublisher(dialogOpen$);
+  const closeImageDialog = usePublisher(closeImageDialog$);
   const insertMarkdown = usePublisher(insertMarkdown$);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const saveImage = usePublisher(saveImage$);
   const image = config.image === false ? false : (config.image ?? {});
-  const [width, setWidth] = useState<number | undefined>(
-    image === false ? undefined : image.width,
-  );
-  const [height, setHeight] = useState<number | undefined>(
-    image === false ? undefined : image.height,
-  );
-  const [rotation, setRotation] = useState(
-    image === false ? 0 : (image.rotation ?? 0),
-  );
+  const [screen, setScreen] = useState<"browser" | "options">("browser");
+  const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState("");
+  const wasInsertOpen = useRef(false);
+  const editingValues =
+    imageDialog.type === "editing" ? imageDialog.initialValues : null;
+  const editingSource = editingValues?.src;
+  const editingRequest = useMemo(
+    () => (editingSource ? parseIIIFImageUrl(editingSource) : null),
+    [editingSource],
+  );
+  const isGenericImageDialog =
+    imageDialog.type !== "inactive" && !editingRequest;
+  const open = insertOpen || imageDialog.type !== "inactive";
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (open && !dialog?.open) dialog?.showModal();
-    if (!open && dialog?.open) dialog.close();
-  }, [open]);
+    if (
+      insertOpen &&
+      !wasInsertOpen.current &&
+      imageDialog.type === "inactive"
+    ) {
+      setScreen("browser");
+      setDraft(null);
+      setError("");
+    }
+    wasInsertOpen.current = insertOpen;
+  }, [imageDialog.type, insertOpen]);
 
   useEffect(() => {
-    if (image === false) return;
-    setWidth(image.width);
-    setHeight(image.height);
-    setRotation(image.rotation ?? 0);
-  }, [image]);
+    if (!editingRequest || !editingValues) return;
+    setInsertOpen(false);
+    setDraft({
+      request: editingRequest,
+      label: editingValues.altText ?? "IIIF image",
+    });
+    setScreen("options");
+    setError("");
+  }, [editingRequest, editingValues, setInsertOpen]);
+
+  const close = () => {
+    setInsertOpen(false);
+    if (imageDialog.type !== "inactive") closeImageDialog();
+    setScreen("browser");
+    setDraft(null);
+    setError("");
+  };
 
   const browserProps = config.browserProps ?? {};
   const output = useMemo(() => {
@@ -176,227 +313,657 @@ function IIIFBrowserDialog() {
       resource: Selection["resource"],
       _parent: unknown,
       vault: Vault,
-    ) => ({
-      resource,
-      vault,
-    });
-    const insert = (kind: "image" | "canvas") => (value: Selection) => {
+    ) => ({ resource, vault });
+    const select = (value: Selection) => {
       try {
         const resource = one(value.resource);
-        const request = {
-          width,
-          height,
-          rotation,
-          quality: image === false ? "default" : image.quality,
-          format: image === false ? "jpg" : image.format,
-        };
-        const url = createIIIFImageUrl(resource, value.vault, request);
-        const label = resourceLabel(resource, value.vault);
-        const markdown =
-          kind === "canvas"
-            ? `![${escapeMarkdown(label)}](${url})\n\n*${escapeMarkdown(label)}*`
-            : `<img src="${escapeAttribute(url)}" alt="${escapeAttribute(label)}" data-iiif-image="true" />`;
-        activeEditor?.focus(() => insertMarkdown(markdown), {
-          defaultSelection: "rootEnd",
+        const service = imageService(resource, value.vault);
+        const spatial = resource.selector?.spatial;
+        const region: RegionParameter = spatial
+          ? {
+              x: Math.round(spatial.x),
+              y: Math.round(spatial.y),
+              w: Math.round(spatial.width),
+              h: Math.round(spatial.height),
+            }
+          : { full: true };
+        const options = image === false ? {} : image;
+        setDraft({
+          request: createIIIFRequest(service.id, service.version, region, {
+            width: options.width,
+            height: options.height,
+            rotation: resource.rotation ?? options.rotation,
+            quality: options.quality,
+            format: options.format,
+          }),
+          label: resourceLabel(resource, value.vault),
         });
+        setScreen("options");
         setError("");
-        setOpen(false);
       } catch (caught) {
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "Could not insert the IIIF image",
-        );
+        setError(errorMessage(caught, "Could not use the selected image"));
       }
     };
+    const supportedTypes =
+      image === false
+        ? (["Canvas", "CanvasRegion"] as const)
+        : ([
+            "Canvas",
+            "CanvasRegion",
+            "ImageService",
+            "ImageServiceRegion",
+          ] as const);
+    return [
+      {
+        type: "callback" as const,
+        label: image === false ? "Continue" : (image.selectLabel ?? "Continue"),
+        supportedTypes: [...supportedTypes],
+        cb: select,
+        format: { type: "custom" as const, format: selection },
+      },
+    ];
+  }, [image]);
 
-    const actions: NonNullable<IIIFBrowserProps["output"]> = [];
-    if (image !== false) {
-      actions.push({
-        type: "callback",
-        label: image.actionLabel ?? "Insert image",
-        supportedTypes: [
-          "Canvas",
-          "CanvasRegion",
-          "ImageService",
-          "ImageServiceRegion",
-        ],
-        cb: insert("image"),
-        format: { type: "custom", format: selection },
+  const confirm = (kind: "image" | "canvas", resolvedUrl?: string) => {
+    if (!draft) return;
+    try {
+      const url = resolvedUrl ?? imageRequestUrl(draft.request, null);
+      if (editingValues) {
+        saveImage({ ...editingValues, src: url, altText: draft.label });
+        close();
+        return;
+      }
+      const markdown =
+        kind === "canvas"
+          ? `![${escapeMarkdown(draft.label)}](${url})\n\n*${escapeMarkdown(draft.label)}*`
+          : `<img src="${escapeAttribute(url)}" alt="${escapeAttribute(draft.label)}" data-iiif-image="true" />`;
+      activeEditor?.focus(() => insertMarkdown(markdown), {
+        defaultSelection: "rootEnd",
       });
+      close();
+    } catch (caught) {
+      setError(errorMessage(caught, "Could not save the IIIF image"));
     }
-    if (config.canvasSnippet) {
-      const options = config.canvasSnippet === true ? {} : config.canvasSnippet;
-      actions.push({
-        type: "callback",
-        label: options.actionLabel ?? "Insert Canvas snippet",
-        supportedTypes: ["Canvas", "CanvasRegion"],
-        cb: insert("canvas"),
-        format: { type: "custom", format: selection },
-      });
-    }
-    return actions;
-  }, [
-    config.canvasSnippet,
-    activeEditor,
-    height,
-    image,
-    insertMarkdown,
-    rotation,
-    setOpen,
-    width,
-  ]);
+  };
+
+  const title = isGenericImageDialog
+    ? imageDialog.type === "editing"
+      ? "Edit image"
+      : "Insert image"
+    : editingRequest
+      ? "Edit IIIF image"
+      : screen === "options"
+        ? (config.dialog?.optionsTitle ?? "Image options")
+        : (config.dialog?.title ?? "Insert from IIIF");
 
   return (
-    <dialog
-      ref={dialogRef}
-      aria-label={
-        typeof config.dialog?.title === "string"
-          ? config.dialog.title
-          : "IIIF Browser"
-      }
-      className={config.dialog?.className}
-      style={{
-        width: "min(96vw, 1200px)",
-        height: "min(90vh, 850px)",
-        maxWidth: "none",
-        maxHeight: "none",
-        padding: 0,
-        border: "1px solid #aaa",
-        ...config.dialog?.style,
+    <ModalOverlay
+      isOpen={open}
+      isDismissable
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) close();
       }}
-      onCancel={() => setOpen(false)}
-      onClose={() => setOpen(false)}
+      className="iiif-browser-mdx-overlay"
     >
-      <div
-        style={{
-          display: "flex",
-          height: "100%",
-          minHeight: 0,
-          flexDirection: "column",
-        }}
+      <AriaModal
+        className={classNames(
+          "iiif-browser-mdx-modal",
+          config.dialog?.className,
+        )}
+        style={config.dialog?.style}
       >
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-            padding: "0.75rem 1rem",
-            borderBottom: "1px solid #ddd",
-          }}
-        >
-          <strong>{config.dialog?.title ?? "Insert from IIIF"}</strong>
-          <button type="button" onClick={() => setOpen(false)}>
-            {config.dialog?.closeLabel ?? "Close"}
-          </button>
-        </header>
-        {image !== false ? (
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "1rem",
-              padding: "0.5rem 1rem",
-            }}
-          >
-            <NumberField label="Width" value={width} setValue={setWidth} />
-            <NumberField label="Height" value={height} setValue={setHeight} />
-            <NumberField
-              label="Rotation"
-              value={rotation}
-              setValue={(value) => setRotation(value ?? 0)}
-              min={0}
+        <Dialog className="iiif-browser-mdx-dialog">
+          <header className="iiif-browser-mdx-header">
+            {!editingRequest &&
+            !isGenericImageDialog &&
+            screen === "options" ? (
+              <button
+                type="button"
+                className="iiif-browser-mdx-back"
+                onClick={() => setScreen("browser")}
+              >
+                <span aria-hidden="true">←</span> Back
+              </button>
+            ) : null}
+            <Heading slot="title" className="iiif-browser-mdx-title">
+              {title}
+            </Heading>
+            <button
+              type="button"
+              className="iiif-browser-mdx-close"
+              onClick={close}
+            >
+              <svg aria-hidden="true" viewBox="0 0 16 16">
+                <path d="M3 3l10 10M13 3L3 13" />
+              </svg>
+              <span className="iiif-browser-mdx-sr-only">
+                {config.dialog?.closeLabel ?? "Close"}
+              </span>
+            </button>
+          </header>
+
+          {error ? (
+            <div className="iiif-browser-mdx-alert" role="alert">
+              {error}
+            </div>
+          ) : null}
+
+          {isGenericImageDialog ? (
+            <GenericImageForm
+              state={imageDialog}
+              onCancel={close}
+              onSave={(values) => {
+                saveImage(values);
+                close();
+              }}
             />
-          </div>
-        ) : null}
-        {error ? (
-          <div
-            role="alert"
-            style={{ color: "#b00020", padding: "0.5rem 1rem" }}
-          >
-            {error}
-          </div>
-        ) : null}
-        <div
-          className={config.dialog?.browserClassName}
-          style={{ display: "flex", flex: 1, minHeight: 0 }}
+          ) : screen === "browser" ? (
+            <div
+              className={classNames(
+                "iiif-browser-mdx-browser",
+                config.dialog?.browserClassName,
+              )}
+            >
+              <IIIFBrowser
+                {...browserProps}
+                className={browserProps.className ?? "h-full w-full"}
+                navigation={{
+                  canCropImage: true,
+                  multiSelect: false,
+                  ...browserProps.navigation,
+                }}
+                output={output}
+              />
+            </div>
+          ) : draft ? (
+            <ImageOptions
+              draft={draft}
+              setDraft={setDraft}
+              cache={infoCache}
+              requestInit={browserProps.history?.requestInitOptions}
+              className={config.dialog?.optionsClassName}
+              onCancel={close}
+              imageAction={
+                editingRequest
+                  ? {
+                      label: "Save changes",
+                      onClick: (url) => confirm("image", url),
+                    }
+                  : image === false
+                    ? null
+                    : {
+                        label: image.actionLabel ?? "Insert image",
+                        onClick: (url) => confirm("image", url),
+                      }
+              }
+              canvasAction={
+                !editingRequest && config.canvasSnippet
+                  ? {
+                      label:
+                        config.canvasSnippet === true
+                          ? "Insert Canvas snippet"
+                          : (config.canvasSnippet.actionLabel ??
+                            "Insert Canvas snippet"),
+                      onClick: (url) => confirm("canvas", url),
+                    }
+                  : null
+              }
+            />
+          ) : null}
+        </Dialog>
+      </AriaModal>
+    </ModalOverlay>
+  );
+}
+
+function ImageOptions({
+  draft,
+  setDraft,
+  cache,
+  requestInit,
+  className,
+  onCancel,
+  imageAction,
+  canvasAction,
+}: {
+  draft: Draft;
+  setDraft: (draft: Draft) => void;
+  cache: ImageInfoCache;
+  requestInit?: RequestInit;
+  className?: string;
+  onCancel: () => void;
+  imageAction: { label: string; onClick: (url: string) => void } | null;
+  canvasAction: { label: string; onClick: (url: string) => void } | null;
+}) {
+  const { info, loading, error } = useImageInfo(
+    cache,
+    imageServiceId(draft.request),
+    requestInit,
+  );
+  const capabilities = info
+    ? getImageCapabilities(info, draft.request.region)
+    : null;
+  const version = info
+    ? imageApiVersion(info)
+    : (draft.request.size.version ?? 3);
+  const listedSize = capabilities
+    ? capabilities.sizes.find((size) => sizeMatchesRequest(draft.request, size))
+    : null;
+  const sizeMode = draft.request.size.max
+    ? "max"
+    : listedSize
+      ? `preset:${listedSize.width}x${listedSize.height}`
+      : "custom";
+  const customWidth = capabilities
+    ? requestWidth(draft.request, capabilities)
+    : (draft.request.size.width ?? 1);
+  const hasCrop = !draft.request.region.full;
+  const invalidCrop = Boolean(info && hasCrop && !capabilities?.crop);
+  const outputUrl = imageRequestUrl(draft.request, info);
+  const previewRequest =
+    capabilities?.customSize && (draft.request.size.max || customWidth > 900)
+      ? requestAtWidth(draft.request, 900, capabilities)
+      : draft.request;
+  const previewUrl = imageRequestUrl(previewRequest, info);
+
+  const updateRequest = (request: IIIFImageRequest) =>
+    setDraft({ ...draft, request });
+
+  const removeCrop = () => {
+    const request = { ...draft.request, region: { full: true } };
+    if (info && !request.size.max) {
+      updateRequest(
+        requestAtWidth(
+          request,
+          customWidth,
+          getImageCapabilities(info, request.region),
+        ),
+      );
+    } else {
+      updateRequest(request);
+    }
+  };
+
+  return (
+    <>
+      <div className={classNames("iiif-browser-mdx-options", className)}>
+        <section
+          className="iiif-browser-mdx-preview"
+          aria-label="Image preview"
         >
-          <IIIFBrowser
-            {...browserProps}
-            className={browserProps.className ?? "h-full w-full"}
-            navigation={{
-              canCropImage: true,
-              multiSelect: false,
-              ...browserProps.navigation,
-            }}
-            output={output}
-          />
+          <img src={previewUrl} alt="" />
+          <p title={outputUrl}>{outputUrl}</p>
+        </section>
+
+        <div className="iiif-browser-mdx-controls">
+          {loading ? <output>Loading Image API options…</output> : null}
+          {error ? (
+            <p className="iiif-browser-mdx-inline-alert" role="alert">
+              {error} The current request can still be used, but service options
+              are unavailable.
+            </p>
+          ) : null}
+
+          <label className="iiif-browser-mdx-field">
+            <span>Alternative text</span>
+            <input
+              type="text"
+              value={draft.label}
+              onChange={(event) =>
+                setDraft({ ...draft, label: event.currentTarget.value })
+              }
+            />
+          </label>
+
+          {capabilities ? (
+            <fieldset className="iiif-browser-mdx-fieldset">
+              <legend>Image size</legend>
+              <label className="iiif-browser-mdx-field">
+                <span>Request size</span>
+                <select
+                  value={sizeMode}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    if (value === "max") {
+                      updateRequest(fullSizeRequest(draft.request, version));
+                    } else if (value === "custom") {
+                      updateRequest(
+                        requestAtWidth(
+                          draft.request,
+                          Math.min(1200, capabilities.maxWidth),
+                          capabilities,
+                        ),
+                      );
+                    } else {
+                      const size = capabilities.sizes.find(
+                        (candidate) =>
+                          `preset:${candidate.width}x${candidate.height}` ===
+                          value,
+                      );
+                      if (size) {
+                        updateRequest({
+                          ...draft.request,
+                          size: {
+                            max: false,
+                            upscaled: false,
+                            confined: false,
+                            width: size.width,
+                            height: size.height,
+                            version,
+                          },
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <option value="max">
+                    Maximum ({capabilities.sourceWidth} ×{" "}
+                    {capabilities.sourceHeight})
+                  </option>
+                  {capabilities.sizes.map((size) => (
+                    <option
+                      key={`${size.width}x${size.height}`}
+                      value={`preset:${size.width}x${size.height}`}
+                    >
+                      Preferred: {size.width} × {size.height}
+                    </option>
+                  ))}
+                  {capabilities.customSize || sizeMode === "custom" ? (
+                    <option value="custom">Custom width</option>
+                  ) : null}
+                </select>
+              </label>
+              {sizeMode === "custom" ? (
+                <label className="iiif-browser-mdx-field">
+                  <span>
+                    Width <output>{customWidth}px</output>
+                  </span>
+                  <input
+                    className="iiif-browser-mdx-range"
+                    type="range"
+                    min={Math.min(64, capabilities.maxWidth)}
+                    max={capabilities.maxWidth}
+                    value={customWidth}
+                    disabled={!capabilities.customSize}
+                    onChange={(event) =>
+                      updateRequest(
+                        requestAtWidth(
+                          draft.request,
+                          event.currentTarget.valueAsNumber,
+                          capabilities,
+                        ),
+                      )
+                    }
+                  />
+                </label>
+              ) : null}
+            </fieldset>
+          ) : null}
+
+          {hasCrop ? (
+            <fieldset className="iiif-browser-mdx-fieldset">
+              <legend>Crop</legend>
+              <div className="iiif-browser-mdx-crop">
+                <span>{regionLabel(draft.request.region)}</span>
+                <button type="button" onClick={removeCrop}>
+                  Remove crop
+                </button>
+              </div>
+              {invalidCrop ? (
+                <p className="iiif-browser-mdx-inline-alert" role="alert">
+                  This service does not declare support for pixel cropping.
+                  Remove the crop to continue.
+                </p>
+              ) : null}
+            </fieldset>
+          ) : null}
+
+          {capabilities?.rotation ? (
+            <fieldset className="iiif-browser-mdx-fieldset">
+              <legend>Rotation</legend>
+              <div className="iiif-browser-mdx-segmented">
+                {[0, 90, 180, 270].map((rotation) => (
+                  <button
+                    key={rotation}
+                    type="button"
+                    aria-pressed={draft.request.rotation.angle === rotation}
+                    onClick={() =>
+                      updateRequest({
+                        ...draft.request,
+                        rotation: {
+                          ...draft.request.rotation,
+                          angle: rotation,
+                        },
+                      })
+                    }
+                  >
+                    {rotation}°
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
+
+          {capabilities &&
+          (capabilities.formats.length > 1 ||
+            capabilities.qualities.length > 1) ? (
+            <div className="iiif-browser-mdx-field-row">
+              <label className="iiif-browser-mdx-field">
+                <span>Format</span>
+                <select
+                  value={draft.request.format}
+                  onChange={(event) =>
+                    updateRequest({
+                      ...draft.request,
+                      format: event.currentTarget.value,
+                    })
+                  }
+                >
+                  {withCurrent(capabilities.formats, draft.request.format).map(
+                    (format) => (
+                      <option key={format} value={format}>
+                        {format.toUpperCase()}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+              <label className="iiif-browser-mdx-field">
+                <span>Quality</span>
+                <select
+                  value={draft.request.quality}
+                  onChange={(event) =>
+                    updateRequest({
+                      ...draft.request,
+                      quality: event.currentTarget.value,
+                    })
+                  }
+                >
+                  {withCurrent(
+                    capabilities.qualities,
+                    draft.request.quality,
+                  ).map((quality) => (
+                    <option key={quality} value={quality}>
+                      {quality}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
         </div>
       </div>
-    </dialog>
+
+      <footer className="iiif-browser-mdx-footer">
+        <button
+          type="button"
+          className="iiif-browser-mdx-secondary"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        {canvasAction ? (
+          <button
+            type="button"
+            className="iiif-browser-mdx-secondary"
+            disabled={invalidCrop}
+            onClick={() => canvasAction.onClick(outputUrl)}
+          >
+            {canvasAction.label}
+          </button>
+        ) : null}
+        {imageAction ? (
+          <button
+            type="button"
+            className="iiif-browser-mdx-primary"
+            disabled={invalidCrop}
+            onClick={() => imageAction.onClick(outputUrl)}
+          >
+            {imageAction.label}
+          </button>
+        ) : null}
+      </footer>
+    </>
   );
 }
 
-function NumberField({
-  label,
-  value,
-  setValue,
-  min = 1,
+function GenericImageForm({
+  state,
+  onCancel,
+  onSave,
 }: {
-  label: string;
-  value: number | undefined;
-  setValue: (value: number | undefined) => void;
-  min?: number;
+  state:
+    | EditingImageDialogState
+    | InactiveImageDialogState
+    | NewImageDialogState;
+  onCancel: () => void;
+  onSave: (values: {
+    src?: string;
+    altText?: string;
+    title?: string;
+    width?: number;
+    height?: number;
+  }) => void;
 }) {
+  const initial = state.type === "editing" ? state.initialValues : {};
+  const [src, setSrc] = useState(initial.src ?? "");
+  const [altText, setAltText] = useState(initial.altText ?? "");
+  const [title, setTitle] = useState(initial.title ?? "");
+
+  useEffect(() => {
+    setSrc(initial.src ?? "");
+    setAltText(initial.altText ?? "");
+    setTitle(initial.title ?? "");
+  }, [initial.src, initial.altText, initial.title]);
+
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-      {label}
-      <input
-        type="number"
-        min={min}
-        value={value ?? ""}
-        placeholder={label === "Rotation" ? "0" : "max"}
-        onChange={(event) => {
-          const next = event.currentTarget.valueAsNumber;
-          setValue(Number.isFinite(next) ? next : undefined);
-        }}
-        style={{ width: "6rem" }}
-      />
-    </label>
+    <>
+      <div className="iiif-browser-mdx-generic-form">
+        <label className="iiif-browser-mdx-field">
+          <span>Image URL</span>
+          <input
+            type="url"
+            value={src}
+            onChange={(event) => setSrc(event.currentTarget.value)}
+          />
+        </label>
+        <label className="iiif-browser-mdx-field">
+          <span>Alternative text</span>
+          <input
+            value={altText}
+            onChange={(event) => setAltText(event.currentTarget.value)}
+          />
+        </label>
+        <label className="iiif-browser-mdx-field">
+          <span>Title</span>
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.currentTarget.value)}
+          />
+        </label>
+      </div>
+      <footer className="iiif-browser-mdx-footer">
+        <button
+          type="button"
+          className="iiif-browser-mdx-secondary"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="iiif-browser-mdx-primary"
+          disabled={!src}
+          onClick={() => onSave({ ...initial, src, altText, title })}
+        >
+          Save image
+        </button>
+      </footer>
+    </>
   );
 }
 
-function createIIIFImageUrl(
-  resource: IIIFSelectedResource,
-  vault: Vault,
-  options: Omit<IIIFImageOptions, "actionLabel"> = {},
+function useImageInfo(
+  cache: ImageInfoCache,
+  serviceId: string,
+  requestInit?: RequestInit,
 ) {
-  const service = imageService(resource, vault);
-  const serviceId = service.id.replace(/\/info\.json$/i, "").replace(/\/$/, "");
-  const spatial = resource.selector?.spatial;
-  const region = spatial
-    ? [spatial.x, spatial.y, spatial.width, spatial.height]
-        .map(Math.round)
-        .join(",")
-    : "full";
-  const width = positiveInteger(options.width);
-  const height = positiveInteger(options.height);
-  const size =
-    width && height
-      ? `!${width},${height}`
-      : width
-        ? `${width},`
-        : height
-          ? `,${height}`
-          : service.version === 2
-            ? "full"
-            : "max";
-  const rotation = Number.isFinite(options.rotation)
-    ? (((options.rotation ?? 0) % 360) + 360) % 360
-    : 0;
+  const [state, setState] = useState<{
+    info: IIIFImageInfo | null;
+    loading: boolean;
+    error: string;
+  }>({ info: null, loading: true, error: "" });
 
-  return `${serviceId}/${region}/${size}/${rotation}/${options.quality ?? "default"}.${options.format ?? "jpg"}`;
+  useEffect(() => {
+    let active = true;
+    setState({ info: null, loading: true, error: "" });
+    void loadImageInfo(cache, serviceId, requestInit)
+      .then((info) => {
+        if (active) setState({ info, loading: false, error: "" });
+      })
+      .catch((error) => {
+        if (active) {
+          setState({
+            info: null,
+            loading: false,
+            error: errorMessage(error, "Could not load info.json."),
+          });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [cache, serviceId, requestInit]);
+
+  return state;
+}
+
+function loadImageInfo(
+  cache: ImageInfoCache,
+  serviceId: string,
+  requestInit?: RequestInit,
+) {
+  let request = cache.get(serviceId);
+  if (!request) {
+    request = fetch(canonicalServiceUrl(serviceId), requestInit).then(
+      async (response) => {
+        if (!response.ok) {
+          throw new Error(`Could not load info.json (${response.status}).`);
+        }
+        const info = (await response.json()) as IIIFImageInfo;
+        if (!(info.width > 0) || !(info.height > 0)) {
+          throw new Error(
+            "The Image API information document has no dimensions.",
+          );
+        }
+        if (!info.id && info["@id"]) info.id = info["@id"];
+        return info;
+      },
+    );
+    request.catch(() => cache.delete(serviceId));
+    cache.set(serviceId, request);
+  }
+  return request;
 }
 
 function imageService(resource: IIIFSelectedResource, vault: Vault) {
@@ -423,10 +990,11 @@ function imageService(resource: IIIFSelectedResource, vault: Vault) {
   }
   const service = getImageServices(paintable.resource)[0];
   const id = service?.id || service?.["@id"];
-  if (!id)
+  if (!id) {
     throw new Error(
       "The selected image does not have an IIIF Image API service",
     );
+  }
   return {
     id,
     version: imageServiceVersion(
@@ -436,16 +1004,21 @@ function imageService(resource: IIIFSelectedResource, vault: Vault) {
   };
 }
 
-function imageServiceVersion(type?: string, context?: string | string[]) {
+function imageServiceVersion(
+  type?: string,
+  context?: string | string[],
+): 2 | 3 {
   if (type?.endsWith("2")) return 2;
   const contexts = Array.isArray(context) ? context : [context];
   return contexts.some((value) => value?.includes("/image/2/")) ? 2 : 3;
 }
 
 function resourceLabel(resource: IIIFSelectedResource, vault: Vault) {
-  const label =
-    getValue(resource.label) || getValue(vault.get<any>(resource)?.label);
-  return label || "IIIF image";
+  return (
+    getValue(resource.label) ||
+    getValue(vault.get<any>(resource)?.label) ||
+    "IIIF image"
+  );
 }
 
 function one(resource: Selection["resource"]) {
@@ -453,8 +1026,56 @@ function one(resource: Selection["resource"]) {
   return resource;
 }
 
-function positiveInteger(value?: number) {
-  return value && value > 0 ? Math.round(value) : undefined;
+function isListedSize(
+  request: IIIFImageRequest,
+  sizes: Array<{ width: number; height: number }>,
+) {
+  return sizes.some((size) => sizeMatchesRequest(request, size));
+}
+
+function sizeMatchesRequest(
+  request: IIIFImageRequest,
+  size: { width: number; height: number },
+) {
+  return (
+    request.size.width === size.width &&
+    (!request.size.height || request.size.height === size.height)
+  );
+}
+
+function requestWidth(
+  request: IIIFImageRequest,
+  capabilities: ReturnType<typeof getImageCapabilities>,
+) {
+  if (request.size.width) return request.size.width;
+  if (request.size.height) {
+    return Math.round(
+      request.size.height *
+        (capabilities.sourceWidth / capabilities.sourceHeight),
+    );
+  }
+  return capabilities.maxWidth;
+}
+
+function regionLabel(region: RegionParameter) {
+  if (region.square) return "Square crop";
+  if (region.w && region.h) {
+    const prefix = region.percent ? "Percentage crop" : "Pixel crop";
+    return `${prefix}: ${region.x ?? 0}, ${region.y ?? 0}, ${region.w} × ${region.h}`;
+  }
+  return "Full image";
+}
+
+function withCurrent(values: string[], current: string) {
+  return values.includes(current) ? values : [current, ...values];
+}
+
+function classNames(...values: Array<string | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function escapeAttribute(value: string) {

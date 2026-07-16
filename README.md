@@ -293,3 +293,62 @@ The default action inserts an Image API `<img />`. Width, height, rotation,
 crop, format, and quality can be configured; `canvasSnippet` adds a Markdown
 image and caption action. Pass normal `IIIFBrowser` options through
 `browserProps`, and modal classes, styles, title, and labels through `dialog`.
+The toolbar defaults to the image-stack icon; set `icon: "add"` on
+`iiifBrowserPlugin` to use the IIIF add mark instead.
+
+Selection uses two screens: choose or crop an image in the browser, then
+confirm the request using the service's `info.json` sizes, limits, formats,
+qualities, and rotation support. Selecting an existing IIIF image in MDXEditor
+and opening its image settings uses the same options screen, including a
+“Remove crop” action.
+
+When an MDXEditor image is resized, non-preset Image API URLs are updated to
+match the rendered width at twice the pixel density. Configure this using
+`image.resizeMultiplier` (for example `1`, `1.5`, or `2`), or set it to `false`
+to leave the URL unchanged.
+
+### Manifest and Collection snippets
+
+The separate snippet plugin inserts configurable MDX components for IIIF
+Collections, Manifests, and Canvases:
+
+```tsx
+import { MDXEditor, toolbarPlugin } from "@mdxeditor/editor";
+import {
+  InsertIIIFSnippet,
+  iiifSnippetPlugin,
+} from "iiif-browser/mdxeditor-snippet";
+
+<MDXEditor
+  markdown="Choose a IIIF resource"
+  plugins={[
+    iiifSnippetPlugin({
+      defaultSize: { width: 640, height: 420 },
+      browserProps: {
+        navigation: { canSelectCanvas: true },
+      },
+    }),
+    toolbarPlugin({
+      toolbarContents: () => <InsertIIIFSnippet />,
+    }),
+  ]}
+/>
+```
+
+Choose a resource in the IIIF Browser to insert it immediately. Inserted default
+snippets include `IIIFSnippetProvider` and can be resized directly in MDXEditor;
+the final width and height are written back to the MDX when the pointer is
+released. The toolbar defaults to the IIIF add mark; set `icon: "stack"` on
+`iiifSnippetPlugin` to use the image-stack icon instead.
+
+Collection snippets start with a responsive grid of square Manifest thumbnails
+and two-line labels. Choosing an item opens its deep-zoom viewer in place, with
+a bottom breadcrumb to return to the collection. Set
+`collectionNavigation: "button"` to insert an over-image Collection button
+instead.
+
+Use `components` to change the component name, import source, default props, or
+editor preview for each resource type. Set `provider: false` for components
+that load their own resources, or `defaultSize: false` to omit dimensions.
+Normal IIIF Browser options are passed through `browserProps`; titles, classes,
+and styles can be customized through `dialog`.

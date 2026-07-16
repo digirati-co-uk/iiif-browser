@@ -65,6 +65,7 @@ export const WithCanvasSnippet = () => (
     markdown={"Select either insertion action in the IIIF Browser.\n"}
     plugins={[
       iiifBrowserPlugin({
+        icon: "add",
         canvasSnippet: true,
         dialog: {
           title: "Choose an illustration",
@@ -83,3 +84,31 @@ export const WithCanvasSnippet = () => (
     ]}
   />
 );
+
+export const EditExistingIIIFImage = () => {
+  const initialMarkdown = `<img
+  src="https://dg-view.nls.uk/iiif/2/7440%2F74408454.5/250,300,1200,900/625,/90/default.jpg"
+  alt="An existing cropped IIIF image"
+/>
+`;
+  const [markdown, setMarkdown] = useState(initialMarkdown);
+
+  return (
+    <>
+      <p>
+        Select the image, then use its settings button to edit the IIIF request.
+      </p>
+      <MDXEditor
+        markdown={initialMarkdown}
+        onChange={setMarkdown}
+        plugins={[
+          iiifBrowserPlugin({ image: { resizeMultiplier: 2 } }),
+          toolbarPlugin({
+            toolbarContents: () => <InsertIIIFBrowser />,
+          }),
+        ]}
+      />
+      <pre data-testid="markdown-output">{markdown}</pre>
+    </>
+  );
+};

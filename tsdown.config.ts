@@ -11,6 +11,7 @@ export default defineConfig((_ctx) => {
       index: "./src/bundle.ts",
       "digital-collections": "./src/digital-collections/index.ts",
       mdxeditor: "./src/mdxeditor/index.tsx",
+      "mdxeditor-snippet": "./src/mdxeditor-snippet/index.ts",
     },
     target: ["es2020"],
     format: ["esm", "cjs"],
