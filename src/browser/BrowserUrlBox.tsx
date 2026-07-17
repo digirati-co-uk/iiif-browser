@@ -1,7 +1,16 @@
+import { useMemo } from "react";
 import { Button } from "react-aria-components";
+import { useVault } from "react-iiif-vault";
 import { twMerge } from "tailwind-merge";
+import { ManifestMetadata } from "../components/ManifestMetadata";
 import { Omnisearch } from "../components/Omnisearch";
-import { useIsPageLoading } from "../context";
+import {
+  useIsPageLoading,
+  useLocation,
+  useSearchParams,
+  useUIConfig,
+} from "../context";
+import { useRouteResource } from "../hooks/use-route-resource";
 import { BookmarkIcon } from "../icons/BookmarkIcon";
 import { LockIcon } from "../icons/LockIcon";
 
@@ -9,6 +18,21 @@ export function BrowserUrlBox({
   showBookmarkButton,
 }: { showBookmarkButton?: boolean }) {
   const loading = useIsPageLoading();
+  const { manifestInfoButton } = useUIConfig();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const resource = useRouteResource();
+  const vault = useVault();
+  const manifest = useMemo(
+    () =>
+      manifestInfoButton &&
+      location.pathname === "/manifest" &&
+      searchParams.get("view-source") !== "true" &&
+      resource?.type === "Manifest"
+        ? vault.toPresentation3(resource as any)
+        : null,
+    [manifestInfoButton, location.pathname, resource, searchParams, vault],
+  );
 
   return (
     <div
@@ -38,6 +62,12 @@ export function BrowserUrlBox({
           <BookmarkIcon />
         </Button>
       )}
+      {manifest ? (
+        <ManifestMetadata
+          key={searchParams.get("id") || "manifest-information"}
+          manifest={manifest}
+        />
+      ) : null}
     </div>
   );
 }

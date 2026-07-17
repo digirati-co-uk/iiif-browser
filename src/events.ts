@@ -2,6 +2,7 @@ import type { InternationalString } from "@iiif/presentation-3";
 import mitt, { type Emitter } from "mitt";
 import type { BoxSelector } from "react-iiif-vault";
 import type { HistoryItem } from "./stores/browser-store";
+import type { SelectedPainting } from "./utilities/painting-selection";
 
 export type BrowserEvents = {
   ready: undefined;
@@ -27,6 +28,7 @@ export type BrowserEvents = {
       label?: InternationalString;
     };
     selector?: BoxSelector;
+    selectedPainting?: SelectedPainting;
   } | null;
   "image-service.change": {
     id: string;

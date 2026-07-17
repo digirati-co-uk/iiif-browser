@@ -1,9 +1,11 @@
 import {
+  CanvasContext,
   LocaleString,
   useCanvas,
   useCollection,
   useManifest,
 } from "react-iiif-vault";
+import { CanvasThumbnailImage } from "../components/CanvasThumbnailImage";
 import { useSelectedItems } from "../context";
 import { CropIcon } from "../icons/CropIcon";
 import { MultiImageIcon } from "../icons/MultiImageIcon";
@@ -96,6 +98,11 @@ function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
 
   return (
     <div className="flex flex-row items-center gap-2 w-full overflow-hidden truncate">
+      <div className="h-12 w-12 flex-none overflow-hidden rounded bg-white">
+        <CanvasContext canvas={item.id}>
+          <CanvasThumbnailImage selection={item} />
+        </CanvasContext>
+      </div>
       {item.selector ? (
         <div className="text-3xl text-[#F58962]">
           <CropIcon />

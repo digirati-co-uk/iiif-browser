@@ -9,6 +9,12 @@ import {
 import type { BrowserEvents } from "../events";
 import { formats } from "../formats";
 import { targets } from "../targets";
+import {
+  canvasToImageSelector,
+  defaultSelectedPainting,
+  findSelectedPainting,
+  type SelectedPainting,
+} from "../utilities/painting-selection";
 
 export type SelectedItem = {
   id: string;
@@ -22,6 +28,8 @@ export type SelectedItem = {
     thumbnail?: string;
   };
   selector?: BoxSelector;
+  imageSelector?: BoxSelector;
+  selectedPainting?: SelectedPainting;
   rotation?: number;
 };
 
@@ -74,6 +82,7 @@ export interface OutputStore {
   resetSelection(): void;
   runTargetAction(target: OutputTarget): void;
   refineSelectedItem(id: string, refinement: BoxSelector | null): void;
+  setSelectedPainting(id: string, painting?: SelectedPainting): void;
   setRotation(id: string, rotation: number): void;
 }
 
@@ -248,8 +257,9 @@ export function isOutputSupportedForSelection(
   const uniqueTypes = new Set(selectedItems.map((item) => item.type));
 
   if (selectedItems.length === 1) {
-    const onlyType = selectedItems[0]!.type;
-    return outputTarget.supportedTypes.includes(onlyType as any);
+    return outputTypesForItem(selectedItems[0]!).some((type) =>
+      outputTarget.supportedTypes.includes(type),
+    );
   }
 
   if (uniqueTypes.size !== 1) {
@@ -258,6 +268,17 @@ export function isOutputSupportedForSelection(
 
   const [onlyType] = uniqueTypes;
   return outputTarget.supportedTypes.includes(`${onlyType}List` as any);
+}
+
+export function outputTypesForItem(item: SelectedItem): OutputType[] {
+  const types = [item.type as OutputType];
+  if (item.type !== "Canvas") return types;
+  if (item.selector) types.push("CanvasRegion");
+  if (item.selectedPainting?.service) {
+    types.push("ImageService");
+    if (item.imageSelector) types.push("ImageServiceRegion");
+  }
+  return types;
 }
 
 export function createOutputStore(options: OutputStoreOptions) {
@@ -365,14 +386,59 @@ export function createOutputStore(options: OutputStoreOptions) {
     refineSelectedItem(id: string, refinement: BoxSelector | null): void {
       const item = get().selectedItems.find((i) => i.id === id);
       if (!item) return;
+      const canvas = vault.get<any>(item);
+      const painting =
+        canvas && item.selectedPainting
+          ? findSelectedPainting(vault, canvas, item.selectedPainting)
+          : undefined;
+      const updatedItem = {
+        ...item,
+        selector: refinement || undefined,
+        imageSelector:
+          canvas && painting && refinement
+            ? canvasToImageSelector(canvas, painting, refinement)
+            : undefined,
+      };
       set({
         selectedItems: [
           ...get().selectedItems.filter((i) => i.id !== id),
-          { ...item, selector: refinement || undefined },
+          updatedItem,
         ],
         wasManuallySelected: true,
       });
-      emitter.emit("output.refine-selected-item", item);
+      emitter.emit("output.refine-selected-item", updatedItem);
+      emitter.emit("output.selection-change");
+    },
+
+    setSelectedPainting(id, selectedPainting) {
+      const item = get().selectedItems.find((candidate) => candidate.id === id);
+      if (!item) return;
+      if (
+        item.selectedPainting?.id === selectedPainting?.id &&
+        item.selectedPainting?.annotationId === selectedPainting?.annotationId &&
+        item.selectedPainting?.service?.id === selectedPainting?.service?.id &&
+        item.selectedPainting?.choice === selectedPainting?.choice
+      ) {
+        return;
+      }
+      const canvas = vault.get<any>(item);
+      const painting =
+        canvas && selectedPainting
+          ? findSelectedPainting(vault, canvas, selectedPainting)
+          : undefined;
+      set({
+        selectedItems: [
+          ...get().selectedItems.filter((candidate) => candidate.id !== id),
+          {
+            ...item,
+            selectedPainting,
+            imageSelector:
+              canvas && painting
+                ? canvasToImageSelector(canvas, painting, item.selector)
+                : undefined,
+          },
+        ],
+      });
       emitter.emit("output.selection-change");
     },
 
@@ -443,13 +509,28 @@ export function createOutputStore(options: OutputStoreOptions) {
       parent: canvas.parent,
       selector: canvas.selector,
     };
+    const fullCanvas = vault.get<any>(item);
+    item.selectedPainting =
+      canvas.selectedPainting ||
+      (fullCanvas ? defaultSelectedPainting(vault, fullCanvas) : undefined);
+    const painting =
+      fullCanvas && item.selectedPainting
+        ? findSelectedPainting(vault, fullCanvas, item.selectedPainting)
+        : undefined;
+    item.imageSelector =
+      fullCanvas && painting
+        ? canvasToImageSelector(fullCanvas, painting, item.selector)
+        : undefined;
 
+    const selectable = canSelect(item);
     store.setState({
       defaultSelectedItem: item,
-      selectedItems: canSelect(item) ? [item] : [],
+      selectedItems: selectable ? [item] : [],
       wasManuallySelected: false,
     });
-    emitter.emit("output.select-item", item);
+    if (selectable) {
+      emitter.emit("output.select-item", item);
+    }
     emitter.emit("output.selection-change");
   });
 
@@ -464,12 +545,15 @@ export function createOutputStore(options: OutputStoreOptions) {
       type: "ImageService",
     };
 
+    const selectable = canSelect(item);
     store.setState({
       defaultSelectedItem: item,
-      selectedItems: canSelect(item) ? [item] : [],
+      selectedItems: selectable ? [item] : [],
       wasManuallySelected: false,
     });
-    emitter.emit("output.select-item", item);
+    if (selectable) {
+      emitter.emit("output.select-item", item);
+    }
     emitter.emit("output.selection-change");
   });
 
@@ -489,12 +573,15 @@ export function createOutputStore(options: OutputStoreOptions) {
       type: resource.type,
       // @todo once we have label/thumbnail/parent add it here.
     };
+    const selectable = canSelect(item);
     store.setState({
       defaultSelectedItem: item,
-      selectedItems: canSelect(item) ? [item] : [],
+      selectedItems: selectable ? [item] : [],
       wasManuallySelected: false,
     });
-    emitter.emit("output.select-item", item);
+    if (selectable) {
+      emitter.emit("output.select-item", item);
+    }
     emitter.emit("output.selection-change");
   });
 

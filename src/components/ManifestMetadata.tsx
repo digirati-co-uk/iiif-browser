@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
+import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { Metadata } from "react-iiif-vault";
+import { useBrowserContainer } from "../browser/BrowserContainer";
+import { InfoIcon } from "../icons/InfoIcon";
 
 export function ManifestMetadata({ manifest }: { manifest: any }) {
+  const container = useBrowserContainer();
   if (!manifest) return null;
 
   const metadata = list(manifest.metadata);
@@ -11,36 +15,51 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
   if (!hasContent) return null;
 
   return (
-    <details className="absolute left-2 top-2 z-[60] bg-white max-h-[calc(100%-60px)] max-w-[280px] overflow-y-auto rounded-md border border-gray-300 bg-white/85 text-sm text-gray-800 shadow-sm backdrop-blur open:flex open:w-[280px] open:flex-col open:shadow-lg">
-      <summary className="sticky top-0 py-2 px-3 bg-white cursor-pointer select-none font-medium text-gray-900">
-        Manifest information
-      </summary>
-      <div className="mt-3 px-3 pb-2 grid min-h-0 flex-1 gap-3 overflow-y-auto [overflow-wrap:anywhere]">
-        {metadata.length ? (
-          <Metadata
-            allowHtml
-            classes={metadataClasses}
-            metadata={metadata}
-            showEmptyMessage={false}
-          />
-        ) : null}
+    <DialogTrigger>
+      <Button
+        aria-label="Show manifest information"
+        className="relative z-20 flex-shrink-0 rounded p-1 text-lg text-slate-400 outline-none hover:text-slate-600 focus:ring ring-blue-300 aria-expanded:bg-slate-100"
+      >
+        <InfoIcon />
+      </Button>
+      <Popover
+        UNSTABLE_portalContainer={container || undefined}
+        className="z-[70] w-[280px] max-w-[calc(100vw-1rem)] !max-h-[min(28rem,calc(100%-4rem))] overflow-y-auto rounded-md border border-gray-300 bg-white text-sm text-gray-800 shadow-lg"
+        placement="bottom end"
+      >
+        <Dialog
+          aria-label="Manifest information"
+          className="p-3 outline-none"
+        >
+          <h2 className="font-medium text-gray-900">Manifest information</h2>
+          <div className="mt-3 grid gap-3 [overflow-wrap:anywhere]">
+            {metadata.length ? (
+              <Metadata
+                allowHtml
+                classes={metadataClasses}
+                metadata={metadata}
+                showEmptyMessage={false}
+              />
+            ) : null}
 
-        {manifest.rights ? (
-          <MetadataSection title="Rights">
-            <LinkOrText value={manifest.rights} />
-          </MetadataSection>
-        ) : null}
+            {manifest.rights ? (
+              <MetadataSection title="Rights">
+                <LinkOrText value={manifest.rights} />
+              </MetadataSection>
+            ) : null}
 
-        {requiredStatement ? (
-          <Metadata
-            allowHtml
-            classes={metadataClasses}
-            metadata={[requiredStatement]}
-            showEmptyMessage={false}
-          />
-        ) : null}
-      </div>
-    </details>
+            {requiredStatement ? (
+              <Metadata
+                allowHtml
+                classes={metadataClasses}
+                metadata={[requiredStatement]}
+                showEmptyMessage={false}
+              />
+            ) : null}
+          </div>
+        </Dialog>
+      </Popover>
+    </DialogTrigger>
   );
 }
 

@@ -1,9 +1,6 @@
 import {
   type BoxSelector,
   createThumbnailHelper,
-  expandTarget,
-  getValue,
-  parseSelector,
   Vault,
 } from "@iiif/helpers";
 import { isImageService } from "@iiif/parser/image-3";
@@ -26,6 +23,7 @@ import {
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
+import { selectedPaintingFromId } from "../utilities/painting-selection";
 import { selectorFromXYWH } from "../utilities/selector-from-xywh";
 
 type IndexedHistory = History & {
@@ -534,7 +532,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           const searchParamsString = newSearchParams.toString();
 
           browserSuccess(url, seedCollection, viewSource);
-          history.replace(`${route.url}?${searchParamsString}`, { parent });
+          history.replace(`${route.url}?${searchParamsString}`, {
+            parent,
+            sourceUrl: url,
+          });
           return;
         }
 
@@ -612,7 +613,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             resolvedDigitalCollectionResource.resource,
             viewSource,
           );
-          history.replace(`${route.url}?${searchParamsString}`, { parent });
+          history.replace(`${route.url}?${searchParamsString}`, {
+            parent,
+            sourceUrl: url,
+          });
           return;
         }
 
@@ -725,7 +729,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           requestAbortController = undefined;
         }
         browserSuccess(url, result, viewSource);
-        history.replace(`${route.url}?${searchParamsString}`, { parent });
+        history.replace(`${route.url}?${searchParamsString}`, {
+          parent,
+          sourceUrl: url,
+        });
         return;
       } catch (error: any) {
         if (error?.name === "AbortError") {
@@ -799,16 +806,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             history.push(`${route.url}?${canvasSearchParams.toString()}`, {
               parent,
             });
-
-            const region = canvasSearchParams.get("xywh");
-
-            // Browser success with Canvas
-            browserSuccess(url, fullResource, viewSource, parent);
-
+            browserSuccess(url);
             return;
           }
 
-          return browserLoading(url, parent, searchParams);
+          return browserLoading(manifestUrl, parent, canvasSearchParams);
         }
 
         if (url.startsWith("https://") || url.startsWith("http://")) {
@@ -1092,6 +1094,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     } else if (resolved) {
       // Extract parent from state if available
       const parent = (r.location.state as any)?.parent;
+      const sourceUrl = (r.location.state as any)?.sourceUrl;
 
       const historyItem: HistoryItem = {
         resource:
@@ -1099,7 +1102,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             ? resolved
             : null,
         route: locationUrl,
-        url: resolved,
+        url: sourceUrl || resolved,
         parent: parent,
         metadata: {
           type: resource?.type,
@@ -1190,21 +1193,25 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         emitter.emit("collection.change", resource);
       }
       if (resource?.type === "Manifest") {
-        emitter.emit("manifest.change", resource);
-
-        // Search check for changed canvas.
         const searchParams = new URLSearchParams(r.location.search);
         const canvasId = searchParams.get("canvas");
         const xywh = searchParams.get("xywh");
+        const choice = searchParams.get("choice");
         if (canvasId) {
           const selector = selectorFromXYWH(xywh);
+          const canvas = vault.get<any>({ id: canvasId, type: "Canvas" });
 
           emitter.emit("canvas.change", {
             id: canvasId,
             type: "Canvas",
             parent: resource,
             selector,
+            selectedPainting: canvas
+              ? selectedPaintingFromId(vault, canvas, choice)
+              : undefined,
           });
+        } else {
+          emitter.emit("manifest.change", resource);
         }
       }
       if (resource && (resource?.type || "").startsWith("ImageService")) {

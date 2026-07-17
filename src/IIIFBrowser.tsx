@@ -43,6 +43,8 @@ export interface IIIFBrowserConfig {
   portalIcons: boolean;
   homeLink: string;
   showFilterButton: boolean;
+  manifestInfoButton?: boolean;
+  /** @deprecated Use manifestInfoButton instead. */
   showManifestMetadata: boolean;
   collectionSearchTagEnabled: boolean;
   buttonClassName: string;

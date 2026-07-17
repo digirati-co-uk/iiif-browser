@@ -1429,6 +1429,18 @@ export const SearchWithinOnly = () => (
 );
 SearchWithinOnly.storyName = "Search: Within-only (default)";
 
+export const ManifestInformationButtonDisabled = () => (
+  <div className="w-full h-[80vh] flex">
+    <IIIFBrowser
+      className="w-full h-[80vh] flex"
+      history={historyConfig}
+      ui={{ manifestInfoButton: false }}
+    />
+  </div>
+);
+ManifestInformationButtonDisabled.storyName =
+  "Toolbar: Manifest information disabled";
+
 // ── Story 2: Custom in-memory adapter + within collection ────────────────────
 
 /**

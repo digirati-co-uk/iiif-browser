@@ -15,6 +15,7 @@ import {
   OutputContext,
   useCanvasOutputRotation,
   useCanvasOutputSelector,
+  useCanvasSelectedPainting,
   useLocation,
   useMode,
   useNavigate,
@@ -49,6 +50,7 @@ export function ManifestCanvasViewer() {
   const current = sequence[currentSequenceIndex];
   const canvas = items[current[0]];
   const currentCanvasSelector = useCanvasOutputSelector(canvas);
+  const selectedPainting = useCanvasSelectedPainting(canvas);
   const rotation = useCanvasOutputRotation(canvas);
   const xywh = currentCanvasSelector
     ? [
@@ -67,6 +69,9 @@ export function ManifestCanvasViewer() {
       if (xywh) {
         search.set("xywh", xywh);
       }
+      if (selectedPainting?.choice) {
+        search.set("choice", selectedPainting.id);
+      }
       const nextSearch = search.toString();
       const currentSearch = location.search.replace(/^\?/, "");
 
@@ -81,19 +86,36 @@ export function ManifestCanvasViewer() {
         { replace: true },
       );
     }
-  }, [canvas, location.search, manifest.id, navigate, xywh]);
+  }, [
+    canvas,
+    location.search,
+    manifest.id,
+    navigate,
+    selectedPainting?.choice,
+    selectedPainting?.id,
+    xywh,
+  ]);
 
   return (
     <div className="flex h-full flex-col w-full flex-1">
       <div className="group relative flex w-full flex-1 min-h-0 flex-col">
         <ModeProvider mode={mode}>
-          <CanvasPanel.Viewer height={"auto"} mode={mode}>
+          <CanvasPanel.Viewer
+            key={`${canvas.id}:${selectedPainting?.id || ""}`}
+            height={"auto"}
+            mode={mode}
+          >
             <ModeContext.Provider value={mode}>
               <CanvasPanel.RenderCanvas
                 strategies={["empty", "images", "media", "textual-content"]}
                 renderViewerControls={() => <CanvasControls />}
                 renderMediaControls={() => <MediaControls />}
                 rotation={rotation}
+                defaultChoices={
+                  selectedPainting?.choice
+                    ? [{ id: selectedPainting.id }]
+                    : undefined
+                }
               >
                 <OutputContext.Provider value={outputCtx}>
                   <CurrentCanvasRefinement
@@ -105,7 +127,7 @@ export function ManifestCanvasViewer() {
             </ModeContext.Provider>
           </CanvasPanel.Viewer>
         </ModeProvider>
-        {sequence.length > 1 ? (
+        {!editMode && sequence.length > 1 ? (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-between p-3 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
             <button
               type="button"
@@ -128,7 +150,7 @@ export function ManifestCanvasViewer() {
           </div>
         ) : null}
       </div>
-      {sequence.length > 1 ? (
+      {!editMode && sequence.length > 1 ? (
         <div className="relative flex-shrink-0">
           <button
             type="button"

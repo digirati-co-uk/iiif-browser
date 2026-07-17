@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Button, Toolbar } from "react-aria-components";
 import {
   type AnnotationResponse,
@@ -16,12 +16,12 @@ import {
 } from "../context";
 import { CropIcon } from "../icons/CropIcon";
 import { DeleteForeverIcon } from "../icons/DeleteForeverIcon";
-import { HandIcon } from "../icons/HandIcon";
 import { HomeIcon } from "../icons/HomeIcon";
 import { MinusIcon } from "../icons/MinusIcon";
 import { PlusIcon } from "../icons/PlusIcon";
 import { ReloadIcon } from "../icons/ReloadIcon";
 import { paste } from "../utilities/paste-util";
+import { CanvasImageSourceSelect } from "./CanvasImageSourceSelect";
 import { CropAnnotationControls } from "./CropAnnotationControls";
 
 export function CanvasControls({ id }: { id?: string }) {
@@ -36,6 +36,8 @@ export function CanvasControls({ id }: { id?: string }) {
   const editMode = mode === "sketch";
   const canvasButton = paste();
   const t = useRequestAnnotation();
+  const cancelRequest = useRef(t.cancelRequest);
+  cancelRequest.current = t.cancelRequest;
 
   const saveAnnotationResponse = useCallback(
     (resp: AnnotationResponse | null) => {
@@ -57,8 +59,15 @@ export function CanvasControls({ id }: { id?: string }) {
     [id, canvas, refine, setEditMode],
   );
 
+  useEffect(() => () => cancelRequest.current(), []);
+
+  if (editMode) {
+    return null;
+  }
+
   return (
     <Toolbar className="absolute bottom-0 flex gap-1 p-2 z-50">
+      <CanvasImageSourceSelect />
       <Button
         className={canvasButton.c(
           "disabled:opacity-40 bg-white/90 hover:bg-white text-black text-2xl flex gap-2 items-center px-2 py-1 rounded border border-gray-300 shadow-sm transition",
@@ -92,7 +101,6 @@ export function CanvasControls({ id }: { id?: string }) {
         <>
           <Button
             className={canvasButton.v()}
-            isDisabled={editMode && !canvasOutputSelector}
             onPress={() => {
               const selector = canvasOutputSelector?.spatial;
               return t
@@ -101,24 +109,16 @@ export function CanvasControls({ id }: { id?: string }) {
                   ...(selector ? { selector } : {}),
                   annotationPopup: <CropAnnotationControls />,
                 })
-                .then(saveAnnotationResponse);
+                .then(saveAnnotationResponse)
+                .catch(() => setEditMode(false));
             }}
+            aria-label={canvasOutputSelector ? "Edit crop" : "Crop image"}
           >
             {canvasOutputSelector ? (
-              <span className="text-sm">
-                {" "}
-                {editMode ? "Confirm" : "Edit crop"}
-              </span>
+              <span className="text-sm">Edit crop</span>
             ) : (
               <CropIcon />
             )}
-          </Button>
-          <Button
-            className={canvasButton.v()}
-            isDisabled={!editMode}
-            onPress={() => setEditMode(false)}
-          >
-            <HandIcon />
           </Button>
           <Button
             className={canvasButton.v()}
@@ -132,6 +132,7 @@ export function CanvasControls({ id }: { id?: string }) {
                 }
               }
             }}
+            aria-label="Remove crop"
           >
             <DeleteForeverIcon />
           </Button>
