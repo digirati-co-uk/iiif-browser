@@ -1,4 +1,5 @@
 import "./styles/lib.css";
+import "./index.css";
 export * from "./IIIFBrowser";
 export * from "./context";
 export type {

@@ -1,5 +1,5 @@
 import type { ViewerMode } from "@atlas-viewer/atlas";
-import { getValue, type Vault } from "@iiif/helpers";
+import { getValue, Vault } from "@iiif/helpers";
 import {
   createContext,
   useCallback,
@@ -7,11 +7,11 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import {
   useAtlasStore,
   useCollection,
-  useExistingVault,
   useVault,
   VaultProvider,
 } from "react-iiif-vault";
@@ -413,6 +413,21 @@ export function useSetRotation() {
   return useStore(store, (state) => state.setRotation);
 }
 
+export function useSetSelectedPainting() {
+  const store = useOutputStore();
+  return useStore(store, (state) => state.setSelectedPainting);
+}
+
+export function useCanvasSelectedPainting(canvas?: { id?: string } | null) {
+  const store = useOutputStore();
+  return useStore(
+    store,
+    (state) =>
+      state.selectedItems.find((item) => item.id === canvas?.id)
+        ?.selectedPainting,
+  );
+}
+
 export function useCanvasOutputRotation(canvas?: { id?: string } | null) {
   const store = useOutputStore();
   return (
@@ -486,7 +501,7 @@ export function BrowserProvider({
   children: React.ReactNode;
 }) {
   const readyRef = useRef(false);
-  const vault = useExistingVault(customVault);
+  const [vault] = useState(() => customVault ?? new Vault());
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const emitter = useMemo(
@@ -503,7 +518,14 @@ export function BrowserProvider({
   );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
-    const { defaultPages, ...rest } = uiConfig || {};
+    const {
+      defaultPages,
+      manifestInfoButton,
+      showManifestMetadata,
+      ...rest
+    } = uiConfig || {};
+    const showManifestInfo =
+      manifestInfoButton ?? showManifestMetadata ?? true;
     return {
       defaultPages: {
         about: true,
@@ -520,7 +542,6 @@ export function BrowserProvider({
       forwardButton: true,
       bookmarkButton: false,
       showFilterButton: false,
-      showManifestMetadata: true,
       buttonClassName: "",
       collectionPaginationSize: 25,
       manifestPaginationSize: 25,
@@ -529,6 +550,8 @@ export function BrowserProvider({
       collectionSearchTagEnabled: true,
       portalIcons: true,
       ...rest,
+      manifestInfoButton: showManifestInfo,
+      showManifestMetadata: showManifestInfo,
     } as IIIFBrowserConfig;
   }, [uiConfig]);
 

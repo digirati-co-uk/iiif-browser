@@ -36,7 +36,7 @@ describe("reload route state", () => {
   it("builds a reload request from search params", () => {
     const request = getReloadRequest(
       new URLSearchParams(
-        "id=https://example.org/manifest&canvas=canvas-1&xywh=10,20,30,40&view-source=true",
+        "id=https://example.org/manifest&canvas=canvas-1&xywh=10,20,30,40&choice=image-2&view-source=true",
       ),
     );
 
@@ -45,6 +45,7 @@ describe("reload route state", () => {
     expect(request?.viewSource).toBe(true);
     expect(request?.searchParams.get("canvas")).toBe("canvas-1");
     expect(request?.searchParams.get("xywh")).toBe("10,20,30,40");
+    expect(request?.searchParams.get("choice")).toBe("image-2");
   });
 
   it("restores reload navigation including collection and view parameters", async () => {
@@ -65,7 +66,7 @@ describe("reload route state", () => {
 
     const request = getReloadRequest(
       new URLSearchParams(
-        "id=https://example.org/collection&canvas=https://example.org/canvas/1&xywh=10,20,30,40&view-source=true",
+        "id=https://example.org/collection&canvas=https://example.org/canvas/1&xywh=10,20,30,40&choice=https://example.org/image/2&view-source=true",
       ),
     );
 
@@ -83,6 +84,7 @@ describe("reload route state", () => {
     expect(params.get("id")).toBe("https://example.org/collection");
     expect(params.get("canvas")).toBe("https://example.org/canvas/1");
     expect(params.get("xywh")).toBe("10,20,30,40");
+    expect(params.get("choice")).toBe("https://example.org/image/2");
     expect(params.get("view-source")).toBe("true");
   });
 });

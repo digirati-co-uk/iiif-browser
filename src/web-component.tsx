@@ -30,6 +30,7 @@ interface IIIFBrowserAttributes {
   "home-button"?: boolean;
   "bookmark-button"?: boolean;
   "menu-button"?: boolean;
+  "manifest-info-button"?: boolean;
 
   // Navigation.
   "multi-select"?: boolean;
@@ -82,6 +83,7 @@ function IIIFBrowserWrapper(attributes: IIIFBrowserProperties) {
       reloadButton: defaultBool(attributes.reloadButton, false),
       forwardButton: defaultBool(attributes.forwardButton, false),
       menuButton: defaultBool(attributes.menuButton, true),
+      manifestInfoButton: defaultBool(attributes.manifestInfoButton, true),
     } as Exclude<IIIFBrowserProps["ui"], undefined>;
 
     const canSelectCanvas = defaultBool(attributes.canSelectCanvas, true);
@@ -213,6 +215,7 @@ const IIIFBrowser = r2wc(IIIFBrowserWrapper, {
     homeButton: "boolean",
     bookmarkButton: "boolean",
     menuButton: "boolean",
+    manifestInfoButton: "boolean",
 
     // Navigation.
     multiSelect: "boolean",

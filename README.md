@@ -27,6 +27,9 @@ export interface IIIFBrowserConfig {
   homeButton: boolean;
   bookmarkButton: boolean;
   menuButton: boolean;
+  manifestInfoButton?: boolean;
+  /** @deprecated Use manifestInfoButton instead. */
+  showManifestMetadata: boolean;
 
   collectionPaginationSize: number;
   manifestPaginationSize: number;
@@ -50,6 +53,8 @@ export interface IIIFBrowserConfig {
 - **homeButton**: Show or hide the home button.
 - **bookmarkButton**: Show or hide the bookmark button.
 - **menuButton**: Show or hide the menu button.
+- **manifestInfoButton**: Show or hide manifest information in the URL bar.
+- **showManifestMetadata**: Deprecated alias for `manifestInfoButton`.
 - **collectionPaginationSize**: Number of items per page in collections.
 - **manifestPaginationSize**: Number of items per page in manifests.
 - **paginationNavigationType**: Type of navigation for pagination (`replace`
@@ -197,6 +202,7 @@ export default function App() {
         homeButton: true,
         bookmarkButton: false,
         menuButton: true,
+        manifestInfoButton: true,
         collectionPaginationSize: 25,
         manifestPaginationSize: 25,
         paginationNavigationType: "replace",
@@ -265,7 +271,7 @@ import {
   toolbarPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import "iiif-browser/dist/index.css";
+import "iiif-browser/mdx-plugins.css";
 import {
   iiifBrowserPlugin,
   InsertIIIFBrowser,

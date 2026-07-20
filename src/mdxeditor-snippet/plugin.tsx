@@ -251,7 +251,7 @@ export function IIIFSnippetDialog() {
 
           <div
             className={[
-              "iiif-browser-mdx-browser",
+              "iiif-browser-mdx-browser iiif-browser",
               config.dialog?.browserClassName,
             ]
               .filter(Boolean)
@@ -259,7 +259,11 @@ export function IIIFSnippetDialog() {
           >
             <IIIFBrowser
               {...browserProps}
-              className={browserProps.className ?? "h-full w-full"}
+              className={
+                browserProps.className ??
+                "h-full w-full border-none border-t rounded-none"
+              }
+              innerClassName="border-none border-t rounded-none"
               navigation={{
                 multiSelect: false,
                 canCropImage: false,

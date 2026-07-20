@@ -2,7 +2,12 @@ import { Vault } from "@iiif/helpers";
 import mitt from "mitt";
 import { describe, expect, it } from "vitest";
 import type { BrowserLinkConfig } from "../src/browser/BrowserLink";
-import { createOutputStore, type OutputTarget, type SelectedItem } from "../src/stores/output-store";
+import {
+  createOutputStore,
+  type OutputTarget,
+  outputTypesForItem,
+  type SelectedItem,
+} from "../src/stores/output-store";
 
 function createConfig(overrides: Partial<BrowserLinkConfig> = {}): BrowserLinkConfig {
   return {
@@ -97,6 +102,36 @@ const canvasB: SelectedItem = {
 };
 
 describe("mixed selection gating", () => {
+  it("exposes region and image output identities only when available", () => {
+    expect(
+      outputTypesForItem({
+        id: canvasA.id,
+        type: "Canvas",
+        selector: {
+          type: "BoxSelector",
+          spatial: { x: 1, y: 2, width: 3, height: 4 },
+        },
+        imageSelector: {
+          type: "BoxSelector",
+          spatial: { x: 1, y: 2, width: 3, height: 4 },
+        },
+        selectedPainting: {
+          id: "https://example.org/image",
+          type: "Image",
+          annotationId: "https://example.org/painting",
+          service: {
+            id: "https://example.org/image-service",
+            type: "ImageService3",
+          },
+        },
+      }),
+    ).toEqual([
+      "Canvas",
+      "CanvasRegion",
+      "ImageService",
+      "ImageServiceRegion",
+    ]);
+  });
   it("offers manifest outputs for manifest-only selection", () => {
     const store = makeStore({
       mixedSingle: () => undefined,

@@ -1,21 +1,23 @@
 import {
-  getImageServices,
   canonicalServiceUrl,
+  getImageServices,
 } from "@atlas-viewer/iiif-image-api";
-import { createPaintingAnnotationsHelper } from "@iiif/helpers";
 import type { CanvasNormalized } from "@iiif/presentation-3-normalized";
 import type { ExplorerFormat } from "../IIIFBrowser.types";
+import { findSelectedPainting } from "../utilities/painting-selection";
 
 export const imageServiceFormat: ExplorerFormat<"image-service"> = {
   label: "Image service",
   format: async (resource, options, vault) => {
     const canvas = vault.get<CanvasNormalized>(resource);
-    const painting = createPaintingAnnotationsHelper(vault);
-    const paintables = painting.getPaintables(canvas);
-    const first = paintables.items[0];
+    const first = findSelectedPainting(
+      vault,
+      canvas,
+      resource.selectedPainting,
+    );
 
     if (!first) {
-      throw new Error("Resource not found");
+      throw new Error("Choose an image source for this Canvas");
     }
 
     if (first.type !== "image" || first.resource.type !== "Image") {

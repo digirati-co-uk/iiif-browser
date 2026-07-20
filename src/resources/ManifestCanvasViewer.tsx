@@ -1,12 +1,15 @@
 import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
-import { useContext, useEffect, useId } from "react";
+import { useContext, useEffect, useId, useMemo } from "react";
 import {
   CanvasPanel,
   SequenceThumbnails,
+  useAtlasStore,
+  useCanvas,
   useManifest,
   useSimpleViewer,
 } from "react-iiif-vault";
 import { twMerge } from "tailwind-merge";
+import { useStore } from "zustand";
 import { CanvasControls } from "../components/CanvasControls";
 import { CanvasThumbnailFallback } from "../components/CanvasThumbnailFallback";
 import { CurrentCanvasRefinement } from "../components/CurrentCanvasRefinement";
@@ -15,6 +18,7 @@ import {
   OutputContext,
   useCanvasOutputRotation,
   useCanvasOutputSelector,
+  useCanvasSelectedPainting,
   useLocation,
   useMode,
   useNavigate,
@@ -22,7 +26,102 @@ import {
 import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { MultiImageIcon } from "../icons/MultiImageIcon";
+import {
+  rotatedCanvasBounds,
+  rotatedCanvasOverflow,
+} from "../utilities/rotation";
 import { useLocalStorage } from "../utilities/use-local-storage";
+
+function RotatedCropOverflow({
+  canvas,
+  rotation,
+}: {
+  canvas: { id: string };
+  rotation: number;
+}) {
+  const atlas = useAtlasStore();
+  const inputCanvas = useCanvas({ id: canvas.id });
+  const editor = useStore(atlas, (state) => state.polygons);
+  const editingCrop = useStore(
+    atlas,
+    (state) => state.tool.enabled && state.requestType === "box",
+  );
+  const bounds = useMemo(
+    () =>
+      inputCanvas ? rotatedCanvasBounds(inputCanvas, rotation) : undefined,
+    [inputCanvas, rotation],
+  );
+  const overflow = inputCanvas
+    ? rotatedCanvasOverflow(inputCanvas, rotation)
+    : [];
+  const pointer = (event: any) =>
+    editor.pointer([[~~event.atlas.x, ~~event.atlas.y]]);
+
+  useEffect(() => {
+    if (!editingCrop || !bounds) {
+      return;
+    }
+
+    const pointer = editor.pointer;
+    editor.setBounds(bounds);
+    editor.pointer = (pointers) => {
+      pointer(
+        pointers.map((point) => {
+          const constrained = [...point] as typeof point;
+          constrained[0] = Math.max(
+            bounds.x,
+            Math.min(bounds.x + bounds.width, point[0]),
+          );
+          constrained[1] = Math.max(
+            bounds.y,
+            Math.min(bounds.y + bounds.height, point[1]),
+          );
+          return constrained;
+        }),
+      );
+    };
+
+    return () => {
+      editor.pointer = pointer;
+      editor.setBounds(null);
+    };
+  }, [bounds, editingCrop, editor]);
+
+  if (!editingCrop) {
+    return null;
+  }
+
+  return (
+    <>
+      {overflow.map((box, index) => (
+        // biome-ignore lint/a11y/noStaticElementInteractions: Atlas world objects are not DOM elements.
+        <world-object
+          key={index}
+          {...box}
+          onMouseMove={pointer}
+          onMouseDown={(event) => {
+            if (event.button !== 2) {
+              pointer(event);
+              editor.pointerDown();
+            }
+          }}
+          onMouseUp={(event) => {
+            if (event.button !== 2) {
+              pointer(event);
+              editor.pointerUp();
+            }
+          }}
+          onMouseLeave={editor.blur}
+        >
+          <box
+            target={{ x: 0, y: 0, width: box.width, height: box.height }}
+            style={{ opacity: 0 }}
+          />
+        </world-object>
+      ))}
+    </>
+  );
+}
 
 export function ManifestCanvasViewer() {
   const manifest = useManifest()!;
@@ -49,6 +148,7 @@ export function ManifestCanvasViewer() {
   const current = sequence[currentSequenceIndex];
   const canvas = items[current[0]];
   const currentCanvasSelector = useCanvasOutputSelector(canvas);
+  const selectedPainting = useCanvasSelectedPainting(canvas);
   const rotation = useCanvasOutputRotation(canvas);
   const xywh = currentCanvasSelector
     ? [
@@ -67,6 +167,9 @@ export function ManifestCanvasViewer() {
       if (xywh) {
         search.set("xywh", xywh);
       }
+      if (selectedPainting?.choice) {
+        search.set("choice", selectedPainting.id);
+      }
       const nextSearch = search.toString();
       const currentSearch = location.search.replace(/^\?/, "");
 
@@ -81,19 +184,42 @@ export function ManifestCanvasViewer() {
         { replace: true },
       );
     }
-  }, [canvas, location.search, manifest.id, navigate, xywh]);
+  }, [
+    canvas,
+    location.search,
+    manifest.id,
+    navigate,
+    selectedPainting?.choice,
+    selectedPainting?.id,
+    xywh,
+  ]);
 
   return (
     <div className="flex h-full flex-col w-full flex-1">
-      <div className="group relative flex w-full flex-1 min-h-0 flex-col">
+      <div
+        className={twMerge(
+          "group relative flex w-full flex-1 min-h-0 flex-col",
+          editMode && rotation % 180 !== 0 && "rotated-crop-editor",
+        )}
+      >
         <ModeProvider mode={mode}>
-          <CanvasPanel.Viewer height={"auto"} mode={mode}>
+          <CanvasPanel.Viewer
+            key={`${canvas.id}:${selectedPainting?.id || ""}`}
+            name={thumbnailStripId}
+            height={"auto"}
+            mode={mode}
+          >
             <ModeContext.Provider value={mode}>
               <CanvasPanel.RenderCanvas
                 strategies={["empty", "images", "media", "textual-content"]}
                 renderViewerControls={() => <CanvasControls />}
                 renderMediaControls={() => <MediaControls />}
                 rotation={rotation}
+                defaultChoices={
+                  selectedPainting?.choice
+                    ? [{ id: selectedPainting.id }]
+                    : undefined
+                }
               >
                 <OutputContext.Provider value={outputCtx}>
                   <CurrentCanvasRefinement
@@ -102,10 +228,11 @@ export function ManifestCanvasViewer() {
                   />
                 </OutputContext.Provider>
               </CanvasPanel.RenderCanvas>
+              <RotatedCropOverflow canvas={canvas} rotation={rotation} />
             </ModeContext.Provider>
           </CanvasPanel.Viewer>
         </ModeProvider>
-        {sequence.length > 1 ? (
+        {!editMode && sequence.length > 1 ? (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-between p-3 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
             <button
               type="button"
@@ -128,7 +255,7 @@ export function ManifestCanvasViewer() {
           </div>
         ) : null}
       </div>
-      {sequence.length > 1 ? (
+      {!editMode && sequence.length > 1 ? (
         <div className="relative flex-shrink-0">
           <button
             type="button"

@@ -89,6 +89,11 @@ describe("browser digital collections", () => {
         id: manifestUrl,
         type: "Manifest",
       });
+      expect(store.getState().historyList[0]).toMatchObject({
+        url: leedsUrl,
+        resource: manifestUrl,
+        route: `/manifest?id=${encodeURIComponent(manifestUrl)}`,
+      });
       expect(fetchSpy).toHaveBeenCalledWith(
         leedsUrl,
         expect.objectContaining({ signal: expect.any(AbortSignal) }),

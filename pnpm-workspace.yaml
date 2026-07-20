@@ -1,6 +1,10 @@
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@iiif/helpers@1.6.1'
+  - react-iiif-vault@2.0.18
 overrides:
-    '@atlas-viewer/atlas': 3.2.3
-    "react-reconciler": 0.33.0
+  '@atlas-viewer/atlas': 3.2.3
+  "react-reconciler": 0.33.0
+  react-iiif-vault: 2.0.18

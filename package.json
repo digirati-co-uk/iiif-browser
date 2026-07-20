@@ -53,6 +53,7 @@
       "import": "./dist/mdxeditor-snippet.js",
       "default": "./dist/mdxeditor-snippet.js"
     },
+    "./mdx-plugins.css": "./dist/mdx-plugins.css",
     "./dist/index.css": "./dist/index.css"
   },
   "scripts": {
@@ -68,8 +69,8 @@
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
-    "@atlas-viewer/atlas": "^3.2.2",
-    "@iiif/helpers": "^1.5.9",
+    "@atlas-viewer/atlas": "^3.2.3",
+    "@iiif/helpers": "^1.6.1",
     "@iiif/parser": "^2.2.10",
     "@iiif/presentation-3": "^2.2.3",
     "@iiif/presentation-3-normalized": "^0.9.7",
@@ -82,7 +83,7 @@
     "react-aria": "^3.43.2",
     "react-aria-components": "^1.13.0",
     "react-dom": "^19.2.7",
-    "react-iiif-vault": "^2.0.15",
+    "react-iiif-vault": "^2.0.18",
     "react-lazy-load-image-component": "^1.6.3",
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",

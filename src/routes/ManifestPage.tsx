@@ -5,8 +5,7 @@ import {
   useManifest,
   useVault,
 } from "react-iiif-vault";
-import { ManifestMetadata } from "../components/ManifestMetadata";
-import { useHistory, useSearchParams, useUIConfig } from "../context";
+import { useHistory, useSearchParams } from "../context";
 import { ManifestCanvasViewer } from "../resources/ManifestCanvasViewer";
 import { ManifestItemList } from "../resources/ManifestItemList";
 
@@ -16,17 +15,12 @@ export function ManifestPage() {
   const canvas = searchParams.get("canvas") as string;
   const vault = useVault();
   const history = useHistory();
-  const { showManifestMetadata } = useUIConfig();
   const viewSource = searchParams.get("view-source") === "true";
   const manifest = useManifest({ id });
-  const presentationManifest = useMemo(
-    () => (manifest ? vault.toPresentation3(manifest as any) : null),
-    [vault, manifest],
-  );
   const source = useMemo(() => {
-    if (!viewSource || !presentationManifest) return null;
-    return presentationManifest;
-  }, [presentationManifest, viewSource]);
+    if (!viewSource || !manifest) return null;
+    return vault.toPresentation3(manifest as any);
+  }, [manifest, vault, viewSource]);
 
   useEffect(() => {
     if (!manifest) {
@@ -47,9 +41,6 @@ export function ManifestPage() {
   return (
     <ManifestContext manifest={manifest.id}>
       <div className="relative flex h-full min-h-0 flex-col">
-        {showManifestMetadata ? (
-          <ManifestMetadata manifest={presentationManifest} />
-        ) : null}
         <div className="flex min-h-0 flex-1 w-full flex-col">
           {canvas ? (
             <SimpleViewerProvider

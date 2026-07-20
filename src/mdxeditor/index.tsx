@@ -3,6 +3,7 @@ import {
   getImageServices,
   type RegionParameter,
 } from "@atlas-viewer/iiif-image-api";
+import "../mdx-plugins.css";
 import type { Vault } from "@iiif/helpers";
 import { createPaintingAnnotationsHelper, getValue } from "@iiif/helpers";
 import {
@@ -101,6 +102,16 @@ export type IIIFSelectedResource = {
   selector?: {
     type: string;
     spatial: { x: number; y: number; width: number; height: number };
+  };
+  imageSelector?: {
+    type: string;
+    spatial: { x: number; y: number; width: number; height: number };
+  };
+  selectedPainting?: {
+    id: string;
+    type: "Image";
+    annotationId: string;
+    choice?: true;
   };
   rotation?: number;
 };
@@ -318,7 +329,8 @@ function IIIFBrowserDialog() {
       try {
         const resource = one(value.resource);
         const service = imageService(resource, value.vault);
-        const spatial = resource.selector?.spatial;
+        const spatial =
+          resource.imageSelector?.spatial || resource.selector?.spatial;
         const region: RegionParameter = spatial
           ? {
               x: Math.round(spatial.x),
@@ -460,13 +472,16 @@ function IIIFBrowserDialog() {
           ) : screen === "browser" ? (
             <div
               className={classNames(
-                "iiif-browser-mdx-browser",
+                "iiif-browser-mdx-browser iiif-browser",
                 config.dialog?.browserClassName,
               )}
             >
               <IIIFBrowser
                 {...browserProps}
-                className={browserProps.className ?? "h-full w-full"}
+                className={
+                  browserProps.className ??
+                  "h-full w-full border-none border-t rounded-none"
+                }
                 navigation={{
                   canCropImage: true,
                   multiSelect: false,
@@ -979,8 +994,19 @@ function imageService(resource: IIIFSelectedResource, vault: Vault) {
   }
 
   const canvas = vault.get<any>(resource, { skipSelfReturn: false });
-  const paintable =
-    createPaintingAnnotationsHelper(vault).getPaintables(canvas).items[0];
+  const paintables = createPaintingAnnotationsHelper(vault).getPaintables(
+    canvas,
+    resource.selectedPainting ? [resource.selectedPainting.id] : undefined,
+  ).items;
+  const paintable = resource.selectedPainting
+    ? paintables.find(
+        (candidate) =>
+          candidate.annotationId === resource.selectedPainting?.annotationId &&
+          candidate.resource.id === resource.selectedPainting.id,
+      )
+    : paintables.length === 1
+      ? paintables[0]
+      : undefined;
   if (
     !paintable ||
     paintable.type !== "image" ||
