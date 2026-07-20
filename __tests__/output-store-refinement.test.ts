@@ -142,6 +142,19 @@ describe("output store Canvas refinements", () => {
       "Image service region",
     ]);
 
+    output.getState().setRotation(canvasId, 90);
+    emitter.emit("canvas.change", {
+      id: canvasId,
+      type: "Canvas",
+      parent: { id: manifestId, type: "Manifest" },
+      selector: crop,
+    });
+
+    expect(output.getState().selectedItems[0]).toMatchObject({
+      selector: crop,
+      rotation: 90,
+    });
+
     output.getState().refineSelectedItem(canvasId, null);
 
     expect(refinements).toHaveLength(2);

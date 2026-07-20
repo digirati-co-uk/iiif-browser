@@ -21,6 +21,11 @@ import { MinusIcon } from "../icons/MinusIcon";
 import { PlusIcon } from "../icons/PlusIcon";
 import { ReloadIcon } from "../icons/ReloadIcon";
 import { paste } from "../utilities/paste-util";
+import {
+  canvasToViewerBox,
+  rotatedCanvasBounds,
+  viewerToCanvasBox,
+} from "../utilities/rotation";
 import { CanvasImageSourceSelect } from "./CanvasImageSourceSelect";
 import { CropAnnotationControls } from "./CropAnnotationControls";
 
@@ -42,21 +47,24 @@ export function CanvasControls({ id }: { id?: string }) {
   const saveAnnotationResponse = useCallback(
     (resp: AnnotationResponse | null) => {
       if (!resp?.cancelled && resp?.boundingBox) {
+        const spatial = canvas
+          ? viewerToCanvasBox(resp.boundingBox, canvas, rotation)
+          : resp.boundingBox;
         if (id) {
           refine(id, {
             type: "BoxSelector",
-            spatial: resp.boundingBox,
+            spatial,
           });
         } else if (canvas) {
           refine(canvas.id, {
             type: "BoxSelector",
-            spatial: resp.boundingBox,
+            spatial,
           });
         }
       }
       setEditMode(false);
     },
-    [id, canvas, refine, setEditMode],
+    [id, canvas, refine, rotation, setEditMode],
   );
 
   useEffect(() => () => cancelRequest.current(), []);
@@ -102,11 +110,21 @@ export function CanvasControls({ id }: { id?: string }) {
           <Button
             className={canvasButton.v()}
             onPress={() => {
-              const selector = canvasOutputSelector?.spatial;
+              const selector =
+                canvasOutputSelector && canvas
+                  ? canvasToViewerBox(
+                      canvasOutputSelector.spatial,
+                      canvas,
+                      rotation,
+                    )
+                  : canvasOutputSelector?.spatial;
               return t
                 .requestAnnotation({
                   type: "box",
                   ...(selector ? { selector } : {}),
+                  ...(canvas
+                    ? { bounds: rotatedCanvasBounds(canvas, rotation) }
+                    : {}),
                   annotationPopup: <CropAnnotationControls />,
                 })
                 .then(saveAnnotationResponse)

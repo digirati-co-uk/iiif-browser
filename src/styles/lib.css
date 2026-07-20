@@ -55,6 +55,11 @@
   --atlas-background: rgb(248 250 252);
 }
 
+.rotated-crop-editor .atlas-overlay--interactive,
+.rotated-crop-editor .atlas-overlay--interactive svg {
+  overflow: visible;
+}
+
 .atlas-cursor-se {
   cursor: se-resize;
 }

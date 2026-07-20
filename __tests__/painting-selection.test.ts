@@ -192,12 +192,7 @@ describe("painting selection", () => {
     )!;
 
     expect(
-      selectedPaintingThumbnail(
-        vault,
-        canvas,
-        selected,
-        imageSelector,
-      ),
-    ).toContain("/400,200,200,100/!120,/0/default.jpg");
+      selectedPaintingThumbnail(vault, canvas, selected, imageSelector, 90),
+    ).toContain("/400,200,200,100/!120,/90/default.jpg");
   });
 });

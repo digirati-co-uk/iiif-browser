@@ -21,9 +21,16 @@ export function CanvasThumbnailImage({
             canvas,
             selection?.selectedPainting,
             selection?.imageSelector,
+            selection?.rotation,
           )
         : undefined,
-    [canvas, selection?.imageSelector, selection?.selectedPainting, vault],
+    [
+      canvas,
+      selection?.imageSelector,
+      selection?.selectedPainting,
+      selection?.rotation,
+      vault,
+    ],
   );
   const [selectionFailed, setSelectionFailed] = useState(false);
   useEffect(() => setSelectionFailed(false), [selectedThumbnail]);

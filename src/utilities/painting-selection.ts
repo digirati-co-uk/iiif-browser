@@ -204,6 +204,7 @@ export function selectedPaintingThumbnail(
   canvas: CanvasNormalized,
   selected: SelectedPainting | undefined,
   selector: BoxSelector | undefined,
+  rotation = 0,
   size = 120,
 ) {
   try {
@@ -235,6 +236,7 @@ export function selectedPaintingThumbnail(
           upscaled: false,
           confined: true,
         },
+        rotation: { angle: rotation },
       },
       normalizedService,
     );

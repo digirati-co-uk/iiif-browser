@@ -14,6 +14,100 @@ export default {
   component: IIIFBrowser,
 };
 
+const rotationCropManifestId = "https://example.org/rotation-crop/manifest";
+const rotationCropCanvasId = "https://example.org/rotation-crop/canvas";
+
+function createRotationCropVault() {
+  const vault = new Vault();
+  vault.loadSync(rotationCropManifestId, {
+    id: rotationCropManifestId,
+    type: "Manifest",
+    label: { en: ["Rotation and crop regression"] },
+    items: [
+      {
+        id: rotationCropCanvasId,
+        type: "Canvas",
+        width: 1523,
+        height: 2105,
+        label: { en: ["Rotation test image"] },
+        items: [
+          {
+            id: "https://example.org/rotation-crop/page",
+            type: "AnnotationPage",
+            items: [
+              {
+                id: "https://example.org/rotation-crop/painting",
+                type: "Annotation",
+                motivation: "painting",
+                target: rotationCropCanvasId,
+                body: {
+                  id: "https://iiif.io/api/image/3.0/example/reference/85a96c630f077e6ac6cb984f1b752bbf-0-21198-zz00022840-1-page1/full/max/0/default.jpg",
+                  type: "Image",
+                  width: 1523,
+                  height: 2105,
+                  format: "image/jpeg",
+                  service: [
+                    {
+                      id: "https://iiif.io/api/image/3.0/example/reference/85a96c630f077e6ac6cb984f1b752bbf-0-21198-zz00022840-1-page1",
+                      type: "ImageService3",
+                      profile: "level1",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  } as any);
+  return vault;
+}
+
+export const RotationAndCrop = () => {
+  const vault = useMemo(createRotationCropVault, []);
+  return (
+    <>
+      <div className="flex h-[70vh] w-full">
+        <IIIFBrowser
+          vault={vault}
+          debug
+          history={{
+            restoreFromLocalStorage: false,
+            saveToLocalStorage: false,
+            initialHistory: [
+              {
+                url: rotationCropManifestId,
+                resource: rotationCropManifestId,
+                route: `/manifest?id=${encodeURIComponent(rotationCropManifestId)}&canvas=${encodeURIComponent(rotationCropCanvasId)}`,
+              },
+            ],
+          }}
+          navigation={{
+            canSelectCanvas: true,
+            canSelectManifest: false,
+            canSelectCollection: false,
+            canCropImage: true,
+          }}
+          output={[
+            {
+              type: "callback",
+              label: "Select",
+              supportedTypes: ["Canvas", "CanvasRegion"],
+              cb: () => undefined,
+              format: {
+                type: "custom",
+                format: (resource) => resource,
+              },
+            },
+          ]}
+        />
+      </div>
+      <div id="iiif-browser__debug-selected" />
+    </>
+  );
+};
+
 export const Default = () => (
   <div className="">
     <div className="w-full h-[80vh] flex">

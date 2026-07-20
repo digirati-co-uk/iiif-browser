@@ -503,11 +503,15 @@ export function createOutputStore(options: OutputStoreOptions) {
       return;
     }
 
+    const previousItem = store
+      .getState()
+      .selectedItems.find((item) => item.id === canvas.id);
     const item: SelectedItem = {
       id: canvas.id,
       type: "Canvas",
       parent: canvas.parent,
       selector: canvas.selector,
+      rotation: previousItem?.rotation,
     };
     const fullCanvas = vault.get<any>(item);
     item.selectedPainting =

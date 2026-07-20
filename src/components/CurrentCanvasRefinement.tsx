@@ -1,7 +1,12 @@
 import type { BoxStyle } from "@atlas-viewer/atlas";
 import { useMemo } from "react";
 import { useCanvas } from "react-iiif-vault";
-import { useCanvasOutputSelector, useMode } from "../context";
+import {
+  useCanvasOutputRotation,
+  useCanvasOutputSelector,
+  useMode,
+} from "../context";
+import { canvasToViewerBox } from "../utilities/rotation";
 import { RegionHighlight } from "./RegionHighlight";
 
 export function CurrentCanvasRefinement({
@@ -25,13 +30,19 @@ export function CurrentCanvasRefinement({
     return null;
   }, [id, inputCanvas]);
   const currentCanvasSelector = useCanvasOutputSelector(canvas);
+  const rotation = useCanvasOutputRotation(canvas);
+  const region =
+    currentCanvasSelector && inputCanvas
+      ? canvasToViewerBox(currentCanvasSelector.spatial, inputCanvas, rotation)
+      : currentCanvasSelector?.spatial;
 
   return (
     <>
       {currentCanvasSelector?.type === "BoxSelector" &&
+      region &&
       mode.mode === "explore" ? (
         <RegionHighlight
-          region={{ ...currentCanvasSelector.spatial } as any}
+          region={{ ...region } as any}
           isEditing={false}
           onSave={() => {}}
           style={
