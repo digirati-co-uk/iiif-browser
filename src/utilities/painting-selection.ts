@@ -155,6 +155,7 @@ export function canvasToImageSelector(
         height: canvas.height,
       },
     } as BoxSelector);
+  const service = getImageServices(painting.resource)[0];
   const source =
     box(painting.selector) ||
     ({
@@ -162,8 +163,10 @@ export function canvasToImageSelector(
       spatial: {
         x: 0,
         y: 0,
-        width: painting.resource.width || target.spatial.width,
-        height: painting.resource.height || target.spatial.height,
+        width:
+          service?.width || painting.resource.width || target.spatial.width,
+        height:
+          service?.height || painting.resource.height || target.spatial.height,
       },
     } as BoxSelector);
 

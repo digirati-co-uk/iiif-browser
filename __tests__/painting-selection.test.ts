@@ -84,6 +84,29 @@ describe("painting selection", () => {
     });
   });
 
+  it("uses full image-service dimensions instead of a scaled painting body", () => {
+    const { vault, canvas } = loadCanvas({
+      id: "https://example.org/image/full/250,125/0/default.jpg",
+      type: "Image",
+      width: 250,
+      height: 125,
+      service: [
+        {
+          "@id": "https://example.org/image",
+          "@type": "ImageService2",
+          profile: "http://iiif.io/api/image/2/level2.json",
+          width: 1000,
+          height: 500,
+        },
+      ],
+    });
+    const painting = getImagePaintings(vault, canvas)[0]!;
+
+    expect(canvasToImageSelector(canvas, painting, crop)?.spatial).toEqual(
+      crop.spatial,
+    );
+  });
+
   it("uses a deterministic Choice default and preserves another service by id", () => {
     const { vault, canvas } = loadCanvas({
       type: "Choice",
@@ -129,9 +152,7 @@ describe("painting selection", () => {
       choice: true,
       service: { id: "https://example.org/xray" },
     });
-    expect(findSelectedPainting(vault, canvas, xray)?.resource.id).toBe(
-      xrayId,
-    );
+    expect(findSelectedPainting(vault, canvas, xray)?.resource.id).toBe(xrayId);
   });
 
   it("requires an explicit source for multi-up Image Service output", () => {
