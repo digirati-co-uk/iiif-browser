@@ -1,7 +1,12 @@
 import { createContext, useContext, useState } from "react";
 import { UNSAFE_PortalProvider } from "react-aria";
 import { twMerge } from "tailwind-merge";
-import { AtlasStoreProvider, useAtlasStore } from 'react-iiif-vault';
+import mitt from "mitt";
+import {
+  type AtlasStoreEvents,
+  AtlasStoreProvider,
+  createAtlasStore,
+} from "react-iiif-vault";
 
 const BrowserContainerContext = createContext<HTMLDivElement | null>(null);
 
@@ -15,9 +20,12 @@ export const BrowserContainer = function BrowserContainer(props: {
   innerClassName?: string;
 }) {
   const [ref, setRef] = useState<HTMLDivElement | null>(null);
+  const [atlasStore] = useState(() =>
+    createAtlasStore({ events: mitt<AtlasStoreEvents>() }),
+  );
 
   return (
-    <AtlasStoreProvider name="iiif-browser">
+    <AtlasStoreProvider name="iiif-browser" existing={atlasStore}>
       <BrowserContainerContext.Provider value={ref}>
         <UNSAFE_PortalProvider getContainer={() => ref}>
           <div
@@ -26,7 +34,7 @@ export const BrowserContainer = function BrowserContainer(props: {
               props.className,
             )}
             style={{
-              '--ib-icon-count': 0,
+              "--ib-icon-count": 0,
             } as any}
             ref={setRef}
           >

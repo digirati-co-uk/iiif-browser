@@ -60,6 +60,38 @@ export const ImageApiImage = () => {
   );
 };
 
+export const CanvasHistory = () => {
+  const manifest = "https://view.nls.uk/manifest/7446/74464117/manifest.json";
+  const canvas = "https://view.nls.uk/iiif/7446/74464117/canvas/1";
+
+  return (
+    <MDXEditor
+      markdown={"Open the IIIF image browser.\n"}
+      plugins={[
+        iiifBrowserPlugin({
+          browserProps: {
+            history: {
+              initialHistory: [
+                {
+                  url: canvas,
+                  resource: canvas,
+                  route: `/manifest?id=${encodeURIComponent(manifest)}&canvas=${encodeURIComponent(canvas)}`,
+                  metadata: { type: "Canvas" },
+                },
+              ],
+              restoreFromLocalStorage: false,
+              saveToLocalStorage: false,
+            },
+          },
+        }),
+        toolbarPlugin({
+          toolbarContents: () => <InsertIIIFBrowser />,
+        }),
+      ]}
+    />
+  );
+};
+
 export const WithCanvasSnippet = () => (
   <MDXEditor
     markdown={"Select either insertion action in the IIIF Browser.\n"}
