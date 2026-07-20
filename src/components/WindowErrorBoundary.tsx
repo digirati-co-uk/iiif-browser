@@ -19,7 +19,7 @@ function ErrorFallback({
     error instanceof Error ? error.message : "An unexpected error occurred.";
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-5 p-8 text-center bg-gray-50">
+    <div className="flex flex-1 flex-col items-center justify-center w-full h-full gap-5 p-8 text-center bg-gray-50">
       <img
         src={SAD_MAC_SRC}
         alt="Error"

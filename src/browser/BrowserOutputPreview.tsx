@@ -94,7 +94,11 @@ function RenderSelectedCollection({ id }: { id: string }) {
 
 function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
   const manifest = useManifest({ id: item.parent?.id! });
-  const canvas = useCanvas({ id: item.id })!;
+  const canvas = useCanvas({ id: item.id });
+
+  if (!canvas) {
+    return <div />;
+  }
 
   return (
     <div className="flex flex-row items-center gap-2 w-full overflow-hidden truncate">

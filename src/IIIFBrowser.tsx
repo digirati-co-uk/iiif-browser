@@ -110,20 +110,20 @@ export function IIIFBrowser({
       debug={debug}
     >
       <BrowserContainer className={className} innerClassName={innerClassName}>
-        <BrowserHeader />
+        <WindowErrorBoundary>
+          <BrowserHeader />
 
-        <BrowserWindow>
-          <WindowErrorBoundary>
+          <BrowserWindow>
             <RouterSwitch routes={allCustomPages} />
-          </WindowErrorBoundary>
-        </BrowserWindow>
-        <BrowserFooter
-          // onSelect={onSelect}
-          targets={targets}
-          types={types as any}
-          format={format}
-        />
-        <Debug />
+          </BrowserWindow>
+          <BrowserFooter
+            // onSelect={onSelect}
+            targets={targets}
+            types={types as any}
+            format={format}
+          />
+          <Debug />
+        </WindowErrorBoundary>
       </BrowserContainer>
     </BrowserProvider>
   );
