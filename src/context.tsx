@@ -1,5 +1,5 @@
 import type { ViewerMode } from "@atlas-viewer/atlas";
-import { getValue, type Vault } from "@iiif/helpers";
+import { getValue, Vault } from "@iiif/helpers";
 import {
   createContext,
   useCallback,
@@ -7,11 +7,11 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import {
   useAtlasStore,
   useCollection,
-  useExistingVault,
   useVault,
   VaultProvider,
 } from "react-iiif-vault";
@@ -501,7 +501,7 @@ export function BrowserProvider({
   children: React.ReactNode;
 }) {
   const readyRef = useRef(false);
-  const vault = useExistingVault(customVault);
+  const [vault] = useState(() => customVault ?? new Vault());
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Configuration is static.
   const emitter = useMemo(

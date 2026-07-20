@@ -205,6 +205,7 @@ export function ManifestCanvasViewer() {
         <ModeProvider mode={mode}>
           <CanvasPanel.Viewer
             key={`${canvas.id}:${selectedPainting?.id || ""}`}
+            name={thumbnailStripId}
             height={"auto"}
             mode={mode}
           >
