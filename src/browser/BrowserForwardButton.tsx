@@ -11,6 +11,7 @@ import { HistoryListItem } from "../components/HistoryListItem";
 import { useHistory, useHistoryIndex, useHistoryList } from "../context";
 import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
+import { useBrowserContainer } from "./BrowserContainer";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
 export function getForwardHistoryList(
@@ -24,6 +25,7 @@ export function BrowserForwardButton() {
   const history = useHistory();
   const historyList = useHistoryList();
   const historyIndex = useHistoryIndex();
+  const container = useBrowserContainer();
 
   const forwardHistoryList = useMemo(() => {
     // Example:
@@ -47,6 +49,7 @@ export function BrowserForwardButton() {
         <ArrowForwardIcon />
       </BrowserToolbarButton>
       <Popover
+        UNSTABLE_portalContainer={container || undefined}
         placement="bottom start"
         className={twMerge(
           "bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm max-w-96 text-slate-600",
