@@ -10,12 +10,14 @@ import { twMerge } from "tailwind-merge";
 import { HistoryListItem } from "../components/HistoryListItem";
 import { useHistory, useHistoryIndex, useHistoryList } from "../context";
 import { ArrowBackIcon } from "../icons/ArrowBackIcon";
+import { useBrowserContainer } from "./BrowserContainer";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
 export function BrowserBackButton() {
   const history = useHistory();
   const historyList = useHistoryList();
   const historyIndex = useHistoryIndex();
+  const container = useBrowserContainer();
 
   const backHistoryList = useMemo(() => {
     // Example:
@@ -40,6 +42,7 @@ export function BrowserBackButton() {
         <ArrowBackIcon />
       </BrowserToolbarButton>
       <Popover
+        UNSTABLE_portalContainer={container || undefined}
         placement="bottom start"
         className={twMerge(
           "bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm max-w-96 text-slate-600",
