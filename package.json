@@ -84,7 +84,6 @@
     "react-aria-components": "^1.13.0",
     "react-dom": "^19.2.7",
     "react-iiif-vault": "^2.0.18",
-    "react-lazy-load-image-component": "^1.6.3",
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",
     "zustand": "^4.5.7"
@@ -107,7 +106,6 @@
     "@types/node": "^25.3.3",
     "@types/react": "^18.3.25",
     "@types/react-dom": "^18.3.7",
-    "@types/react-lazy-load-image-component": "^1.6.4",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.5.2",
     "esbuild-plugin-react18-css": "^0.0.2",

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCanvas, useThumbnail, useVault } from "react-iiif-vault";
-import { LazyLoadComponent } from "react-lazy-load-image-component";
 import type { SelectedItem } from "../stores/output-store";
 import { selectedPaintingThumbnail } from "../utilities/painting-selection";
 import { CanvasThumbnailFallback } from "./CanvasThumbnailFallback";
@@ -45,26 +44,21 @@ export function CanvasThumbnailImage({
 
   if (!thumbnail && (!selectedThumbnail || selectionFailed)) {
     // Fallbacks.
-    return (
-      <LazyLoadComponent>
-        <CanvasThumbnailFallback />
-      </LazyLoadComponent>
-    );
+    return <CanvasThumbnailFallback />;
   }
 
   return (
-    <LazyLoadComponent>
-      <img
-        draggable="false"
-        className="w-full h-full object-contain select-none"
-        src={
-          selectedThumbnail && !selectionFailed
-            ? selectedThumbnail
-            : thumbnail?.id
-        }
-        alt=""
-        onError={() => setSelectionFailed(true)}
-      />
-    </LazyLoadComponent>
+    <img
+      draggable="false"
+      loading="lazy"
+      className="w-full h-full object-contain select-none"
+      src={
+        selectedThumbnail && !selectionFailed
+          ? selectedThumbnail
+          : thumbnail?.id
+      }
+      alt=""
+      onError={() => setSelectionFailed(true)}
+    />
   );
 }
