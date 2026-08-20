@@ -59,9 +59,6 @@ importers:
       react-iiif-vault:
         specifier: 2.0.18
         version: 2.0.18(@atlas-viewer/atlas@3.2.3(@iiif/helpers@1.6.1(@iiif/parser@2.2.10))(react-dom@19.2.7(react@19.2.7))(react-reconciler@0.33.0(react@19.2.7))(react@19.2.7))(@types/react@18.3.25)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      react-lazy-load-image-component:
-        specifier: ^1.6.3
-        version: 1.6.3(react@19.2.7)
       react-timeago:
         specifier: ^8.3.0
         version: 8.3.0(react@19.2.7)
@@ -123,9 +120,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.25)
-      '@types/react-lazy-load-image-component':
-        specifier: ^1.6.4
-        version: 1.6.4
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@6.3.6(@types/node@25.3.3)(jiti@2.6.0)(less@4.4.1)(sass@1.93.2)(stylus@0.62.0)(yaml@2.8.1))
@@ -3232,9 +3226,6 @@ packages:
     resolution: {integrity: sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==}
     peerDependencies:
       '@types/react': ^18.0.0
-
-  '@types/react-lazy-load-image-component@1.6.4':
-    resolution: {integrity: sha512-8pFPeDPF4yVG4lU1/ixZidJEEDZmEOYOTYDvmIu2IAabyuv97Q7n/93nMCocHvQ7vD1czKGiW+op55D9m3MkdA==}
 
   '@types/react@18.3.25':
     resolution: {integrity: sha512-oSVZmGtDPmRZtVDqvdKUi/qgCsWp5IDY29wp8na8Bj4B3cc99hfNzvNhlMkVVxctkAOGUA3Km7MMpBHAnWfcIA==}
@@ -9654,11 +9645,6 @@ snapshots:
   '@types/react-dom@18.3.7(@types/react@18.3.25)':
     dependencies:
       '@types/react': 18.3.25
-
-  '@types/react-lazy-load-image-component@1.6.4':
-    dependencies:
-      '@types/react': 18.3.25
-      csstype: 3.1.3
 
   '@types/react@18.3.25':
     dependencies:
