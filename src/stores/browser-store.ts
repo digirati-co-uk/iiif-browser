@@ -894,6 +894,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const manifestUrl = searchParams.get("id");
         const viewSource = searchParams.get("view-source");
         if (manifestUrl) {
+          if (lowerCaseUrl === "/loading") {
+            return [manifestUrl, null];
+          }
+
           const loaded = get().getLoadedResource(manifestUrl);
 
           if (loaded?.error) {

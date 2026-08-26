@@ -1501,6 +1501,91 @@ const historyConfig = {
   ],
 };
 
+const seededSearchManifestId =
+  "https://example.org/seeded-search/manifest";
+const seededSearchCollection = {
+  id: "https://example.org/seeded-search/collection",
+  type: "Collection",
+  label: { en: ["Seeded search collection"] },
+  items: [
+    {
+      id: seededSearchManifestId,
+      type: "Manifest",
+      label: { en: ["Seeded manifest"] },
+    },
+  ],
+};
+const seededSearchManifest = {
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  id: seededSearchManifestId,
+  type: "Manifest",
+  label: { en: ["Seeded manifest"] },
+  items: [
+    {
+      id: "https://example.org/seeded-search/canvas/1",
+      type: "Canvas",
+      label: { en: ["Canvas loaded from the full manifest"] },
+      height: 1000,
+      width: 1000,
+      items: [],
+    },
+  ],
+};
+const seededSearchManifestDataUrl = `data:application/json,${encodeURIComponent(
+  JSON.stringify(seededSearchManifest),
+)}`;
+const seededSearchAdapter: V2ExternalSearchAdapter = {
+  id: "seeded-manifest-race",
+  async search(query) {
+    if (!query.toLowerCase().includes("seeded")) return [];
+    return [
+      {
+        id: "seeded-manifest-result",
+        label: "Seeded manifest",
+        kind: "external",
+        resourceId: seededSearchManifestId,
+        resourceType: "manifest",
+      },
+    ];
+  },
+};
+
+/**
+ * Regression for a search result that is already present as a label-only
+ * reference in a seeded collection. Search for "seeded" and open the result;
+ * the full manifest should load and display its canvas.
+ */
+export const SearchSeededManifestReference = () => (
+  <div className="w-full h-[80vh] flex">
+    <IIIFBrowser
+      debug
+      className="w-full h-[80vh] flex"
+      history={{
+        restoreFromLocalStorage: false,
+        saveToLocalStorage: false,
+        initialHistory: [
+          {
+            url: seededSearchCollection.id,
+            resource: seededSearchCollection.id,
+            route: `/collection?id=${encodeURIComponent(seededSearchCollection.id)}`,
+          },
+        ],
+        seedCollections: [seededSearchCollection as any],
+        beforeFetchUrl: async (url) =>
+          url === seededSearchManifestId ? seededSearchManifestDataUrl : url,
+      }}
+      search={{
+        enableWithinCollection: false,
+        enableExternal: true,
+        combination: { mode: "externalFirst" },
+        adapter: seededSearchAdapter,
+      }}
+    />
+  </div>
+);
+SearchSeededManifestReference.storyName =
+  "Search: Seeded manifest reference regression";
+
 // ── Story 1: Within-only (default, no external search) ──────────────────────
 
 /**

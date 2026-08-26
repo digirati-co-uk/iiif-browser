@@ -94,6 +94,36 @@ describe("history route invariants", () => {
     expect(store.getState().lastUrl).toBe("iiif://about");
   });
 
+  it("does not treat a seeded manifest reference as loaded while resolving it", async () => {
+    const manifestId = "https://example.org/manifest";
+    const store = createBrowserStore({
+      emitter: createEmitter({}),
+      ...baseConfig,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+      seedCollections: [
+        {
+          id: "https://example.org/collection",
+          type: "Collection",
+          label: { en: ["Example collection"] },
+          items: [
+            {
+              id: manifestId,
+              type: "Manifest",
+              label: { en: ["Manifest reference"] },
+            },
+          ],
+        } as any,
+      ],
+    });
+
+    await store.getState().resolve(manifestId);
+    await store.getState().resolve(manifestId);
+
+    expect(store.getState().history.location.pathname).toBe("/loading");
+    expect(store.getState().loaded[manifestId]).toBeUndefined();
+  });
+
   it("returns forward entries in nearest order with a maximum size", () => {
     const historyItems = Array.from({ length: 12 }, (_, index) =>
       createHistoryItem(`/route-${index}`, `iiif://route-${index}`),

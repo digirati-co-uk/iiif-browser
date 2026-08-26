@@ -310,7 +310,6 @@ export function OmnisearchModal({
                       if (item) selectionAction(item);
                     }}
                     getSearchResult={getSearchResult}
-                    selectionAction={selectionAction}
                     showCollectionTag={showCollectionTag}
                     search={search}
                     isIndexing={isIndexing}
@@ -347,7 +346,6 @@ export function OmnisearchModal({
                         <MenuItem
                           id={item.id}
                           aria-label={item.label}
-                          onAction={() => selectionAction(item)}
                           className={({ isFocused }) =>
                             [
                               isFocused ? "bg-blue-500 text-white" : "",
@@ -463,7 +461,6 @@ function GroupedMenu({
   rows,
   onAction,
   getSearchResult,
-  selectionAction,
   showCollectionTag,
   search,
   isIndexing,
@@ -472,7 +469,6 @@ function GroupedMenu({
   menuItems: SearchIndexItem[];
   onAction: (id: string) => void;
   getSearchResult: (id: string) => SearchIndexItem | undefined;
-  selectionAction: (item: SearchIndexItem) => void;
   showCollectionTag: boolean;
   search: string;
   isIndexing: boolean;
@@ -527,7 +523,6 @@ function GroupedMenu({
                   <MenuItem
                     id={item.id}
                     aria-label={item.label}
-                    onAction={() => selectionAction(item)}
                     className={({ isFocused }) =>
                       [
                         isFocused ? "bg-blue-500 text-white" : "",
