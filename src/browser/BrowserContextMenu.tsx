@@ -7,11 +7,13 @@ import {
 } from "react-aria-components";
 import { useHistory, useLastUrl, useResolve, useUIConfig } from "../context";
 import { MenuIcon } from "../icons/MenuIcon";
+import { useBrowserContainer } from "./BrowserContainer";
 
 export function BrowserContextMenu() {
   const resolve = useResolve();
   const lastUrl = useLastUrl();
   const ui = useUIConfig();
+  const container = useBrowserContainer();
 
   return (
     <MenuTrigger>
@@ -22,6 +24,7 @@ export function BrowserContextMenu() {
         <MenuIcon />
       </Button>
       <Popover
+        UNSTABLE_portalContainer={container || undefined}
         placement="bottom end"
         className="bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm w-36 text-slate-600"
       >
