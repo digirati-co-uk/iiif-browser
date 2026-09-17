@@ -957,3 +957,12 @@ function BrowserDialog({
     </ModalOverlay>
   );
 }
+
+export type {
+  IIIFVirtualCollectionAttributes,
+  IIIFVirtualCollectionOptions,
+} from "./virtual-collection";
+export {
+  IIIFVirtualCollection,
+  InsertIIIFVirtualCollection,
+} from "./virtual-collection";

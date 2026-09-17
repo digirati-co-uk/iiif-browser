@@ -10,8 +10,10 @@ import {
 import {
   IIIFImage,
   IIIFSnippet,
+  IIIFVirtualCollection,
   InsertIIIFImage,
   InsertIIIFSnippet,
+  InsertIIIFVirtualCollection,
 } from "./index";
 
 export default { title: "Integrations/TipTap" };
@@ -245,4 +247,22 @@ export const ImageLayout = {
       '"height": 240',
     );
   },
+};
+
+export const VirtualCollection = () => {
+  const [json, setJson] = useState("");
+  const editor = useEditor({
+    extensions: [StarterKit, IIIFVirtualCollection.configure({ browserProps })],
+    content:
+      "<p>Create a collection, give it a title, and add IIIF resources.</p>",
+    onUpdate: ({ editor }) =>
+      setJson(JSON.stringify(editor.getJSON(), null, 2)),
+  });
+  return (
+    <div style={{ maxWidth: 960, margin: "auto" }}>
+      <InsertIIIFVirtualCollection editor={editor} />
+      <EditorContent editor={editor} />
+      <pre>{json}</pre>
+    </div>
+  );
 };

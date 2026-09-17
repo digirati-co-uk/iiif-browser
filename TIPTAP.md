@@ -51,3 +51,25 @@ See **Integrations / TipTap** and the **Content State Drop** / **Read Only** MDX
 New image selections use the editor's available content width as the initial Image API request width. If it cannot be measured, `IIIFImage.configure({ image: { defaultWidth: 640 } })` sets the fallback (640px by default). The same `image.defaultWidth` option is available to `iiifBrowserPlugin` in MDXEditor. Explicit `image.width` / `image.height` take precedence. Initial sizes respect service limits; level-0 services use a declared size, or full size when that is their only supported choice.
 
 TipTap images keep their natural aspect ratio while resizing by default. In **Edit IIIF image → Display layout**, clear **Keep image aspect ratio** to resize both dimensions, then choose **Contain** (whole image, with spare space) or **Cover** (fill the frame, cropping the edges). These choices persist as `lockAspectRatio` and `objectFit` in JSON and HTML. **Edit IIIF snippet** opens the resource picker to replace a snippet while retaining its dimensions and collection navigation settings.
+
+## Virtual collections
+
+Register `IIIFVirtualCollection` and mount `InsertIIIFVirtualCollection` from
+`iiif-browser/tiptap`:
+
+```tsx
+const editor = useEditor({
+  extensions: [StarterKit, IIIFVirtualCollection.configure({ browserProps })],
+});
+
+<InsertIIIFVirtualCollection editor={editor} />
+<EditorContent editor={editor} />
+```
+
+The toolbar inserts an empty collection. Edit its title and use **Add collection
+or manifest** to select resources with the IIIF Browser. The existing collection
+snippet displays the items, including navigation into child collections and
+manifests. Title, resource references, and dimensions persist in editor JSON and
+HTML; edits support undo/redo. Editing controls disappear in read-only mode.
+You can also call `editor.commands.insertIIIFVirtualCollection()`.
+No collection is created on a remote server.

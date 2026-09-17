@@ -441,3 +441,21 @@
 .iiif-snippet[data-resizable] {
   resize: both;
 }
+
+.iiif-virtual-collection__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.iiif-virtual-collection__controls input,
+.iiif-virtual-collection__controls button {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: white;
+  color: #111827;
+  font: inherit;
+}

@@ -5,7 +5,12 @@ import {
 } from "../editor/ContentStateDragSource";
 import "@mdxeditor/editor/style.css";
 import { useState } from "react";
-import { InsertIIIFSnippet, iiifSnippetPlugin } from "./index";
+import {
+  InsertIIIFSnippet,
+  InsertIIIFVirtualCollection,
+  iiifSnippetPlugin,
+  iiifVirtualCollectionPlugin,
+} from "./index";
 
 export default { title: "Integrations/MDXEditor IIIF snippets" };
 
@@ -243,4 +248,35 @@ export const DropCanvas = {
       ).toBeNull(),
     );
   },
+};
+
+export const VirtualCollection = () => {
+  const [markdown, setMarkdown] = useState(
+    "Create a collection, give it a title, and add IIIF resources.",
+  );
+  const [readOnly, setReadOnly] = useState(false);
+  return (
+    <>
+      <label>
+        <input
+          type="checkbox"
+          checked={readOnly}
+          onChange={(event) => setReadOnly(event.target.checked)}
+        />{" "}
+        Read only
+      </label>
+      <MDXEditor
+        markdown={markdown}
+        onChange={setMarkdown}
+        readOnly={readOnly}
+        plugins={[
+          iiifVirtualCollectionPlugin(),
+          toolbarPlugin({
+            toolbarContents: () => <InsertIIIFVirtualCollection />,
+          }),
+        ]}
+      />
+      <MarkdownPreview markdown={markdown} />
+    </>
+  );
 };
