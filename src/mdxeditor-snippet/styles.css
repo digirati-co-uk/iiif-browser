@@ -9,7 +9,7 @@
   grid-template-rows: minmax(0, 1fr) 44px;
   margin: 0;
   overflow: hidden;
-  resize: both;
+  resize: none;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
@@ -436,4 +436,8 @@
   .iiif-snippet__collection-back span {
     display: none;
   }
+}
+
+.iiif-snippet[data-resizable] {
+  resize: both;
 }

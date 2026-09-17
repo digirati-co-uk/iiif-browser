@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  createIIIFRequest,
+  fitInitialImageRequest,
   getImageCapabilities,
   imageRequestUrl,
   imageServiceId,
+  initialImageWidth,
   parseIIIFImageUrl,
   requestAtWidth,
 } from "../src/mdxeditor/image-api";
@@ -73,4 +76,34 @@ describe("MDXEditor IIIF image requests", () => {
 
     expect(imageRequestUrl(request, info)).toContain("/full/!800,600/0/");
   });
+});
+
+it("defaults to the editor width or a validated fallback and respects service limits", () => {
+  expect(initialImageWidth(840, 600)).toBe(840);
+  expect(initialImageWidth(0, 600)).toBe(600);
+  expect(initialImageWidth(undefined, Number.NaN)).toBe(640);
+  const request = createIIIFRequest(
+    "https://example.org/iiif/book",
+    2,
+    { full: true },
+    { width: 900 },
+  );
+  expect(fitInitialImageRequest(request, info).size.width).toBe(900);
+  expect(
+    fitInitialImageRequest(request, { ...info, width: 300, height: 200 }).size
+      .width,
+  ).toBe(300);
+  expect(
+    fitInitialImageRequest(request, {
+      ...info,
+      profile: ["http://iiif.io/api/image/2/level0.json"],
+    }).size.width,
+  ).toBe(1200);
+  expect(
+    fitInitialImageRequest(request, {
+      ...info,
+      profile: ["http://iiif.io/api/image/2/level0.json"],
+      sizes: [],
+    }).size.max,
+  ).toBe(true);
 });

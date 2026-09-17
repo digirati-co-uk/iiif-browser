@@ -3,7 +3,7 @@ import postcssImport from "postcss-import";
 import postcss from "rollup-plugin-postcss";
 import { defineConfig } from "tsdown";
 
-const external = ["@iiif/parser", "@iiif/helpers", "@mdxeditor/editor"];
+const external = ["@iiif/parser", "@iiif/helpers", "@mdxeditor/editor", "lexical", /^@tiptap\//];
 const styles = (extract: string) => [
   postcss({ plugins: [postcssImport()], extract }),
 ];
@@ -28,6 +28,7 @@ export default defineConfig([
     clean: false,
     dts: true,
     entry: {
+      tiptap: "./src/tiptap/index.tsx",
       mdxeditor: "./src/mdxeditor/index.tsx",
       "mdxeditor-snippet": "./src/mdxeditor-snippet/index.ts",
     },

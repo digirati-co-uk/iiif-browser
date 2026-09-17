@@ -112,6 +112,7 @@ export interface IIIFSnippetBaseProps {
   className?: string;
   style?: CSSProperties;
   /** Used by the MDXEditor integration to persist drag resizing. */
+  resizable?: boolean;
   onSizeChange?: (width: number, height: number) => void;
 }
 
@@ -381,6 +382,7 @@ function SnippetFrame({
   resource,
   resourceType,
   onSizeChange,
+  resizable = false,
   caption,
   children,
 }: IIIFSnippetBaseProps & {
@@ -436,6 +438,7 @@ function SnippetFrame({
       onSizeChangeRef.current?.(next.width, next.height);
     };
     const startResize = () => {
+      if (!resizable) return;
       trackingPointer = true;
       window.addEventListener("pointerup", finishResize);
       window.addEventListener("pointercancel", finishResize);
@@ -448,12 +451,13 @@ function SnippetFrame({
       window.removeEventListener("pointerup", finishResize);
       window.removeEventListener("pointercancel", finishResize);
     };
-  }, []);
+  }, [resizable]);
 
   return (
     <figure
       ref={frameRef}
       className={["iiif-snippet", className].filter(Boolean).join(" ")}
+      data-resizable={resizable || undefined}
       style={{ width, height, ...style }}
     >
       <div className="iiif-snippet__viewer">
