@@ -22,6 +22,7 @@ import {
 } from "../digital-collections";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
+import { findCanvasParent } from "../utilities/find-canvas-parent";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
 import { selectedPaintingFromId } from "../utilities/painting-selection";
 import { selectorFromXYWH } from "../utilities/selector-from-xywh";
@@ -132,6 +133,8 @@ export type BrowserStoreConfig = {
   restoreFromLocalStorage: boolean;
   saveToLocalStorage: boolean;
   localStorageKey: string;
+  /** Internal URLs mapped to custom page paths, supplied automatically by IIIFBrowser. */
+  customRoutes?: Record<string, string>;
 
   preprocessManifest?: (manifest: Manifest) => Promise<Manifest>;
   preprocessCollection?: (collection: Collection) => Promise<Collection>;
@@ -346,7 +349,12 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     Promise<DigitalCollectionResource | null>
   >();
 
-  const fixedRoutes = routes.filter((route) => route.type === "fixed");
+  const fixedRoutes = [
+    ...routes.filter((route) => route.type === "fixed"),
+    ...Object.entries(options.customRoutes ?? {}).map(([router, url]) => ({
+      type: "fixed" as const, router, url, title: router.replace("iiif://", ""), fallback: false,
+    })),
+  ];
   const resourceRoutes = routes.filter((route) => route.type === "resource");
   const notFound404 = fixedRoutes.find((route) => route.fallback)!;
 
@@ -776,7 +784,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           requestAbortController.abort();
         }
 
-        // Handle canvas with parent passed in.
+        parent ??= findCanvasParent(url, vault);
+        // Handle canvas with parent passed in or recovered from the shared vault.
         if (parent?.type === "Manifest") {
           const manifestUrl = parent.id;
           const canvasId = url;
@@ -815,12 +824,6 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
         if (url.startsWith("https://") || url.startsWith("http://")) {
           // We _might_ have been passed a canvas id
-          const canvasRef = vault.get({ id: url, type: "Canvas" });
-          if (canvasRef) {
-            // @todo Handle this with iiif-parser:hasPart property.
-            return;
-          }
-
           // We are dealing with a resource at this point.
           // 1. Do we already know about this resource?
           const existing = get().loaded[url];
@@ -869,9 +872,10 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
         // imagine iiif://about is passed here. We need to navigate to that mapped route, or go to
         // the not found page.
+        const internalUrl = url.split("?")[0];
         for (const route of fixedRoutes) {
-          if (route.router === url) {
-            history.push(route.url, { parent });
+          if (route.router === internalUrl) {
+            history.push(`${route.url}${url.slice(internalUrl.length)}`, { parent });
             browserSuccess(url);
             return;
           }
@@ -886,7 +890,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const lowerCaseUrl = (pathname || "").toLowerCase();
         for (const route of fixedRoutes) {
           if (route.url === lowerCaseUrl) {
-            return [route.router, null];
+            return [`${route.router}${search || ""}`, null];
           }
         }
 

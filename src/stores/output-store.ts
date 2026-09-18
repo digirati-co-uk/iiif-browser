@@ -105,13 +105,13 @@ type OutputFormat =
   | { type: "json"; pretty?: boolean }
   | { type: "image-service" }
   | {
-    type: "custom";
-    format: (
-      resource: SelectedItem,
-      parent: SelectedItem | null,
-      vault: Vault,
-    ) => any;
-  }
+      type: "custom";
+      format: (
+        resource: SelectedItem,
+        parent: SelectedItem | null,
+        vault: Vault,
+      ) => any;
+    }
   | { type: "url"; resolvable?: boolean };
 
 export type OutputTarget = {
@@ -126,17 +126,17 @@ export type OutputTargetTypes =
   | { type: "callback"; cb: (resource: any) => void }
   | { type: "clipboard" }
   | {
-    type: "input";
-    separator?: string;
-    el: { current: null | HTMLInputElement };
-  }
+      type: "input";
+      separator?: string;
+      el: { current: null | HTMLInputElement };
+    }
   | {
-    type: "open-new-window";
-    urlPattern?: string;
-    target?: string;
-    features?: string;
-    cb?: (resource: any, window: Window | null) => void;
-  };
+      type: "open-new-window";
+      urlPattern?: string;
+      target?: string;
+      features?: string;
+      cb?: (resource: any, window: Window | null) => void;
+    };
 
 export type OutputConfig = OutputTarget[];
 
@@ -272,6 +272,8 @@ export function isOutputSupportedForSelection(
 
 export function outputTypesForItem(item: SelectedItem): OutputType[] {
   const types = [item.type as OutputType];
+  if (item.type === "ImageService" && item.selector)
+    types.push("ImageServiceRegion");
   if (item.type !== "Canvas") return types;
   if (item.selector) types.push("CanvasRegion");
   if (item.selectedPainting?.service) {
@@ -415,7 +417,8 @@ export function createOutputStore(options: OutputStoreOptions) {
       if (!item) return;
       if (
         item.selectedPainting?.id === selectedPainting?.id &&
-        item.selectedPainting?.annotationId === selectedPainting?.annotationId &&
+        item.selectedPainting?.annotationId ===
+          selectedPainting?.annotationId &&
         item.selectedPainting?.service?.id === selectedPainting?.service?.id &&
         item.selectedPainting?.choice === selectedPainting?.choice
       ) {

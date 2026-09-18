@@ -966,3 +966,5 @@ export {
   IIIFVirtualCollection,
   InsertIIIFVirtualCollection,
 } from "./virtual-collection";
+
+export { IIIFLink, InsertIIIFLink } from "./link";

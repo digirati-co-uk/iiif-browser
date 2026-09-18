@@ -362,3 +362,10 @@ and styles can be customized through `dialog`.
 ## Optional TipTap integration
 
 See [TIPTAP.md](./TIPTAP.md) for Image API images, interactive IIIF snippets, and IIIF Content State drag-and-drop support in TipTap and MDXEditor. Preview the integrations in Storybook under **Integrations**.
+
+## Project notebooks
+
+The optional [`iiif-browser/notebook`](./NOTEBOOK.md) plugin adds an embeddable
+Tiptap notebook with smart IIIF links, resource previews, interactive checklists,
+project context, and shared browser search/save integration. See
+**Integrations / Notebook / Manifest Editor** in Storybook for a working host app.

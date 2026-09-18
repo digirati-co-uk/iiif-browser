@@ -53,14 +53,19 @@
       "import": "./dist/mdxeditor-snippet.js",
       "default": "./dist/mdxeditor-snippet.js"
     },
-    "./mdx-plugins.css": "./dist/mdx-plugins.css",
+    "./mdx-plugins.css": "./dist/index.css",
     "./dist/index.css": "./dist/index.css",
     "./tiptap": {
       "types": "./dist/tiptap.d.ts",
       "import": "./dist/tiptap.js",
       "default": "./dist/tiptap.js"
     },
-    "./editor-plugins.css": "./dist/mdx-plugins.css"
+    "./editor-plugins.css": "./dist/index.css",
+    "./notebook": {
+      "types": "./dist/notebook.d.ts",
+      "import": "./dist/notebook.js",
+      "default": "./dist/notebook.js"
+    }
   },
   "scripts": {
     "build": "tsdown",
@@ -110,6 +115,7 @@
     "@storybook/test": "^8.6.14",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tiptap/core": "^3.31.3",
+    "@tiptap/extension-list": "3.31.3",
     "@tiptap/pm": "^3.31.3",
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
@@ -144,7 +150,9 @@
     "@tiptap/core": "^3.31.3",
     "@tiptap/pm": "^3.31.3",
     "@tiptap/react": "^3.31.3",
-    "lexical": "^0.35.0"
+    "lexical": "^0.35.0",
+    "@tiptap/starter-kit": "^3.31.3",
+    "@tiptap/extension-list": "^3.31.3"
   },
   "peerDependenciesMeta": {
     "@mdxeditor/editor": {
@@ -160,6 +168,12 @@
       "optional": true
     },
     "lexical": {
+      "optional": true
+    },
+    "@tiptap/starter-kit": {
+      "optional": true
+    },
+    "@tiptap/extension-list": {
       "optional": true
     }
   },

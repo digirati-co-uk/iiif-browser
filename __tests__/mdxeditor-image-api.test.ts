@@ -25,6 +25,21 @@ const info = {
 };
 
 describe("MDXEditor IIIF image requests", () => {
+  it("rejects presentation URLs and ordinary image paths", () => {
+    expect(
+      parseIIIFImageUrl(
+        "https://heritage.tudelft.nl/iiif/manifests/015fcbc0-6ccb-4dd9-bffe-9e5b64545f6f/manifest.json",
+      ),
+    ).toBeNull();
+    expect(
+      parseIIIFImageUrl("https://example.org/photos/2024/10/12/photo.jpg"),
+    ).toBeNull();
+    expect(
+      parseIIIFImageUrl(
+        "https://example.org/iiif/id/pct:10,20,30,40/^pct:50/!22.5/default.png?token=test",
+      ),
+    ).not.toBeNull();
+  });
   it("parses an existing cropped request and preserves its service identity", () => {
     const request = parseIIIFImageUrl(
       "https://example.org/iiif/book%2Fpage-1/10,20,900,600/600,/90/default.jpg",
