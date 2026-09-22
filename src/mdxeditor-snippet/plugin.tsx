@@ -3,6 +3,7 @@ import {
   addComposerChild$,
   ButtonWithTooltip,
   Cell,
+  createActiveEditorSubscription$,
   GenericJsxEditor,
   insertMarkdown$,
   type JsxComponentDescriptor,
@@ -10,6 +11,7 @@ import {
   jsxPlugin,
   NestedLexicalEditor,
   type RealmPlugin,
+  readOnly$,
   realmPlugin,
   rootEditor$,
   useCellValue,
@@ -29,6 +31,7 @@ import {
   Heading,
   ModalOverlay,
 } from "react-aria-components";
+import { registerIIIFDrop } from "../editor/mdx-drop";
 import { IIIFBrowser, type IIIFBrowserProps } from "../IIIFBrowser";
 import { IIIFPluginLogo } from "../icons/IIIFPluginLogos";
 import {
@@ -98,6 +101,17 @@ const snippetPlugin = realmPlugin<IIIFSnippetPluginParams>({
   init(realm, params) {
     realm.pub(config$, params ?? {});
     realm.pub(addComposerChild$, IIIFSnippetDialog);
+    realm.pub(createActiveEditorSubscription$, (editor) =>
+      registerIIIFDrop(editor, (targets) => {
+        const markdown = targets
+          .map((target) =>
+            createIIIFSnippetMarkdown(target, realm.getValue(config$)),
+          )
+          .join("\n\n");
+        realm.pub(insertMarkdown$, markdown);
+        return true;
+      }),
+    );
   },
   update(realm, params) {
     realm.pub(config$, params ?? {});
@@ -406,6 +420,7 @@ function SnippetEditor({
   collectionNavigation?: "breadcrumbs" | "button";
 }) {
   const updateMdastNode = useMdastNodeUpdater();
+  const readOnly = useCellValue(readOnly$);
   const values = Object.fromEntries(
     props.mdastNode.attributes.flatMap((attribute) => {
       if (
@@ -425,9 +440,11 @@ function SnippetEditor({
   const width = positiveNumber(values.width, 640);
   const height = positiveNumber(values.height, 420);
   const common = {
+    resizable: !readOnly,
     width,
     height,
     onSizeChange: (nextWidth: number, nextHeight: number) => {
+      if (readOnly) return;
       if (nextWidth === width && nextHeight === height) return;
       const updatedNames = new Set<string>();
       const attributes = props.mdastNode.attributes.map((attribute) => {
@@ -469,9 +486,11 @@ function SnippetEditor({
 
   return (
     <div className="iiif-snippet-editor">
-      <div className="iiif-snippet-editor__settings">
-        <GenericJsxEditor {...props} />
-      </div>
+      {!readOnly && (
+        <div className="iiif-snippet-editor__settings">
+          <GenericJsxEditor {...props} />
+        </div>
+      )}
       <div className="iiif-snippet-editor__preview">
         {resourceType === "Collection" ? (
           <IIIFSnippetProvider collectionId={values.collectionId}>

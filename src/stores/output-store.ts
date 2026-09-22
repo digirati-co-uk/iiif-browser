@@ -1,5 +1,5 @@
 import type { BoxSelector, Vault } from "@iiif/helpers";
-import type { InternationalString } from "@iiif/presentation-3";
+import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
 import {
@@ -272,6 +272,8 @@ export function isOutputSupportedForSelection(
 
 export function outputTypesForItem(item: SelectedItem): OutputType[] {
   const types = [item.type as OutputType];
+  if (item.type === "ImageService" && item.selector)
+    types.push("ImageServiceRegion");
   if (item.type !== "Canvas") return types;
   if (item.selector) types.push("CanvasRegion");
   if (item.selectedPainting?.service) {
@@ -415,7 +417,8 @@ export function createOutputStore(options: OutputStoreOptions) {
       if (!item) return;
       if (
         item.selectedPainting?.id === selectedPainting?.id &&
-        item.selectedPainting?.annotationId === selectedPainting?.annotationId &&
+        item.selectedPainting?.annotationId ===
+        selectedPainting?.annotationId &&
         item.selectedPainting?.service?.id === selectedPainting?.service?.id &&
         item.selectedPainting?.choice === selectedPainting?.choice
       ) {

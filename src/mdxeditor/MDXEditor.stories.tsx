@@ -4,6 +4,9 @@ import {
   MDXEditor,
   toolbarPlugin,
 } from "@mdxeditor/editor";
+import {
+  ContentStateDragSource,
+} from "../editor/ContentStateDragSource";
 import "@mdxeditor/editor/style.css";
 import { useState } from "react";
 import { InsertIIIFBrowser, iiifBrowserPlugin } from "./index";
@@ -139,6 +142,31 @@ export const EditExistingIIIFImage = () => {
             toolbarContents: () => <InsertIIIFBrowser />,
           }),
         ]}
+      />
+      <pre data-testid="markdown-output">{markdown}</pre>
+    </>
+  );
+};
+
+export const ContentStateDrop = () => {
+  const [markdown, setMarkdown] = useState("Drop a cookbook resource here.\n");
+  const [readOnly, setReadOnly] = useState(false);
+  return (
+    <>
+      <ContentStateDragSource />
+      <label>
+        <input
+          type="checkbox"
+          checked={readOnly}
+          onChange={(event) => setReadOnly(event.target.checked)}
+        />{" "}
+        Read only
+      </label>
+      <MDXEditor
+        markdown="Drop a cookbook resource here.\n"
+        readOnly={readOnly}
+        onChange={setMarkdown}
+        plugins={[iiifBrowserPlugin()]}
       />
       <pre data-testid="markdown-output">{markdown}</pre>
     </>

@@ -1,4 +1,5 @@
 import type { Vault } from "@iiif/helpers/vault";
+import type { Collection } from "@iiif/parser/presentation-3/types";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
@@ -112,11 +113,20 @@ export interface IIIFSnippetBaseProps {
   className?: string;
   style?: CSSProperties;
   /** Used by the MDXEditor integration to persist drag resizing. */
+  resizable?: boolean;
   onSizeChange?: (width: number, height: number) => void;
 }
 
 export interface IIIFCollectionProps extends IIIFSnippetBaseProps {
   collectionId: string;
+  /** Inline collection data, used by virtual collections. */
+  collection?: Pick<Collection, "id" | "label"> & {
+    items: Array<{
+      id: string;
+      type: "Collection" | "Manifest";
+      label?: Collection["label"];
+    }>;
+  };
   navigation?: "breadcrumbs" | "button";
 }
 
@@ -131,26 +141,53 @@ export interface IIIFCanvasProps extends IIIFSnippetBaseProps {
 
 export function IIIFCollection({
   collectionId,
+  collection: inlineCollection,
   navigation = "breadcrumbs",
   ...frameProps
 }: IIIFCollectionProps) {
-  const collection = useCollection({ id: collectionId });
+  const loadedCollection = useCollection({ id: collectionId });
+  const collection = inlineCollection ?? loadedCollection;
   const vault = useVault();
   const [selection, setSelection] = useState<{
     collectionId: string;
-    manifestId: string;
+    resourceId: string;
+    type: "Collection" | "Manifest";
   } | null>(null);
-  const selectedManifest =
-    selection?.collectionId === collectionId ? selection.manifestId : null;
-  const manifests =
-    collection?.items?.filter((item) => item.type === "Manifest") ?? [];
+  const selectedResource =
+    selection?.collectionId === collectionId ? selection.resourceId : null;
+  const items: Array<{
+    id: string;
+    type: string;
+    label?: Collection["label"];
+  }> = collection?.items ?? [];
+  const resources = items.filter(
+    (item) => item.type === "Manifest" || item.type === "Collection",
+  );
 
-  return selectedManifest ? (
-    <IIIFSnippetProvider vault={vault} manifestId={selectedManifest}>
+  return selectedResource && selection?.type === "Collection" ? (
+    <div>
+      <button type="button" onClick={() => setSelection(null)}>
+        ←{" "}
+        {collection?.label ? (
+          <LocaleString>{collection.label}</LocaleString>
+        ) : (
+          "Collection"
+        )}
+      </button>
+      <IIIFSnippetProvider vault={vault} collectionId={selectedResource}>
+        <IIIFCollection
+          {...frameProps}
+          collectionId={selectedResource}
+          navigation={navigation}
+        />
+      </IIIFSnippetProvider>
+    </div>
+  ) : selectedResource ? (
+    <IIIFSnippetProvider vault={vault} manifestId={selectedResource}>
       <SelectedCollectionManifest
         {...frameProps}
         collection={collection}
-        manifestId={selectedManifest}
+        manifestId={selectedResource}
         navigation={navigation}
         onBack={() => setSelection(null)}
       />
@@ -161,45 +198,51 @@ export function IIIFCollection({
       resource={collection}
       resourceType="Collection"
     >
-      {manifests.length ? (
+      {resources.length ? (
         <ul
           className="iiif-snippet__collection-grid"
-          aria-label="Collection manifests"
+          aria-label="Collection items"
         >
-          {manifests.map((manifest) => (
-            <li key={manifest.id}>
-              <CollectionManifestCard
-                manifestId={manifest.id}
+          {resources.map((resource) => (
+            <li key={resource.id}>
+              <CollectionItemCard
+                resourceId={resource.id}
+                resourceType={resource.type as "Collection" | "Manifest"}
+                label={resource.label}
                 onSelect={() =>
-                  setSelection({ collectionId, manifestId: manifest.id })
+                  setSelection({
+                    collectionId,
+                    resourceId: resource.id,
+                    type: resource.type as "Collection" | "Manifest",
+                  })
                 }
               />
             </li>
           ))}
         </ul>
       ) : (
-        <div className="iiif-snippet__empty">
-          This collection has no directly linked Manifests.
-        </div>
+        <div className="iiif-snippet__empty">This collection has no items.</div>
       )}
     </SnippetFrame>
   );
 }
 
-function CollectionManifestCard({
-  manifestId,
+function CollectionItemCard({
+  resourceId,
+  resourceType,
+  label,
   onSelect,
 }: {
-  manifestId: string;
+  resourceId: string;
+  resourceType: "Collection" | "Manifest";
+  label?: Collection["label"];
   onSelect: () => void;
 }) {
   const vault = useVault();
-  const manifest = useManifest({ id: manifestId });
-  const thumbnail = useThumbnail(
-    { width: 300, height: 300, fallback: true },
-    true,
-    { manifestId },
-  );
+  const manifest = useManifest({ id: resourceId });
+  const childCollection = useCollection({ id: resourceId });
+  const resource = resourceType === "Collection" ? childCollection : manifest;
+  const thumbnail = childCollection?.thumbnail?.[0];
   const cardRef = useRef<HTMLButtonElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -220,8 +263,11 @@ function CollectionManifestCard({
   }, []);
 
   useEffect(() => {
-    if (visible) void vault.load(manifestId);
-  }, [manifestId, vault, visible]);
+    if (visible)
+      void vault.load(resourceId).catch(() => {
+        /* Opening the item displays the loading error. */
+      });
+  }, [resourceId, vault, visible]);
 
   return (
     <button
@@ -231,20 +277,35 @@ function CollectionManifestCard({
       onClick={onSelect}
     >
       <span className="iiif-snippet__collection-thumbnail">
-        {thumbnail?.id ? (
+        {resourceType === "Manifest" && manifest ? (
+          <ManifestCardThumbnail manifestId={resourceId} />
+        ) : thumbnail?.id ? (
           <img src={thumbnail.id} alt="" loading="lazy" />
         ) : (
           <span aria-hidden="true">IIIF</span>
         )}
       </span>
       <span className="iiif-snippet__collection-label">
-        {manifest?.label ? (
-          <LocaleString>{manifest.label}</LocaleString>
+        {resource?.label || label ? (
+          <LocaleString>{resource?.label ?? label}</LocaleString>
         ) : (
-          "Manifest"
+          resourceType
         )}
       </span>
     </button>
+  );
+}
+
+function ManifestCardThumbnail({ manifestId }: { manifestId: string }) {
+  const thumbnail = useThumbnail(
+    { width: 300, height: 300, fallback: true },
+    true,
+    { manifestId },
+  );
+  return thumbnail?.id ? (
+    <img src={thumbnail.id} alt="" loading="lazy" />
+  ) : (
+    <span aria-hidden="true">IIIF</span>
   );
 }
 
@@ -381,6 +442,7 @@ function SnippetFrame({
   resource,
   resourceType,
   onSizeChange,
+  resizable = false,
   caption,
   children,
 }: IIIFSnippetBaseProps & {
@@ -436,6 +498,7 @@ function SnippetFrame({
       onSizeChangeRef.current?.(next.width, next.height);
     };
     const startResize = () => {
+      if (!resizable) return;
       trackingPointer = true;
       window.addEventListener("pointerup", finishResize);
       window.addEventListener("pointercancel", finishResize);
@@ -448,12 +511,13 @@ function SnippetFrame({
       window.removeEventListener("pointerup", finishResize);
       window.removeEventListener("pointercancel", finishResize);
     };
-  }, []);
+  }, [resizable]);
 
   return (
     <figure
       ref={frameRef}
       className={["iiif-snippet", className].filter(Boolean).join(" ")}
+      data-resizable={resizable || undefined}
       style={{ width, height, ...style }}
     >
       <div className="iiif-snippet__viewer">
