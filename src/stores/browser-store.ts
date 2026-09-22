@@ -1,19 +1,15 @@
-import {
-  type BoxSelector,
-  createThumbnailHelper,
-  Vault,
-} from "@iiif/helpers";
+import { type BoxSelector, createThumbnailHelper, Vault } from "@iiif/helpers";
 import { isImageService } from "@iiif/parser/image-3";
-import { upgrade } from "@iiif/parser/upgrader";
 import type {
   Collection,
   InternationalString,
   Manifest,
-} from "@iiif/presentation-3";
+} from "@iiif/parser/presentation-3/types";
 import type {
   CollectionNormalized,
   ManifestNormalized,
-} from "@iiif/presentation-3-normalized";
+} from "@iiif/parser/presentation-3-normalized/types";
+import { upgrade } from "@iiif/parser/upgrader";
 import { Action, createMemoryHistory, type History } from "history";
 import { createStore } from "zustand/vanilla";
 import {
@@ -22,8 +18,8 @@ import {
 } from "../digital-collections";
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
-import { findCanvasParent } from "../utilities/find-canvas-parent";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
+import { findCanvasParent } from "../utilities/find-canvas-parent";
 import { selectedPaintingFromId } from "../utilities/painting-selection";
 import { selectorFromXYWH } from "../utilities/selector-from-xywh";
 
@@ -352,7 +348,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
   const fixedRoutes = [
     ...routes.filter((route) => route.type === "fixed"),
     ...Object.entries(options.customRoutes ?? {}).map(([router, url]) => ({
-      type: "fixed" as const, router, url, title: router.replace("iiif://", ""), fallback: false,
+      type: "fixed" as const,
+      router,
+      url,
+      title: router.replace("iiif://", ""),
+      fallback: false,
     })),
   ];
   const resourceRoutes = routes.filter((route) => route.type === "resource");
@@ -570,9 +570,12 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         }
 
         if (!digitalCollectionResource) {
-          digitalCollectionResource = getIIIFResourceFromDigitalCollection(url, {
-            requestInitOptions: fetchOptions,
-          })
+          digitalCollectionResource = getIIIFResourceFromDigitalCollection(
+            url,
+            {
+              requestInitOptions: fetchOptions,
+            },
+          )
             .then((resource) => {
               if (!resource) {
                 digitalCollectionResourceCache.delete(url);
@@ -586,14 +589,16 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             });
           digitalCollectionResourceCache.set(url, digitalCollectionResource);
         }
-        const resolvedDigitalCollectionResource = await digitalCollectionResource;
+        const resolvedDigitalCollectionResource =
+          await digitalCollectionResource;
         if (abortController.signal.aborted) {
           return;
         }
 
         if (resolvedDigitalCollectionResource?.resource) {
           const route = resourceRoutes.find(
-            (route) => route.resource === resolvedDigitalCollectionResource.type,
+            (route) =>
+              route.resource === resolvedDigitalCollectionResource.type,
           );
           if (!route) {
             return browserResourceError(
@@ -875,7 +880,9 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const internalUrl = url.split("?")[0];
         for (const route of fixedRoutes) {
           if (route.router === internalUrl) {
-            history.push(`${route.url}${url.slice(internalUrl.length)}`, { parent });
+            history.push(`${route.url}${url.slice(internalUrl.length)}`, {
+              parent,
+            });
             browserSuccess(url);
             return;
           }
@@ -1124,13 +1131,19 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const vaultRef = vault.get(resolved as any);
         if (vaultRef) {
           createThumbnailHelper(vault)
-            .getBestThumbnailAtSize(vaultRef, { width: 256, height: 256 }, false)
+            .getBestThumbnailAtSize(
+              vaultRef,
+              { width: 256, height: 256 },
+              false,
+            )
             .then((result) => {
               if (result.best?.id) {
                 historyItem.thumbnail = result.best.id;
               }
             })
-            .catch(() => { /* ignore */ });
+            .catch(() => {
+              /* ignore */
+            });
         }
       }
 

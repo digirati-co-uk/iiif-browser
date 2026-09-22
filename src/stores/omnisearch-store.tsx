@@ -1,10 +1,10 @@
-import { type Vault, getValue } from "@iiif/helpers";
+import { getValue, type Vault } from "@iiif/helpers";
 import type {
   CollectionNormalized,
   ManifestNormalized,
-} from "@iiif/presentation-3-normalized";
+} from "@iiif/parser/presentation-3-normalized/types";
 import type { History } from "history";
-import MiniSearch, { type SearchResult, type Options } from "minisearch";
+import MiniSearch, { type Options, type SearchResult } from "minisearch";
 import type { ReactNode } from "react";
 import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";

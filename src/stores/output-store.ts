@@ -1,5 +1,5 @@
 import type { BoxSelector, Vault } from "@iiif/helpers";
-import type { InternationalString } from "@iiif/presentation-3";
+import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import type { Emitter } from "mitt";
 import { createStore } from "zustand/vanilla";
 import {
@@ -105,13 +105,13 @@ type OutputFormat =
   | { type: "json"; pretty?: boolean }
   | { type: "image-service" }
   | {
-      type: "custom";
-      format: (
-        resource: SelectedItem,
-        parent: SelectedItem | null,
-        vault: Vault,
-      ) => any;
-    }
+    type: "custom";
+    format: (
+      resource: SelectedItem,
+      parent: SelectedItem | null,
+      vault: Vault,
+    ) => any;
+  }
   | { type: "url"; resolvable?: boolean };
 
 export type OutputTarget = {
@@ -126,17 +126,17 @@ export type OutputTargetTypes =
   | { type: "callback"; cb: (resource: any) => void }
   | { type: "clipboard" }
   | {
-      type: "input";
-      separator?: string;
-      el: { current: null | HTMLInputElement };
-    }
+    type: "input";
+    separator?: string;
+    el: { current: null | HTMLInputElement };
+  }
   | {
-      type: "open-new-window";
-      urlPattern?: string;
-      target?: string;
-      features?: string;
-      cb?: (resource: any, window: Window | null) => void;
-    };
+    type: "open-new-window";
+    urlPattern?: string;
+    target?: string;
+    features?: string;
+    cb?: (resource: any, window: Window | null) => void;
+  };
 
 export type OutputConfig = OutputTarget[];
 
@@ -418,7 +418,7 @@ export function createOutputStore(options: OutputStoreOptions) {
       if (
         item.selectedPainting?.id === selectedPainting?.id &&
         item.selectedPainting?.annotationId ===
-          selectedPainting?.annotationId &&
+        selectedPainting?.annotationId &&
         item.selectedPainting?.service?.id === selectedPainting?.service?.id &&
         item.selectedPainting?.choice === selectedPainting?.choice
       ) {

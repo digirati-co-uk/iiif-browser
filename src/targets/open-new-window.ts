@@ -1,4 +1,4 @@
-import type { ManifestNormalized } from "@iiif/presentation-3-normalized";
+import type { ManifestNormalized } from "@iiif/parser/presentation-3-normalized/types";
 import type { ExplorerAction } from "../IIIFBrowser.types";
 
 export const openNewWindowTarget: ExplorerAction<"open-new-window"> = {

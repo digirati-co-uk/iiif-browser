@@ -80,9 +80,9 @@
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
-    "@atlas-viewer/atlas": "^3.2.3",
-    "@iiif/helpers": "^1.6.1",
-    "@iiif/parser": "^2.2.10",
+    "@atlas-viewer/atlas": "^3.3.0",
+    "@iiif/helpers": "^4.0.0",
+    "@iiif/parser": "^4.0.1",
     "@iiif/presentation-3": "^2.2.3",
     "@iiif/presentation-3-normalized": "^0.9.7",
     "history": "^5.3.0",
@@ -94,7 +94,7 @@
     "react-aria": "^3.43.2",
     "react-aria-components": "^1.13.0",
     "react-dom": "^19.2.7",
-    "react-iiif-vault": "^2.0.18",
+    "react-iiif-vault": "^4.0.0",
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",
     "zustand": "^4.5.7"

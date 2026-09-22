@@ -1,5 +1,5 @@
 import type { Vault } from "@iiif/helpers/vault";
-import type { Collection } from "@iiif/presentation-3";
+import type { Collection } from "@iiif/parser/presentation-3/types";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";

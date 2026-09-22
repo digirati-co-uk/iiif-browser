@@ -1,5 +1,5 @@
-import type { Collection } from "@iiif/presentation-3";
 import type { Vault } from "@iiif/helpers";
+import type { Collection } from "@iiif/parser/presentation-3/types";
 import { noteResources } from "./resources";
 import type { NotebookNote } from "./store";
 

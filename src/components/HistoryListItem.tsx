@@ -1,7 +1,7 @@
 import type {
   CollectionNormalized,
   ManifestNormalized,
-} from "@iiif/presentation-3-normalized";
+} from "@iiif/parser/presentation-3-normalized/types";
 import { LocaleString, useVaultSelector } from "react-iiif-vault";
 import { fixedRoutes } from "../routes";
 import type { HistoryItem } from "../stores/browser-store";
