@@ -1,3 +1,8 @@
+import {
+  BrowserPluginsContext,
+  type IIIFBrowserPlugin,
+} from "./browser/plugins";
+export type { IIIFBrowserPlugin } from "./browser/plugins";
 import type { Vault } from "@iiif/helpers";
 import { type ReactNode, useMemo } from "react";
 import { BrowserContainer } from "./browser/BrowserContainer";
@@ -67,6 +72,7 @@ export interface IIIFBrowserProps {
   debug?: boolean;
   vault?: Vault;
   search?: V2SearchConfig;
+  plugins?: IIIFBrowserPlugin[];
 }
 
 export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
@@ -96,36 +102,58 @@ export function IIIFBrowser({
   vault,
   innerClassName,
   search,
+  plugins = [],
 }: IIIFBrowserProps) {
-  const allCustomPages = useDefaultPages(customPages);
+  const pluginPages = useMemo(
+    () =>
+      Object.assign({}, ...plugins.map((plugin) => plugin.pages), customPages),
+    [plugins, customPages],
+  );
+  const allCustomPages = useDefaultPages(pluginPages);
+  const browserHistory = useMemo(
+    () => ({
+      ...history,
+      customRoutes: {
+        ...Object.fromEntries(
+          Object.keys(pluginPages)
+            .filter((path) => path !== "/")
+            .map((path) => [`iiif://${path.replace(/^\//, "")}`, path]),
+        ),
+        ...history?.customRoutes,
+      },
+    }),
+    [history, pluginPages],
+  );
 
   return (
-    <BrowserProvider
-      vault={vault}
-      outputConfig={output}
-      uiConfig={ui}
-      browserConfig={history}
-      linkConfig={navigation}
-      searchConfig={search}
-      debug={debug}
-    >
-      <BrowserContainer className={className} innerClassName={innerClassName}>
-        <WindowErrorBoundary>
-          <BrowserHeader />
+    <BrowserPluginsContext.Provider value={plugins}>
+      <BrowserProvider
+        vault={vault}
+        outputConfig={output}
+        uiConfig={ui}
+        browserConfig={browserHistory}
+        linkConfig={navigation}
+        searchConfig={search}
+        debug={debug}
+      >
+        <BrowserContainer className={className} innerClassName={innerClassName}>
+          <WindowErrorBoundary>
+            <BrowserHeader />
 
-          <BrowserWindow>
-            <RouterSwitch routes={allCustomPages} />
-          </BrowserWindow>
-          <BrowserFooter
-            // onSelect={onSelect}
-            targets={targets}
-            types={types as any}
-            format={format}
-          />
-          <Debug />
-        </WindowErrorBoundary>
-      </BrowserContainer>
-    </BrowserProvider>
+            <BrowserWindow>
+              <RouterSwitch routes={allCustomPages} />
+            </BrowserWindow>
+            <BrowserFooter
+              // onSelect={onSelect}
+              targets={targets}
+              types={types as any}
+              format={format}
+            />
+            <Debug />
+          </WindowErrorBoundary>
+        </BrowserContainer>
+      </BrowserProvider>
+    </BrowserPluginsContext.Provider>
   );
 }
 

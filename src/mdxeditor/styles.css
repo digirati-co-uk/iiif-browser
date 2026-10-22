@@ -1,3 +1,88 @@
+/* The integrations must not depend on a host page's global CSS reset. */
+:where(
+    .iiif-browser-mdx-overlay,
+    .iiif-browser-mdx-overlay *,
+    .iiif-browser-mdx-overlay *::before,
+    .iiif-browser-mdx-overlay *::after
+  ) {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: #e5e7eb;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+}
+
+:where(.iiif-browser-mdx-overlay) {
+  font:
+    400 16px / 1.5 system-ui,
+    sans-serif;
+}
+
+:where(
+    .iiif-browser-mdx-overlay button,
+    .iiif-browser-mdx-overlay input,
+    .iiif-browser-mdx-overlay select,
+    .iiif-browser-mdx-overlay textarea
+  ) {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+:where(.iiif-browser-mdx-overlay button) {
+  background: transparent;
+  cursor: pointer;
+}
+
+:where(.iiif-browser-mdx-overlay button:disabled) {
+  cursor: default;
+}
+:where(
+    .iiif-browser-mdx-overlay h1,
+    .iiif-browser-mdx-overlay h2,
+    .iiif-browser-mdx-overlay h3,
+    .iiif-browser-mdx-overlay p,
+    .iiif-browser-mdx-overlay figure
+  ) {
+  margin: 0;
+}
+:where(
+    .iiif-browser-mdx-overlay h1,
+    .iiif-browser-mdx-overlay h2,
+    .iiif-browser-mdx-overlay h3
+  ) {
+  font-size: inherit;
+  font-weight: inherit;
+}
+:where(.iiif-browser-mdx-overlay a) {
+  color: inherit;
+  text-decoration: inherit;
+}
+:where(.iiif-browser-mdx-overlay img, .iiif-browser-mdx-overlay svg) {
+  display: block;
+  vertical-align: middle;
+}
+:where(.iiif-browser-mdx-overlay img) {
+  max-width: 100%;
+  height: auto;
+}
+:where(.iiif-browser-mdx-overlay table) {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+:where(.iiif-browser-mdx-overlay ul, .iiif-browser-mdx-overlay ol) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .iiif-browser-mdx-overlay {
   position: fixed;
   inset: 0;
@@ -210,7 +295,7 @@
   font-weight: 400;
 }
 
-.iiif-browser-mdx-field input,
+.iiif-browser-mdx-field input:not([type="checkbox"]):not([type="radio"]),
 .iiif-browser-mdx-field select {
   min-height: 2.5rem;
   width: 100%;
@@ -221,7 +306,8 @@
   font: inherit;
 }
 
-.iiif-browser-mdx-field input:not([type="range"]),
+.iiif-browser-mdx-field
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
 .iiif-browser-mdx-field select {
   padding: 0.5rem 0.625rem;
 }
@@ -405,4 +491,48 @@ div.mdxeditor-toolbar {
   .iiif-browser-mdx-modal[data-entering] {
     animation: none;
   }
+}
+
+.iiif-editor-edit {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font:
+    500 0.8125rem / 1.4 system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+.iiif-editor-edit:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.iiif-editor-edit:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.iiif-browser-mdx-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.iiif-browser-mdx-toggle input {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  min-height: 0;
+  margin: 0;
+  accent-color: #2563eb;
+}
+.iiif-browser-mdx-toggle input:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }

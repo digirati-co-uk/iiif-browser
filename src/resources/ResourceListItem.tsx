@@ -1,5 +1,5 @@
 import { getValue } from "@iiif/helpers";
-import type { InternationalString } from "@iiif/presentation-3";
+import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import { useMemo } from "react";
 import { Button, GridListItem } from "react-aria-components";
 import { LocaleString } from "react-iiif-vault";

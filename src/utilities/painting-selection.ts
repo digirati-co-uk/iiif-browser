@@ -9,7 +9,7 @@ import {
   getImageServices,
   imageServiceRequestToString,
 } from "@iiif/parser/image-3";
-import type { CanvasNormalized } from "@iiif/presentation-3-normalized";
+import type { CanvasNormalized } from "@iiif/parser/presentation-3-normalized/types";
 
 export type SelectedPainting = {
   id: string;
@@ -80,11 +80,11 @@ export function paintingReference(
     ...(choice ? { choice: true as const } : {}),
     ...(service && serviceId
       ? {
-          service: {
-            id: serviceId,
-            type: imageServiceType(service),
-          },
-        }
+        service: {
+          id: serviceId,
+          type: imageServiceType(service),
+        },
+      }
       : {}),
   };
 }

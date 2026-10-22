@@ -58,10 +58,13 @@ export function Omnisearch() {
     (result: SearchIndexItem) => {
       if (result) {
         if (result.type === "resource") {
-          resolve({
-            id: result.resource.id,
-            type: result.resource.type,
-          });
+          resolve(
+            {
+              id: result.resource.id,
+              type: result.resource.type,
+            },
+            { parent: result.parent },
+          );
         }
         if (result.type === "action") {
           result.action();
@@ -85,12 +88,6 @@ export function Omnisearch() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [isModalOpen, setIsModalOpen]);
-
-  const onBlur = useCallback(() => {
-    if (!isModalOpen) {
-      wasLastOpen.current = false;
-    }
-  }, [isModalOpen]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Needs to be re-run when indexing status changes
   useEffect(() => {
@@ -125,17 +122,7 @@ export function Omnisearch() {
         <Label className="sr-only">Search</Label>
         <Button
           aria-label="Edit URL and show search"
-          onBlur={onBlur}
-          onFocus={() => {
-            if (!wasLastOpen.current) {
-              setIsModalOpen(true);
-            }
-          }}
-          onPress={() => {
-            if (wasLastOpen.current) {
-              setIsModalOpen(true);
-            }
-          }}
+          onPress={() => setIsModalOpen(true)}
           className="p-1 text-sm focus:outline-none text-slate-600 z-10 w-full text-left"
         >
           <span

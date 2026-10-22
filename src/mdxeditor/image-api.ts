@@ -53,6 +53,22 @@ export function parseIIIFImageUrl(url: string): IIIFImageRequest | null {
     }
     parsedUrl.search = "";
     parsedUrl.hash = "";
+    // The upstream parser accepts arbitrary path segments (including manifest.json).
+    // Check the Image API request syntax before interpreting those segments.
+    const [region, size, rotation, output] = parsedUrl.pathname
+      .split("/")
+      .slice(-4);
+    if (
+      !/^(full|square|(?:pct:)?\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?)$/.test(
+        region ?? "",
+      ) ||
+      !/^\^?(full|max|pct:\d+(?:\.\d+)?|!?\d+,\d+|\d+,|,\d+)$/.test(
+        size ?? "",
+      ) ||
+      !/^!?\d+(?:\.\d+)?$/.test(rotation ?? "") ||
+      !/^[a-zA-Z]+\.[a-zA-Z0-9]+$/.test(output ?? "")
+    )
+      return null;
     const request = parseImageServiceRequest(parsedUrl.toString());
     return request.type === "image" ? request : null;
   } catch {
@@ -290,4 +306,40 @@ function serialiseSize(request: IIIFImageRequest, version: 2 | 3) {
     return `${prefix}${size.width},${version === 3 ? (size.height ?? "") : ""}`;
   }
   return `${prefix},${size.height ?? ""}`;
+}
+
+/** Choose a legal initial request without upscaling or assuming level-2 support. */
+export function fitInitialImageRequest(
+  request: IIIFImageRequest,
+  info: IIIFImageInfo,
+): IIIFImageRequest {
+  const capabilities = getImageCapabilities(info, request.region);
+  const width = request.size.width ?? capabilities.maxWidth;
+  if (capabilities.customSize)
+    return requestAtWidth(request, width, capabilities);
+  const size =
+    capabilities.sizes.find((size) => size.width >= width) ??
+    capabilities.sizes.at(-1);
+  return size
+    ? {
+        ...request,
+        size: {
+          ...size,
+          max: false,
+          upscaled: false,
+          confined: false,
+          version: imageApiVersion(info),
+        },
+      }
+    : fullSizeRequest(request, imageApiVersion(info));
+}
+
+export function initialImageWidth(editorWidth?: number, fallbackWidth = 640) {
+  return Math.round(
+    Number.isFinite(editorWidth) && editorWidth! > 0
+      ? editorWidth!
+      : Number.isFinite(fallbackWidth) && fallbackWidth > 0
+        ? fallbackWidth
+        : 640,
+  );
 }

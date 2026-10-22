@@ -53,8 +53,19 @@
       "import": "./dist/mdxeditor-snippet.js",
       "default": "./dist/mdxeditor-snippet.js"
     },
-    "./mdx-plugins.css": "./dist/mdx-plugins.css",
-    "./dist/index.css": "./dist/index.css"
+    "./mdx-plugins.css": "./dist/index.css",
+    "./dist/index.css": "./dist/index.css",
+    "./tiptap": {
+      "types": "./dist/tiptap.d.ts",
+      "import": "./dist/tiptap.js",
+      "default": "./dist/tiptap.js"
+    },
+    "./editor-plugins.css": "./dist/index.css",
+    "./notebook": {
+      "types": "./dist/notebook.d.ts",
+      "import": "./dist/notebook.js",
+      "default": "./dist/notebook.js"
+    }
   },
   "scripts": {
     "build": "tsdown",
@@ -69,9 +80,9 @@
     "build-storybook": "storybook build && pnpm run preview-pkg"
   },
   "dependencies": {
-    "@atlas-viewer/atlas": "^3.2.3",
-    "@iiif/helpers": "^1.6.1",
-    "@iiif/parser": "^2.2.10",
+    "@atlas-viewer/atlas": "^3.3.0",
+    "@iiif/helpers": "^4.0.0",
+    "@iiif/parser": "^4.0.1",
     "@iiif/presentation-3": "^2.2.3",
     "@iiif/presentation-3-normalized": "^0.9.7",
     "history": "^5.3.0",
@@ -83,7 +94,7 @@
     "react-aria": "^3.43.2",
     "react-aria-components": "^1.13.0",
     "react-dom": "^19.2.7",
-    "react-iiif-vault": "^2.0.18",
+    "react-iiif-vault": "^4.0.0",
     "react-timeago": "^8.3.0",
     "tailwind-merge": "^3.3.1",
     "zustand": "^4.5.7"
@@ -103,6 +114,11 @@
     "@storybook/react-vite": "^8.6.14",
     "@storybook/test": "^8.6.14",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@tiptap/core": "^3.31.3",
+    "@tiptap/extension-list": "3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "@types/node": "^25.3.3",
     "@types/react": "^18.3.25",
     "@types/react-dom": "^18.3.7",
@@ -110,6 +126,8 @@
     "autoprefixer": "^10.5.2",
     "esbuild-plugin-react18-css": "^0.0.2",
     "esbuild-plugin-umd-wrapper": "^2.0.3",
+    "jsdom": "^30.0.1",
+    "lexical": "^0.35.0",
     "path-to-regexp": "^8.3.0",
     "postcss": "^8.5.6",
     "postcss-import": "^16.1.0",
@@ -128,10 +146,34 @@
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
-    "@mdxeditor/editor": "^4.0.4"
+    "@mdxeditor/editor": "^4.0.4",
+    "@tiptap/core": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "lexical": "^0.35.0",
+    "@tiptap/starter-kit": "^3.31.3",
+    "@tiptap/extension-list": "^3.31.3"
   },
   "peerDependenciesMeta": {
     "@mdxeditor/editor": {
+      "optional": true
+    },
+    "@tiptap/core": {
+      "optional": true
+    },
+    "@tiptap/react": {
+      "optional": true
+    },
+    "@tiptap/pm": {
+      "optional": true
+    },
+    "lexical": {
+      "optional": true
+    },
+    "@tiptap/starter-kit": {
+      "optional": true
+    },
+    "@tiptap/extension-list": {
       "optional": true
     }
   },

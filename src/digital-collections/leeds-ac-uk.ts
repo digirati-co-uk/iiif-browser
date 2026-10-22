@@ -1,4 +1,4 @@
-import type { Collection } from "@iiif/presentation-3";
+import type { Collection } from "@iiif/parser/presentation-3/types";
 import type { DigitalCollection } from "./types";
 
 const manifestUrlPattern =
@@ -253,10 +253,10 @@ export const leedsDigitalCollection: DigitalCollection = {
 
       return virtualCollection
         ? {
-            id: virtualCollection.id,
-            type: "Collection",
-            resource: virtualCollection,
-          }
+          id: virtualCollection.id,
+          type: "Collection",
+          resource: virtualCollection,
+        }
         : null;
     }
 

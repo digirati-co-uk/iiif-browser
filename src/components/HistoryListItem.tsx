@@ -1,7 +1,7 @@
 import type {
   CollectionNormalized,
   ManifestNormalized,
-} from "@iiif/presentation-3-normalized";
+} from "@iiif/parser/presentation-3-normalized/types";
 import { LocaleString, useVaultSelector } from "react-iiif-vault";
 import { fixedRoutes } from "../routes";
 import type { HistoryItem } from "../stores/browser-store";
@@ -31,10 +31,15 @@ export function HistoryListItem({ historyItem }: { historyItem: HistoryItem }) {
       <div>
         <div className="flex gap-3 items-center">
           <div className="truncate flex-1">
-            {foundFixedRoute?.title || "Unknown"}
+            {foundFixedRoute?.title ||
+              (historyItem.url.startsWith("iiif://")
+                ? historyItem.url
+                    .slice(7)
+                    .replace(/^./, (letter) => letter.toUpperCase())
+                : "Unknown")}
           </div>
           <div className="flex-shrink-0 rounded text-sm px-2 py-0.5 text-gray-500">
-            {foundFixedRoute?.router || ""}
+            {foundFixedRoute?.router || historyItem.url}
           </div>
         </div>
       </div>

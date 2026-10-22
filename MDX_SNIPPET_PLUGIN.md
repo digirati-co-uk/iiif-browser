@@ -80,3 +80,40 @@ with two-line labels. Selecting a Manifest opens its deep-zoom viewer in place;
 the Collection breadcrumb at the bottom returns to the grid. Set
 `collectionNavigation: "button"` on the plugin to insert an over-image back
 button instead.
+
+### Read-only rendering and drops
+
+Standalone snippet components do not show resize controls by default. Set `resizable` explicitly to enable them outside an editor. MDXEditor previews enable resizing only while the editor is editable.
+
+The plugin accepts Manifest and Canvas Content State drops from [IIIF Cookbook recipe 0599](https://iiif.io/api/cookbook/recipe/0599-drag-and-drop/). Canvas drops retain the parent Manifest. See [TIPTAP.md](./TIPTAP.md#iiif-drag-and-drop) for supported payloads and the optional Lexical peer.
+
+## Virtual collections
+
+Use the independent `iiifVirtualCollectionPlugin` and toolbar button from the
+same `iiif-browser/mdxeditor-snippet` entry point:
+
+```tsx
+import {
+  iiifVirtualCollectionPlugin,
+  InsertIIIFVirtualCollection,
+} from "iiif-browser/mdxeditor-snippet";
+
+<MDXEditor
+  markdown="Create a collection below."
+  plugins={[
+    iiifVirtualCollectionPlugin({ browserProps }),
+    toolbarPlugin({ toolbarContents: () => <InsertIIIFVirtualCollection /> }),
+  ]}
+/>
+```
+
+The button inserts an empty `IIIFVirtualCollection`. Its inline editing controls
+let you change the displayed title and add a collection or manifest through the
+IIIF Browser. The collection snippet provides the preview and resource navigation.
+The title, JSON-encoded `items` references, and dimensions are saved in MDX.
+The plugin also accepts `defaultSize: { width, height }`.
+
+For published MDX, `IIIFVirtualCollection` is exported from the same entry point
+and renders without editing controls or a separate provider. Virtual collections
+live in the document; no remote collection is created. Read-only editors hide the
+title input and add button.

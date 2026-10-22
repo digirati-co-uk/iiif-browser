@@ -5,7 +5,7 @@ import {
   MenuTrigger,
   Popover,
 } from "react-aria-components";
-import { useHistory, useLastUrl, useResolve, useUIConfig } from "../context";
+import { useLastUrl, useResolve, useUIConfig } from "../context";
 import { MenuIcon } from "../icons/MenuIcon";
 
 export function BrowserContextMenu() {
@@ -21,11 +21,8 @@ export function BrowserContextMenu() {
       >
         <MenuIcon />
       </Button>
-      <Popover
-        placement="bottom end"
-        className="bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm w-36 text-slate-600"
-      >
-        <Menu className="flex flex-col gap-1 outline-none">
+      <Popover placement="bottom end" className="iiif-browser">
+        <Menu className="flex flex-col gap-1 outline-none bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm w-36 text-slate-600">
           <MenuItem
             aria-label="Refresh"
             onAction={() => resolve(lastUrl)}
