@@ -20,24 +20,28 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 import { Popover } from "react-aria-components";
 import { IIIFLogo } from "../icons/IIIFPluginLogos";
-import { CloseIcon } from "../icons/CloseIcon";
 import type { IIIFBrowserProps } from "../IIIFBrowser";
 import { IIIFImage, IIIFSnippet, IIIFVirtualCollection } from "../tiptap";
 import { IIIFLink } from "../tiptap/link";
 import { enrichNotebookCrops } from "./crops";
+import { NotebookErrorBoundary } from "./ErrorBoundary";
+import { useHoverIntent } from "./hover-intent";
 import { NotebookImageSize } from "./ImageSize";
+import { ResourcePreview } from "./ResourcePreview";
 import { parseIIIFImageUrl } from "../mdxeditor/image-api";
 import {
   isNotebookUrl,
   notebookPaste,
   resolveNotebookResource,
   enrichNotebookCollection,
+  sanitizeNotebookResource,
   type NotebookResource,
 } from "./resources";
 import type { NotebookNote, NotebookStore } from "./store";
@@ -111,6 +115,15 @@ export function setNotebookTaskChecked(
   }
   return false;
 }
+/** Saved attributes are untrusted JSON; a non-string label must not break rendering. */
+function resourceLinkText(attrs: Record<string, any>): string {
+  return (
+    text(attrs.label) ??
+    text(attrs.resource?.label) ??
+    text(attrs.href) ??
+    "Link"
+  );
+}
 export const NotebookResourceLink = Node.create({
   name: "notebookResource",
   group: "inline",
@@ -124,7 +137,9 @@ export const NotebookResourceLink = Node.create({
         default: null,
         parseHTML: (element) => element.getAttribute("data-link-label"),
         renderHTML: (attrs) =>
-          attrs.label == null ? {} : { "data-link-label": attrs.label },
+          typeof attrs.label === "string"
+            ? { "data-link-label": attrs.label }
+            : {},
       },
       loadOnPaste: {
         default: false,
@@ -158,7 +173,9 @@ export const NotebookResourceLink = Node.create({
         default: null,
         parseHTML: (element) => {
           try {
-            return JSON.parse(element.getAttribute("data-resource") || "null");
+            return sanitizeNotebookResource(
+              JSON.parse(element.getAttribute("data-resource") || "null"),
+            );
           } catch {
             return null;
           }
@@ -178,11 +195,10 @@ export const NotebookResourceLink = Node.create({
         "data-notebook-resource": "true",
         href: isNotebookUrl(node.attrs.href) ? node.attrs.href : undefined,
       }),
-      node.attrs.label ?? node.attrs.resource?.label ?? node.attrs.href,
+      resourceLinkText(node.attrs),
     ];
   },
-  renderText: ({ node }) =>
-    node.attrs.label ?? node.attrs.resource?.label ?? node.attrs.href,
+  renderText: ({ node }) => resourceLinkText(node.attrs),
   addNodeView: () => ReactNodeViewRenderer(ResourceLinkView),
 });
 /** Rich resources contain the existing editable image/viewer nodes. */
@@ -392,6 +408,23 @@ const NotebookTextAlign = Extension.create({
     },
   ],
 });
+/** Remembers that a link was checked and is not a IIIF resource. */
+const NotebookPlainLink = Extension.create({
+  name: "notebookPlainLink",
+  addGlobalAttributes: () => [
+    {
+      types: ["link"],
+      attributes: {
+        notebookPlain: {
+          default: false,
+          parseHTML: (element) => element.hasAttribute("data-notebook-plain"),
+          renderHTML: (attrs) =>
+            attrs.notebookPlain ? { "data-notebook-plain": "" } : {},
+        },
+      },
+    },
+  ],
+});
 export const NotebookPaste = Extension.create({
   name: "notebookPaste",
   priority: 120,
@@ -413,7 +446,14 @@ export const NotebookPaste = Extension.create({
           }[] = [];
           state.doc.descendants((node, position) => {
             const link = node.marks.find((mark) => mark.type.name === "link");
-            if (node.isText && link && isNotebookUrl(link.attrs.href)) {
+            if (
+              node.isText &&
+              link &&
+              // Links already found not to be IIIF stay ordinary links.
+              !link.attrs.notebookPlain &&
+              !node.marks.some((mark) => mark.type.name === "code") &&
+              isNotebookUrl(link.attrs.href)
+            ) {
               const previous = links.at(-1);
               if (
                 previous?.to === position &&
@@ -464,32 +504,115 @@ export const NotebookPaste = Extension.create({
   },
 });
 
-function ResourceLinkView({
+function text(value: unknown): string | undefined {
+  return typeof value === "string" && value ? value : undefined;
+}
+
+/**
+ * Turn a smart link that turned out not to be IIIF back into an ordinary link.
+ * The mark carries `notebookPlain` so paste handling never converts it again.
+ */
+export function demoteNotebookResourceLink(
+  editor: Editor,
+  position: number | undefined,
+  href: string,
+): boolean {
+  if (
+    !editor.isEditable ||
+    editor.isDestroyed ||
+    position === undefined ||
+    position < 0 ||
+    position > editor.state.doc.content.size
+  )
+    return false;
+  const node = editor.state.doc.nodeAt(position);
+  if (
+    !node ||
+    node.type.name !== "notebookResource" ||
+    node.attrs.href !== href ||
+    node.attrs.resource
+  )
+    return false;
+  const label = text(node.attrs.label) ?? href;
+  const link = editor.schema.marks.link;
+  const marks =
+    link && isNotebookUrl(href)
+      ? [
+          link.create({
+            href,
+            target: "_blank",
+            rel: "noopener noreferrer nofollow",
+            notebookPlain: true,
+          }),
+        ]
+      : [];
+  editor.view.dispatch(
+    editor.state.tr
+      .replaceWith(
+        position,
+        position + node.nodeSize,
+        editor.schema.text(label, marks),
+      )
+      .setMeta("addToHistory", false),
+  );
+  return true;
+}
+
+function ResourceLinkView(props: NodeViewProps) {
+  const rich = props.node.type.name === "notebookResourceBlock";
+  const href = text(props.node.attrs.href) ?? "";
+  // A throwing preview, thumbnail or resolver must never unmount the editor.
+  return (
+    <NotebookErrorBoundary
+      resetKey={props.node}
+      fallback={
+        <NodeViewWrapper as={rich ? "div" : "span"}>
+          <span contentEditable={false}>
+            <a
+              href={isNotebookUrl(href) ? href : undefined}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+            >
+              {text(props.node.attrs.label) ?? href}
+            </a>
+          </span>
+          {rich && <NodeViewContent />}
+        </NodeViewWrapper>
+      }
+    >
+      <ResourceLinkContent {...props} />
+    </NotebookErrorBoundary>
+  );
+}
+
+function ResourceLinkContent({
   node,
   editor,
   getPos,
   updateAttributes,
 }: NodeViewProps) {
   const context = useContext(NotebookEditorContext);
-  const [resolved, setResolved] = useState<NotebookResource | null>(
-    node.attrs.resource,
+  const supplied = useMemo(
+    () => sanitizeNotebookResource(node.attrs.resource),
+    [node.attrs.resource],
   );
+  const [resolved, setResolved] = useState<NotebookResource | null>(supplied);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [retry, setRetry] = useState(0);
   const [open, setOpen] = useState(false);
+  // Set once a link has been checked and is definitely not a IIIF resource.
+  const [plain, setPlain] = useState(false);
   const [requested, setRequested] = useState(
     Boolean(node.attrs.loadOnPaste) ||
       node.type.name === "notebookResourceBlock",
   );
   const [busy, setBusy] = useState<string | null>(null);
-  const [editingLabel, setEditingLabel] = useState(false);
-  const [draftLabel, setDraftLabel] = useState("");
+  const chip = useRef<HTMLSpanElement>(null);
   const anchor = useRef<HTMLAnchorElement>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
   const mounted = useRef(true);
   const loaded = useRef("");
-  const openAfterLoading = useRef(false);
+  const pointerFocus = useRef(false);
   const state = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -497,12 +620,14 @@ function ResourceLinkView({
       doc: editor.state.doc,
     }),
   });
-  const href: string = node.attrs.href;
+  const href = text(node.attrs.href) ?? "";
   const resource: NotebookResource | null = state.editable
-    ? (node.attrs.resource ?? resolved)
-    : (resolved ?? node.attrs.resource);
+    ? (supplied ?? resolved)
+    : (resolved ?? supplied);
+  // Only a resource that actually resolved as IIIF gets IIIF styling and a preview.
+  const isPlain = !resource && (plain || Boolean(node.attrs.metadataLoaded));
   const linkLabel: string =
-    node.attrs.label ?? node.attrs.resource?.label ?? href;
+    text(node.attrs.label) ?? text(node.attrs.resource?.label) ?? href;
   const previewTitle =
     linkLabel === href ? resource?.label || "Link" : linkLabel;
   const resolve = context?.resolveResource;
@@ -511,15 +636,15 @@ function ResourceLinkView({
     mounted.current = true;
     return () => {
       mounted.current = false;
-      clearTimeout(timer.current);
     };
   }, []);
   useEffect(() => {
-    const supplied = node.attrs.resource as NotebookResource | null;
     const requestKey = `${retry}:${href}`;
     if (
       !requested ||
+      (!isNotebookUrl(href) && supplied?.type !== "ContentState") ||
       loaded.current === requestKey ||
+      plain ||
       (node.attrs.metadataLoaded &&
         !retry &&
         !(supplied?.type === "ImageService" && !supplied.imageInfo))
@@ -547,6 +672,7 @@ function ResourceLinkView({
         ? Promise.resolve(supplied)
         : resolveLink(href);
     void request
+      .then((value) => sanitizeNotebookResource(value))
       .then((value) =>
         value
           ? enrichNotebookCrops(
@@ -565,16 +691,16 @@ function ResourceLinkView({
       .then((value) =>
         value ? enrichNotebookCollection(value, resolveLink) : null,
       )
+      .then((value) => sanitizeNotebookResource(value))
       .then((value) => {
         if (!active) return;
         loaded.current = requestKey;
         setResolved(value);
-        if (value && openAfterLoading.current) {
-          openAfterLoading.current = false;
-          setOpen(false);
-          setTimeout(() => {
-            if (mounted.current) context?.onOpenResource?.(value);
-          }, 0);
+        if (!value) {
+          // Not IIIF (a web page, a document, some other JSON): an ordinary link.
+          setPlain(true);
+          demoteNotebookResourceLink(editor, getPos(), href);
+          return;
         }
         if (editor.isEditable && !editor.isDestroyed) {
           const position = getPos();
@@ -596,7 +722,7 @@ function ResourceLinkView({
                     (current!.attrs.label ??
                       current!.attrs.resource?.label ??
                       href) === href
-                      ? (value?.label ?? href)
+                      ? (value.label ?? href)
                       : (current!.attrs.label ??
                         current!.attrs.resource?.label ??
                         href),
@@ -609,13 +735,20 @@ function ResourceLinkView({
         }
       })
       .catch((reason) => {
-        openAfterLoading.current = false;
-        if (active)
-          setError(
-            reason?.name === "AbortError"
-              ? "Preview timed out. Retry when connected."
-              : "Preview unavailable. The source link is preserved.",
-          );
+        if (!active) return;
+        if (!supplied && node.attrs.loadOnPaste) {
+          // Pasted links that cannot be verified (blocked by CORS, offline,
+          // HTTP errors) were never confirmed as IIIF, so keep them ordinary.
+          loaded.current = requestKey;
+          setPlain(true);
+          demoteNotebookResourceLink(editor, getPos(), href);
+          return;
+        }
+        setError(
+          reason?.name === "AbortError"
+            ? "Preview timed out. Retry when connected."
+            : "Preview unavailable. The source link is preserved.",
+        );
       })
       .finally(() => {
         clearTimeout(timeout);
@@ -626,7 +759,19 @@ function ResourceLinkView({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [href, retry, requested, resolve, history, editor]);
+  }, [href, retry, requested, resolve, history, editor, plain]);
+
+  const hover = useHoverIntent({
+    isOpen: open,
+    open: () => {
+      setRequested(true);
+      // Unconfirmed links only verify themselves; there is nothing to preview yet.
+      if (resource) setOpen(true);
+    },
+    close: () => setOpen(false),
+    keepOpen: () =>
+      !!document.activeElement?.closest(".iiif-notebook__preview"),
+  });
   if (!context)
     return (
       <NodeViewWrapper as="span">
@@ -642,8 +787,11 @@ function ResourceLinkView({
       if (at.node(depth).type.name === "taskItem") return at.node(depth);
     return null;
   })();
-  const openResource = (value = resource) => {
+  const openResource = (
+    value: NotebookResource | null | undefined = resource,
+  ) => {
     setOpen(false);
+    hover.cancel();
     // Finish dismissing the preview before opening another overlay from it.
     setTimeout(() => {
       if (value && mounted.current) context.onOpenResource?.(value);
@@ -710,17 +858,6 @@ function ResourceLinkView({
       )
     );
   };
-  const enter = () => {
-    clearTimeout(timer.current);
-    setRequested(true);
-    setOpen(true);
-  };
-  const leave = () => {
-    timer.current = setTimeout(() => {
-      if (!document.activeElement?.closest(".iiif-notebook__preview"))
-        setOpen(false);
-    }, 180);
-  };
   const rich = node.type.name === "notebookResourceBlock";
   const canShowRich = !!resource && resourceWidgets(resource).length > 0;
   const imageSrc = rich
@@ -773,32 +910,37 @@ function ResourceLinkView({
         }}
       />
     ) : null;
-  const link = (
+  const link = resource ? (
     <span
+      ref={chip}
       className="iiif-notebook__resource"
-      onMouseEnter={enter}
-      onMouseLeave={leave}
+      {...hover.triggerProps}
     >
       <IIIFLogo className="iiif-notebook__resource-icon" aria-hidden="true" />
       <a
         ref={anchor}
         href={isNotebookUrl(href) ? href : undefined}
         tabIndex={0}
-        onFocus={enter}
+        onPointerDown={() => {
+          pointerFocus.current = true;
+        }}
+        onBlur={() => {
+          pointerFocus.current = false;
+        }}
+        onFocus={() => {
+          setRequested(true);
+          // A click focuses the link too; only keyboard focus opens the preview.
+          if (!pointerFocus.current) setOpen(true);
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape") setOpen(false);
         }}
         aria-haspopup="dialog"
         aria-expanded={open}
-        title={linkLabel}
         onClick={(event) => {
           if (!event.ctrlKey && !event.metaKey) {
             event.preventDefault();
-            if (resource) openResource();
-            else {
-              openAfterLoading.current = true;
-              enter();
-            }
+            openResource();
           }
         }}
       >
@@ -809,7 +951,10 @@ function ResourceLinkView({
         className="iiif-notebook__preview-trigger"
         aria-label={`Preview ${linkLabel}`}
         aria-expanded={open}
-        onClick={enter}
+        onClick={() => {
+          setRequested(true);
+          setOpen(true);
+        }}
       >
         ⋯
       </button>
@@ -823,196 +968,64 @@ function ResourceLinkView({
         onOpenChange={setOpen}
         isNonModal
         placement="bottom start"
+        offset={6}
         className="iiif-notebook iiif-notebook__preview"
-        onMouseEnter={enter}
-        onMouseLeave={leave}
         shouldCloseOnInteractOutside={(element) =>
-          !anchor.current?.contains(element)
+          !chip.current?.contains(element)
         }
       >
-        <div
-          role="dialog"
-          aria-label="Resource preview"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
+        <div {...hover.popupProps}>
+          <ResourcePreview
+            resource={resource}
+            href={href}
+            label={linkLabel}
+            title={previewTitle}
+            loading={loading}
+            error={error}
+            editable={state.editable}
+            rich={rich}
+            canShowRich={canShowRich}
+            image={previewImage}
+            imageSize={imageSize}
+            actions={actions("tooltip")}
+            onOpen={(value) =>
+              openResource(value === undefined ? resource : value)
             }
-          }}
-        >
-          <div className="iiif-notebook__preview-heading">
-            {resource &&
-            (!resource.thumbnail || resource.type === "Collection") ? (
-              <button
-                type="button"
-                className="iiif-notebook__preview-title"
-                onClick={() => openResource()}
-              >
-                {previewTitle}
-              </button>
-            ) : (
-              <strong>
-                {loading && previewTitle === "Link"
-                  ? "Loading preview…"
-                  : previewTitle}
-              </strong>
-            )}
-            <button
-              type="button"
-              className="iiif-notebook__icon"
-              aria-label="Close preview"
-              onClick={() => setOpen(false)}
-            >
-              <CloseIcon aria-hidden="true" />
-            </button>
-          </div>
-          {resource?.type === "Collection" && !!resource.items?.length ? (
-            <div className="iiif-notebook__collection-preview">
-              <div className="iiif-notebook__collection-grid">
-                {resource.items.slice(0, 6).map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    title={item.label}
-                    aria-label={`Open ${item.label}`}
-                    onClick={() => openResource(item)}
-                  >
-                    {item.thumbnail && isNotebookUrl(item.thumbnail) ? (
-                      <img src={item.thumbnail} alt="" />
-                    ) : (
-                      <span>{item.label}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-              {(resource.totalItems ?? 0) > resource.items.length && (
-                <button
-                  type="button"
-                  className="iiif-notebook__collection-more"
-                  onClick={() => openResource()}
-                >
-                  +{" "}
-                  {(
-                    (resource.totalItems ?? 0) - resource.items.length
-                  ).toLocaleString()}{" "}
-                  more
-                </button>
-              )}
-            </div>
-          ) : (
-            resource &&
-            previewImage &&
-            isNotebookUrl(previewImage) && (
-              <button
-                type="button"
-                className="iiif-notebook__preview-image"
-                aria-label={`Open ${resource.label}`}
-                onClick={() => openResource()}
-              >
-                <img
-                  className="iiif-notebook__thumbnail"
-                  src={previewImage}
-                  alt=""
-                />
-              </button>
-            )
-          )}
-          {loading && <p role="status">Loading preview…</p>}
-          {imageSize}
-          {state.editable &&
-            (editingLabel ? (
-              <form
-                className="iiif-notebook__label-editor"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!editor.isEditable || !draftLabel.trim()) return;
-                  updateAttributes({ label: draftLabel.trim() });
-                  setEditingLabel(false);
-                }}
-              >
-                <label>
-                  Link label
-                  <input
-                    autoFocus
-                    value={draftLabel}
-                    onChange={(event) => setDraftLabel(event.target.value)}
-                  />
-                </label>
-                <button type="submit" disabled={!draftLabel.trim()}>
-                  Save label
-                </button>
-                <button type="button" onClick={() => setEditingLabel(false)}>
-                  Cancel
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                className="iiif-notebook__edit-label"
-                onClick={() => {
-                  setDraftLabel(linkLabel);
-                  setEditingLabel(true);
-                }}
-              >
-                Edit label
-              </button>
-            ))}
-          {state.editable && canShowRich && (
-            <div className="iiif-notebook__view-control">
-              <span>View</span>
-              <div role="group" aria-label="Switch view">
-                {(["text", "rich"] as const).map((view) => (
-                  <button
-                    key={view}
-                    type="button"
-                    aria-pressed={rich === (view === "rich")}
-                    onClick={() => {
-                      setOpen(false);
-                      setNotebookResourceView(editor, getPos(), view);
-                    }}
-                  >
-                    {view === "text" ? "Text" : "Rich"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {actions("tooltip")}
-          {error && (
-            <p role="alert">
-              {error}{" "}
-              {
-                <button
-                  type="button"
-                  onClick={() => setRetry((value) => value + 1)}
-                >
-                  Retry preview
-                </button>
-              }
-            </p>
-          )}
-          <div className="iiif-notebook__source">
-            {resource?.infoUrl &&
-              resource.infoUrl !== href &&
-              isNotebookUrl(resource.infoUrl) && (
-                <a href={resource.infoUrl} target="_blank" rel="noreferrer">
-                  info.json ↗
-                </a>
-              )}
-            {isNotebookUrl(href) ? (
-              <a href={href} target="_blank" rel="noreferrer">
-                {href === resource?.infoUrl ? "info.json" : href} ↗
-              </a>
-            ) : (
-              <span>
-                IIIF Content State
-                {resource?.targets?.length
-                  ? ` · ${resource.targets.length} targets`
-                  : ""}
-              </span>
-            )}
-          </div>
+            onClose={() => setOpen(false)}
+            onRetry={() => setRetry((value) => value + 1)}
+            onSaveLabel={(label) => {
+              if (editor.isEditable) updateAttributes({ label });
+            }}
+            onSwitchView={(view) => {
+              setOpen(false);
+              setNotebookResourceView(editor, getPos(), view);
+            }}
+          />
         </div>
       </Popover>
+    </span>
+  ) : (
+    // Not (yet) a confirmed IIIF resource: an ordinary link, verified lazily.
+    <span
+      className="iiif-notebook__plain-link"
+      data-loading={loading || undefined}
+      {...(isPlain ? {} : hover.triggerProps)}
+    >
+      <a
+        ref={anchor}
+        href={isNotebookUrl(href) ? href : undefined}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        onFocus={() => {
+          if (!isPlain) {
+            // Allow a failed check to be retried the next time the link is used.
+            if (error) setRetry((value) => value + 1);
+            else setRequested(true);
+          }
+        }}
+      >
+        {linkLabel}
+      </a>
     </span>
   );
   const ctx = actionContext("inline");
@@ -1048,11 +1061,7 @@ export function notebookExtensions(
                 child.type.name,
               )
             )
-              parts.push(
-                child.attrs.label ??
-                  child.attrs.resource?.label ??
-                  child.attrs.href,
-              );
+              parts.push(resourceLinkText(child.attrs));
           });
           return `Task: ${parts.join(" ") || "Untitled task"}`;
         },
@@ -1062,6 +1071,7 @@ export function notebookExtensions(
     NotebookResourceBlock,
     NotebookCrop,
     NotebookTextAlign,
+    NotebookPlainLink,
     NotebookPaste,
     IIIFLink.configure({ browserProps: options.browserProps }),
     IIIFImage.configure({ browserProps: options.browserProps }),

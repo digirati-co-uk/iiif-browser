@@ -59,17 +59,110 @@ export function isNotebookUrl(value: unknown): value is string {
 }
 function label(value: any, fallback: string): string {
   if (!value) return fallback;
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return value.trim() || fallback;
   try {
-    return getValue(value) || fallback;
+    const result = getValue(value);
+    return typeof result === "string" && result.trim() ? result : fallback;
   } catch {
     return fallback;
   }
+}
+
+const RESOURCE_TYPES: ReadonlySet<string> = new Set<NotebookResource["type"]>([
+  "Manifest",
+  "Collection",
+  "Canvas",
+  "ImageService",
+  "Image",
+  "ContentState",
+]);
+const MAX_PREVIEW_ITEMS = 12;
+const MAX_TARGETS = 100;
+const MAX_REMOTE_BYTES = 50 * 1024 * 1024;
+const XYWH = /^(?:pct:)?[-+0-9.eE]+(?:,[-+0-9.eE]+){3}$/;
+
+function safeUrl(value: unknown): string | undefined {
+  return isNotebookUrl(value) ? value : undefined;
+}
+
+/**
+ * Notebook documents are user-editable JSON that may be imported, synced or
+ * hand-written. Anything displayed, indexed or loaded into a vault goes through
+ * here first so a malformed resource is dropped instead of crashing a renderer.
+ */
+export function sanitizeNotebookResource(
+  value: unknown,
+  depth = 0,
+): NotebookResource | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || depth > 2)
+    return null;
+  const input = value as Record<string, unknown>;
+  const type = input.type;
+  if (typeof type !== "string" || !RESOURCE_TYPES.has(type)) return null;
+  const id = input.id;
+  if (typeof id !== "string" || !id) return null;
+  // Content States are encoded payloads; every other resource is an http(s) URL.
+  if (type !== "ContentState" && !isNotebookUrl(id)) return null;
+  const source =
+    typeof input.source === "string" && input.source ? input.source : id;
+  const resource: NotebookResource = {
+    id,
+    source,
+    type: type as NotebookResource["type"],
+    label: label(input.label, type),
+  };
+  const thumbnail = safeUrl(input.thumbnail);
+  const image = safeUrl(input.image);
+  const infoUrl = safeUrl(input.infoUrl);
+  if (thumbnail) resource.thumbnail = thumbnail;
+  if (image) resource.image = image;
+  if (infoUrl) resource.infoUrl = infoUrl;
+  const parent = input.parent as { id?: unknown } | undefined;
+  if (parent && typeof parent === "object" && isNotebookUrl(parent.id))
+    resource.parent = { id: parent.id, type: "Manifest" };
+  if (typeof input.xywh === "string" && XYWH.test(input.xywh))
+    resource.xywh = input.xywh;
+  if (input.contentState !== undefined)
+    resource.contentState = input.contentState;
+  if (
+    input.imageInfo &&
+    typeof input.imageInfo === "object" &&
+    !Array.isArray(input.imageInfo)
+  )
+    resource.imageInfo = input.imageInfo as IIIFImageInfo;
+  if (Array.isArray(input.items)) {
+    const items = input.items
+      .slice(0, MAX_PREVIEW_ITEMS)
+      .map((item) => sanitizeNotebookResource(item, depth + 1))
+      .filter((item): item is NotebookResource => !!item);
+    resource.items = items;
+    const total = Number(input.totalItems);
+    resource.totalItems =
+      Number.isFinite(total) && total >= items.length
+        ? Math.floor(total)
+        : items.length;
+  }
+  if (Array.isArray(input.targets)) {
+    const targets = input.targets
+      .slice(0, MAX_TARGETS)
+      .map((target) => sanitizeNotebookResource(target, depth + 1))
+      .filter((target): target is NotebookResource => !!target);
+    if (targets.length) resource.targets = targets;
+  }
+  if (type === "ContentState" && !resource.targets?.length) return null;
+  return resource;
 }
 function imageId(value: any): string | undefined {
   const item = Array.isArray(value) ? value[0] : value;
   const id = typeof item === "string" ? item : item?.id || item?.["@id"];
   return isNotebookUrl(id) ? id : undefined;
+}
+function isRecord(value: unknown): value is Record<string, any> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+/** Non-narrowing variant, for values that are deliberately kept as `any`. */
+function isObject(value: unknown): boolean {
+  return isRecord(value);
 }
 function stateResource(
   json: any,
@@ -241,7 +334,11 @@ export async function resolveNotebookResource(
     const response = await fetch(fetchUrl, options.requestInitOptions);
     if (!response.ok)
       throw new Error(`Resource returned HTTP ${response.status}.`);
-    if (response.headers.get("content-type")?.startsWith("image/"))
+    const contentType = (response.headers.get("content-type") ?? "")
+      .toLowerCase()
+      .split(";")[0]
+      .trim();
+    if (contentType.startsWith("image/"))
       return {
         id: url,
         source: input,
@@ -250,14 +347,34 @@ export async function resolveNotebookResource(
         image: url,
         thumbnail: url,
       };
-    // HTML pages remain ordinary links; never inject remote HTML into a note.
-    if (response.headers.get("content-type")?.includes("text/html"))
+    // Pages, documents and media remain ordinary links; never inject remote
+    // content into a note or download something that cannot be IIIF.
+    if (
+      contentType &&
+      !/json|text\/plain|octet-stream|javascript/.test(contentType)
+    )
       return null;
-    json = await response.json();
+    const length = Number(response.headers.get("content-length"));
+    if (Number.isFinite(length) && length > MAX_REMOTE_BYTES) return null;
+    try {
+      json = JSON.parse(await response.text());
+    } catch (error) {
+      // Not JSON at all: an ordinary link. Aborts and network failures still throw.
+      if (error instanceof SyntaxError) return null;
+      throw error;
+    }
   }
+  // JSON that is not an object (numbers, strings, arrays) cannot be IIIF.
+  if (!isObject(json)) return null;
   const state = stateResource(json, input);
   if (state) return state;
-  if (isImageService(json as any)) {
+  let imageService = false;
+  try {
+    imageService = isImageService(json as any);
+  } catch {
+    imageService = false;
+  }
+  if (imageService) {
     if (!(json.width > 0) || !(json.height > 0))
       throw new Error("The Image API information document has no dimensions.");
     const id =
@@ -293,31 +410,45 @@ export async function resolveNotebookResource(
       imageInfo: json,
     };
   }
-  json = upgrade(json);
-  if (json?.type === "Manifest" && options.preprocessManifest)
-    json = await options.preprocessManifest(json);
-  if (json?.type === "Collection" && options.preprocessCollection)
-    json = await options.preprocessCollection(json);
-  if (!["Manifest", "Collection", "Canvas"].includes(json?.type)) return null;
-  const id = json.id || url;
+  try {
+    json = upgrade(json);
+  } catch {
+    // Arbitrary JSON the IIIF upgrader cannot read is not a IIIF resource.
+    return null;
+  }
+  if (!isObject(json)) return null;
+  if (json.type === "Manifest" && options.preprocessManifest)
+    json = await options.preprocessManifest(json as any);
+  if (json.type === "Collection" && options.preprocessCollection)
+    json = await options.preprocessCollection(json as any);
+  if (!isObject(json)) return null;
+  if (!["Manifest", "Collection", "Canvas"].includes(json.type)) return null;
+  const id = typeof json.id === "string" && json.id ? json.id : url;
   if (!isNotebookUrl(id)) throw new Error("Invalid resource identifier.");
   const resourceParent = [json.partOf]
     .flat()
-    .find((part) => part?.type === "Manifest" && isNotebookUrl(part.id));
+    .find(
+      (part) =>
+        isRecord(part) && part.type === "Manifest" && isNotebookUrl(part.id),
+    );
   const items =
     json.type === "Collection"
-      ? (json.items ?? []).filter(
+      ? (Array.isArray(json.items) ? json.items : []).filter(
           (item: any) =>
+            isRecord(item) &&
             ["Manifest", "Collection"].includes(item.type) &&
             isNotebookUrl(item.id),
         )
       : undefined;
+  const firstItem = Array.isArray(json.items) ? json.items[0] : undefined;
   return {
     id,
     source: input,
     type: json.type,
     label: label(json.label, json.type),
-    thumbnail: imageId(json.thumbnail) || imageId(json.items?.[0]?.thumbnail),
+    thumbnail:
+      imageId(json.thumbnail) ||
+      (isRecord(firstItem) ? imageId(firstItem.thumbnail) : undefined),
     ...(items
       ? {
           totalItems: items.length,
@@ -435,52 +566,62 @@ export function notebookPaste(text: string): JSONContent[] | null {
 
 export function noteResources(content: JSONContent): NotebookResource[] {
   const found = new Map<string, NotebookResource>();
-  const visit = (node: JSONContent) => {
-    const attrs = node.attrs ?? {};
+  const add = (key: unknown, value: unknown) => {
+    const resource = sanitizeNotebookResource(value);
+    if (resource && typeof key === "string" && key) found.set(key, resource);
+  };
+  const visit = (node: JSONContent, depth = 0) => {
+    // Imported documents are untrusted: tolerate malformed or absurdly deep nodes.
+    if (!node || typeof node !== "object" || depth > 200) return;
+    const attrs = (
+      node.attrs && typeof node.attrs === "object" ? node.attrs : {}
+    ) as Record<string, any>;
     if (
       ["notebookResource", "notebookResourceBlock"].includes(node.type ?? "") &&
       attrs.resource
     ) {
-      found.set(attrs.href, attrs.resource);
+      add(attrs.href, attrs.resource);
       return;
     }
     if (node.type === "iiifImage" && isNotebookUrl(attrs.src))
-      found.set(attrs.src, {
+      add(attrs.src, {
         id: attrs.src,
         source: attrs.src,
         type: "Image",
-        label: attrs.alt || "Image",
+        label: typeof attrs.alt === "string" && attrs.alt ? attrs.alt : "Image",
         thumbnail: attrs.src,
         image: attrs.src,
       });
     if (node.type === "iiifSnippet") {
       const id = attrs.canvasId || attrs.collectionId || attrs.manifestId;
-      if (isNotebookUrl(id))
-        found.set(id, {
-          id,
-          source: id,
-          type: attrs.resourceType,
-          label: attrs.resourceType,
-          ...(attrs.canvasId
-            ? { parent: { id: attrs.manifestId, type: "Manifest" } }
-            : {}),
-        });
+      add(id, {
+        id,
+        source: id,
+        type: attrs.resourceType,
+        label: attrs.resourceType,
+        ...(attrs.canvasId
+          ? { parent: { id: attrs.manifestId, type: "Manifest" } }
+          : {}),
+      });
     }
     if (node.type === "iiifVirtualCollection") {
       try {
-        for (const item of JSON.parse(attrs.items))
-          if (isNotebookUrl(item.id))
-            found.set(item.id, {
-              id: item.id,
-              source: item.id,
-              type: item.type,
-              label: label(item.label, item.type),
-            });
+        const items = JSON.parse(attrs.items);
+        if (Array.isArray(items))
+          for (const item of items)
+            if (isRecord(item))
+              add(item.id, {
+                id: item.id,
+                source: item.id,
+                type: item.type,
+                label: label(item.label, item.type),
+              });
       } catch {
         /* Invalid imported widget. */
       }
     }
-    node.content?.forEach(visit);
+    if (Array.isArray(node.content))
+      for (const child of node.content) visit(child, depth + 1);
   };
   visit(content);
   return Array.from(found.values());

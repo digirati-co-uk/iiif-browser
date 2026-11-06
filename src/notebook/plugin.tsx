@@ -20,6 +20,7 @@ import {
 } from "../routes/Homepage";
 import { notebookSelection } from "./selection";
 import { findCanvasParent } from "../utilities/find-canvas-parent";
+import { NotebookErrorBoundary } from "./ErrorBoundary";
 import { NotebookResourceBrowser } from "./ResourceBrowser";
 import {
   useCurrentRoute,
@@ -199,9 +200,19 @@ function NotebookCollection({
   const id = noteUrl(noteId, true);
   // The underlying notes array is stable across selection and view updates.
   const content = JSON.stringify(notebookCollection(notes));
+  const [loadError, setLoadError] = useState("");
   useEffect(() => {
-    const collection = JSON.parse(content);
-    loadNotebookCollection(vault, collection);
+    try {
+      loadNotebookCollection(vault, JSON.parse(content));
+      setLoadError("");
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : "These notes could not be shown as a collection.",
+      );
+      return;
+    }
     emitter.emit("collection.change", { id, type: "Collection" });
     return () => emitter.emit("collection.change", null);
   }, [vault, emitter, content, id]);
@@ -216,7 +227,22 @@ function NotebookCollection({
           {noteId ? "Edit note" : "View notes"}
         </button>
       </div>
-      <CollectionItemList id={id} />
+      {loadError ? (
+        <p role="alert" className="px-5 py-4 text-sm text-gray-500">
+          These notes could not be shown as a collection: {loadError}
+        </p>
+      ) : (
+        <NotebookErrorBoundary
+          resetKey={content}
+          fallback={
+            <p role="alert" className="px-5 py-4 text-sm text-gray-500">
+              This collection could not be displayed.
+            </p>
+          }
+        >
+          <CollectionItemList id={id} />
+        </NotebookErrorBoundary>
+      )}
     </section>
   );
 }

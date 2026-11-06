@@ -12,13 +12,23 @@ export function noteUrl(id?: string, collection = false) {
 
 /** Local IIIF collections reference the original resources; no copies are fetched. */
 export function notebookCollection(notes: NotebookNote[]): Collection {
+  // A vault entity has one type. If notes disagree about what an id is (for
+  // example a link that returned different JSON over time), the first wins.
+  const kinds = new Map<string, string>();
+  const reserved = noteUrl(undefined, true);
   return {
-    id: noteUrl(undefined, true),
+    id: reserved,
     type: "Collection",
     label: { en: ["Your notes"] },
     items: notes.map((note) => {
       const items = new Map<string, any>();
-      for (const source of noteResources(note.content)) {
+      let sources: ReturnType<typeof noteResources> = [];
+      try {
+        sources = noteResources(note.content);
+      } catch {
+        /* One unreadable note must not hide the others. */
+      }
+      for (const source of sources) {
         for (const resource of source.type === "ContentState"
           ? (source.targets ?? [])
           : [source]) {
@@ -27,9 +37,12 @@ export function notebookCollection(notes: NotebookNote[]): Collection {
           if (
             !target ||
             (target.type !== "Manifest" && target.type !== "Collection") ||
-            items.has(target.id)
+            items.has(target.id) ||
+            target.id.startsWith("iiif://") ||
+            (kinds.get(target.id) ?? target.type) !== target.type
           )
             continue;
+          kinds.set(target.id, target.type);
           items.set(target.id, {
             id: target.id,
             type: target.type,
