@@ -53,6 +53,23 @@ describe("MDXEditor IIIF image requests", () => {
     );
   });
 
+  it("preserves upscaling, mirroring, and encoded service identifiers", () => {
+    const request = parseIIIFImageUrl(
+      "https://example.org/iiif/book%5Epage%2F1/pct:10,20,30,40/^pct:50/!22.5/default.png?token=test#preview",
+    );
+    expect(request).toMatchObject({
+      region: { x: 10, y: 20, w: 30, h: 40, percent: true },
+      size: { upscaled: true, percentScale: 50 },
+      rotation: { angle: 22.5, mirror: true },
+    });
+    expect(imageServiceId(request!)).toBe(
+      "https://example.org/iiif/book%5Epage%2F1",
+    );
+    expect(imageRequestUrl(request!)).toBe(
+      "https://example.org/iiif/book%5Epage%2F1/pct:10,20,30,40/^pct:50/!22.5/default.png",
+    );
+  });
+
   it("uses profile limits and rewrites custom requests at a crisp resize ratio", () => {
     const request = parseIIIFImageUrl(
       "https://example.org/iiif/book%2Fpage-1/full/900,/0/default.jpg",

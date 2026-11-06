@@ -55,9 +55,11 @@ export function parseIIIFImageUrl(url: string): IIIFImageRequest | null {
     parsedUrl.hash = "";
     // The upstream parser accepts arbitrary path segments (including manifest.json).
     // Check the Image API request syntax before interpreting those segments.
-    const [region, size, rotation, output] = parsedUrl.pathname
-      .split("/")
-      .slice(-4);
+    const path = parsedUrl.pathname.split("/");
+    // URL serializes the Image API upscaling marker as %5E. Decode only that
+    // marker, preserving encoded characters in the service identifier.
+    path[path.length - 3] = path[path.length - 3]?.replace(/^%5e/i, "^");
+    const [region, size, rotation, output] = path.slice(-4);
     if (
       !/^(full|square|(?:pct:)?\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?)$/.test(
         region ?? "",
@@ -69,7 +71,9 @@ export function parseIIIFImageUrl(url: string): IIIFImageRequest | null {
       !/^[a-zA-Z]+\.[a-zA-Z0-9]+$/.test(output ?? "")
     )
       return null;
-    const request = parseImageServiceRequest(parsedUrl.toString());
+    const request = parseImageServiceRequest(
+      `${parsedUrl.origin}${path.join("/")}`,
+    );
     return request.type === "image" ? request : null;
   } catch {
     return null;

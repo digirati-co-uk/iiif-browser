@@ -1,6 +1,6 @@
 import {
   canonicalServiceUrl,
-  getImageServices,
+  isImageService,
   type RegionParameter,
 } from "@atlas-viewer/iiif-image-api";
 import {
@@ -535,7 +535,9 @@ export function imageService(resource: IIIFSelectedResource, vault: Vault) {
   ) {
     throw new Error("The selected Canvas does not contain an image");
   }
-  const service = getImageServices(paintable.resource)[0];
+  // Painting bodies can include bare service URLs; only service objects carry
+  // the type/profile information needed to identify an Image API service.
+  const service = paintable.resource.service?.find(isImageService);
   const id = service?.id || service?.["@id"];
   if (!id) {
     throw new Error(
