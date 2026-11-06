@@ -194,15 +194,20 @@ export function OmnisearchModal({
   );
 
   const doSearch = (id: string) => {
-    const item: SearchIndexItem = getSearchResult(id) ?? {
-      id,
-      resource: { id, type: "unknown" },
-      label: `Open ${id}`,
-      type: "resource",
-      source: "dynamic",
-      keywords: [],
-    };
-    selectionAction(item);
+    const item: SearchIndexItem | undefined =
+      combined.find((item) => item.id === id) ??
+      getSearchResult(id) ??
+      (/^(https?:\/\/|iiif:\/\/|view-source:)/.test(id)
+        ? {
+            id,
+            resource: { id, type: "unknown" },
+            label: `Open ${id}`,
+            type: "resource",
+            source: "dynamic",
+            keywords: [],
+          }
+        : combined[0]);
+    if (item) selectionAction(item);
   };
 
   // -------------------------------------------------------------------------
@@ -248,7 +253,19 @@ export function OmnisearchModal({
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        doSearch((e.target as HTMLInputElement).value);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const input = e.target as HTMLInputElement;
+                        const active = input.getAttribute(
+                          "aria-activedescendant",
+                        );
+                        doSearch(
+                          (active &&
+                            document
+                              .getElementById(active)
+                              ?.getAttribute("data-search-id")) ||
+                            input.value,
+                        );
                       }
                       if (e.key === "Escape") {
                         closeModalAction();
@@ -345,6 +362,7 @@ export function OmnisearchModal({
                       return (
                         <MenuItem
                           id={item.id}
+                          data-search-id={item.id}
                           aria-label={item.label}
                           className={({ isFocused }) =>
                             [
@@ -522,6 +540,7 @@ function GroupedMenu({
                 return (
                   <MenuItem
                     id={item.id}
+                    data-search-id={item.id}
                     aria-label={item.label}
                     className={({ isFocused }) =>
                       [

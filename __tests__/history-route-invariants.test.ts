@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Vault } from "@iiif/helpers";
 import { getForwardHistoryList } from "../src/browser/BrowserForwardButton";
 import { getActiveHistoryEntry } from "../src/context";
 import { createEmitter } from "../src/events";
@@ -31,6 +32,63 @@ function createHistoryItem(route: string, url: string): HistoryItem {
 }
 
 describe("history route invariants", () => {
+  it("routes an unfetchable Canvas identifier through its Manifest in the shared vault", async () => {
+    const vault = new Vault();
+    const manifest = "https://example.org/manifest";
+    const canvas = `${manifest}/canvas`;
+    vault.loadSync(manifest, {
+      id: manifest,
+      type: "Manifest",
+      items: [
+        { id: canvas, type: "Canvas", width: 100, height: 100, items: [] },
+      ],
+    });
+    const store = createBrowserStore({
+      ...baseConfig,
+      emitter: createEmitter({}),
+      vault,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+    });
+    await store.getState().resolve(canvas);
+    const { pathname, search } = store.getState().history.location;
+    expect(pathname).toBe("/loading");
+    expect(new URLSearchParams(search).get("id")).toBe(manifest);
+    expect(new URLSearchParams(search).get("canvas")).toBe(canvas);
+  });
+  it("navigates custom pages through internal URLs and restores them with Back and Forward", async () => {
+    const store = createBrowserStore({
+      emitter: createEmitter({}),
+      ...baseConfig,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+      customRoutes: { "iiif://notes": "/notes" },
+    });
+    await store.getState().resolve("iiif://notes");
+    expect(store.getState().router.location.pathname).toBe("/notes");
+    expect(store.getState().lastUrl).toBe("iiif://notes");
+    expect(store.getState().mapToRoute("/notes", "")).toEqual([
+      "iiif://notes",
+      null,
+    ]);
+    await store.getState().resolve("iiif://home");
+    store.getState().history.back();
+    expect(store.getState().lastUrl).toBe("iiif://notes");
+    store.getState().history.forward();
+    expect(store.getState().lastUrl).toBe("iiif://home");
+    await store.getState().resolve("iiif://notes?note=first&view=collection");
+    expect(store.getState().history.location.pathname).toBe("/notes");
+    expect(store.getState().lastUrl).toBe(
+      "iiif://notes?note=first&view=collection",
+    );
+    await store.getState().resolve("iiif://notes?note=second");
+    store.getState().history.back();
+    expect(store.getState().lastUrl).toBe(
+      "iiif://notes?note=first&view=collection",
+    );
+    store.getState().history.forward();
+    expect(store.getState().lastUrl).toBe("iiif://notes?note=second");
+  });
   it("keeps duplicate route entries in forward/back traversal", () => {
     const historyItems = [
       createHistoryItem("/", "iiif://home"),

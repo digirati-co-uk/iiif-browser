@@ -1,16 +1,16 @@
-import { useLastUrl, useLocation, useResolve } from "../context";
+import { useLastUrl, useResolve } from "../context";
 import { HomeIcon } from "../icons/HomeIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
-export function BrowserHomeButton({ href }: { href: string }) {
+export function BrowserHomeButton({ href }: { href?: string }) {
   const resolve = useResolve();
-  const location = useLocation();
   const lastUrl = useLastUrl();
+  const homeUrl = href || "iiif://home";
 
   return (
     <BrowserToolbarButton
-      isDisabled={href === lastUrl}
-      onPress={() => resolve(href)}
+      isDisabled={homeUrl === lastUrl}
+      onPress={() => resolve(homeUrl)}
       aria-label="Go Home"
     >
       <HomeIcon />

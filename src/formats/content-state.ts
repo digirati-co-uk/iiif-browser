@@ -1,6 +1,6 @@
 import { type ContentState, serialiseContentState } from "@iiif/helpers";
-import type { Reference } from "@iiif/presentation-3";
-import type { CanvasNormalized } from "@iiif/presentation-3-normalized";
+import type { Reference } from "@iiif/parser/presentation-3/types";
+import type { CanvasNormalized } from "@iiif/parser/presentation-3-normalized/types";
 import type { ExplorerFormat } from "../IIIFBrowser.types";
 
 export const contentStateFormat: ExplorerFormat<"content-state"> = {

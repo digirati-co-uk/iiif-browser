@@ -256,11 +256,16 @@ export function useResolve() {
 
   return useCallback(
     (
-      input: string | { id: string; type: string },
+      input: string | { id: string; type: string } | null | undefined,
       options?: Parameters<typeof _resolve>[1],
     ) => {
-      let toCheck: { id: string; type: string } | string = input;
+      // Optional home links and resources that have not loaded can be absent.
+      // Validate the destination before dereferencing it or querying the Vault.
+      if (!input) return;
       const url = typeof input === "string" ? input : input.id;
+      if (typeof url !== "string" || !url.trim()) return;
+
+      let toCheck: { id: string; type: string } | string = input;
       if (typeof toCheck === "string") {
         const maybeResource = vault.get(toCheck);
         if (maybeResource) {
