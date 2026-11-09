@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import {
   CanvasContext,
   LocaleString,
@@ -33,6 +34,7 @@ export function BrowserOutputPreview() {
 }
 
 function RenderSelectedManifest({ id }: { id: string }) {
+ const { t } = useBrowserI18n();
   const manifest = useManifest({ id });
 
   if (!manifest) {
@@ -49,7 +51,7 @@ function RenderSelectedManifest({ id }: { id: string }) {
           </LocaleString>
         </div>
         <a
-          aria-label="Selected Manifest URL"
+          aria-label={t("selectedManifestURL", "Selected Manifest URL")}
           className="text-blue-500 hover:underline truncate text-xs"
           href={manifest.id}
           target="_blank"
@@ -63,6 +65,7 @@ function RenderSelectedManifest({ id }: { id: string }) {
 }
 
 function RenderSelectedCollection({ id }: { id: string }) {
+ const { t } = useBrowserI18n();
   const collection = useCollection({ id });
 
   if (!collection) {
@@ -79,7 +82,7 @@ function RenderSelectedCollection({ id }: { id: string }) {
           </LocaleString>
         </div>
         <a
-          aria-label="Selected Collection URL"
+          aria-label={t("selectedCollectionURL", "Selected Collection URL")}
           className="text-blue-500 hover:underline truncate text-xs"
           href={collection.id}
           target="_blank"
@@ -93,6 +96,7 @@ function RenderSelectedCollection({ id }: { id: string }) {
 }
 
 function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
+ const { t } = useBrowserI18n();
   const manifest = useManifest({ id: item.parent?.id! });
   const canvas = useCanvas({ id: item.id });
 
@@ -127,7 +131,7 @@ function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
           <LocaleString>{canvas.label}</LocaleString>
         </div>
         <span
-          aria-label="Selected Canvas ID"
+          aria-label={t("selectedCanvasID", "Selected Canvas ID")}
           className="text-blue-500 truncate text-xs"
         >
           {item.id}
@@ -142,6 +146,7 @@ function RenderSelectedListOfType() {
 }
 
 function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
+ const { t } = useBrowserI18n();
   if (items.length === 0) {
     return <div />;
   }
@@ -149,8 +154,8 @@ function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
   return (
     <div className="flex items-center gap-3">
       <MultiImageIcon className="text-2xl text-[#C63E75]" />
-      <span aria-label="Multiple items selected">
-        {items.length} items selected
+      <span aria-label={t("multipleItemsSelected", "Multiple items selected")}>
+        {t("selectedCount", items.length === 1 ? "{{value}} item selected" : "{{value}} items selected", { count: items.length, value: items.length })}
       </span>
     </div>
   );

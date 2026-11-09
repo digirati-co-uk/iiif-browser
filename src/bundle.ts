@@ -44,3 +44,5 @@ export {
   type ThemeMode,
   type ThemePreference,
 } from "./theme/theme";
+
+export { BrowserI18nProvider, type BrowserI18n } from "./i18n";

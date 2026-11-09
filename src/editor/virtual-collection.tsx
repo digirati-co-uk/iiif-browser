@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useId, useState } from "react";
 import { Dialog, Heading, Modal } from "react-aria-components";
 import { VaultProvider } from "react-iiif-vault";
@@ -62,6 +63,7 @@ export function IIIFVirtualCollection({
   IIIFVirtualCollectionOptions & {
     onChange?: (attributes: Partial<IIIFVirtualCollectionAttributes>) => void;
   }) {
+ const { t } = useBrowserI18n();
   const id = `urn:iiif:virtual:${useId()}`;
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
@@ -126,7 +128,7 @@ export function IIIFVirtualCollection({
               <button
                 type="button"
                 className="iiif-browser-mdx-close"
-                aria-label="Close"
+                aria-label={t("close", "Close")}
                 onClick={close}
               >
                 ×

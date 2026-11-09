@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { Button, GridList } from "react-aria-components";
 import { CanvasContext, LocaleString, useManifest } from "react-iiif-vault";
 import { twMerge } from "tailwind-merge";
@@ -11,6 +12,7 @@ import { CanvasGridSnippet } from "./CanvasGridSnippet";
 import { CanvasListSnippet } from "./CanvasListSnippet";
 
 export function ManifestItemList() {
+ const { t } = useBrowserI18n();
   const manifest = useManifest();
   const config = useLinkConfig();
   const [items, actions] = usePaginateArray(manifest?.items || [], 48);
@@ -50,13 +52,12 @@ export function ManifestItemList() {
             className="text-blue-600 hover:underline disabled:text-gray-300 text-start focus:outline-none px-4"
             onPress={actions.prevPage}
             isDisabled={actions.currentPage === 1}
-            aria-label="Previous page"
+            aria-label={t("previousPage", "Previous page")}
           >
-            Previous
-          </Button>
+            {t("previous", "Previous")}</Button>
           <div
             className="text-center text-sm text-gray-400"
-            aria-label="Page number"
+            aria-label={t("pageNumber", "Page number")}
           >
             Page {actions.currentPage} of {actions.totalPages}
           </div>
@@ -64,10 +65,9 @@ export function ManifestItemList() {
             className="text-blue-600 hover:underline disabled:text-gray-300 text-end focus:outline-none px-4"
             onPress={actions.nextPage}
             isDisabled={actions.currentPage === actions.totalPages}
-            aria-label="Next page"
+            aria-label={t("nextPage", "Next page")}
           >
-            Next
-          </Button>
+            {t("next", "Next")}</Button>
         </div>
       ) : null}
 

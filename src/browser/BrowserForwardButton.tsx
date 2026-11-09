@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useMemo } from "react";
 import {
   Button,
@@ -21,6 +22,7 @@ export function getForwardHistoryList(
 }
 
 export function BrowserForwardButton() {
+ const { t } = useBrowserI18n();
   const history = useHistory();
   const historyList = useHistoryList();
   const historyIndex = useHistoryIndex();
@@ -38,7 +40,7 @@ export function BrowserForwardButton() {
   return (
     <MenuTrigger trigger="longPress">
       <BrowserToolbarButton
-        aria-label="Go Forward"
+        aria-label={t("goForward", "Go Forward")}
         isDisabled={forwardHistoryList.length <= 0}
         onPress={() => {
           history.forward();

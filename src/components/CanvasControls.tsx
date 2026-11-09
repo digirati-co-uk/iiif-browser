@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useCallback, useEffect, useRef } from "react";
 import {
   Button,
@@ -57,6 +58,7 @@ export function CanvasControls({
   id?: string;
   thumbnails?: { visible: boolean; controls: string; onToggle(): void };
 }) {
+ const { t: translate } = useBrowserI18n();
   const canvas = useCanvas();
   const preset = useViewerPreset();
   const { canCropImage } = useLinkConfig();
@@ -165,15 +167,15 @@ export function CanvasControls({
           <>
             <Button
               className="ib-viewer-controls__edit"
-              aria-label="Edit crop"
+              aria-label={translate("editCrop", "Edit crop")}
               onPress={startCrop}
             >
               <CropIcon />
-              <span>Edit crop</span>
+              <span>{translate("editCrop", "Edit crop")}</span>
             </Button>
             <Button
               className="ib-viewer-controls__delete"
-              aria-label="Remove crop"
+              aria-label={translate("removeCrop", "Remove crop")}
               onPress={() => {
                 if (confirm("Remove crop?"))
                   refine(id || canvas?.id || "", null);
@@ -191,7 +193,7 @@ export function CanvasControls({
         <ViewControl
           data-secondary
           data-action="home"
-          label="Reset view"
+          label={translate("resetView", "Reset view")}
           onPress={() => preset && resetViewerHome(preset.runtime, rotation, false)}
         >
           <HomeIcon />
@@ -200,7 +202,7 @@ export function CanvasControls({
           <ViewControl
             data-secondary
             data-action="thumbnails"
-            label={thumbnails.visible ? "Hide thumbnails" : "Show thumbnails"}
+            label={thumbnails.visible ? translate("hideThumbnails", "Hide thumbnails") : translate("showThumbnails", "Show thumbnails")}
             aria-expanded={thumbnails.visible}
             aria-controls={thumbnails.controls}
             onPress={thumbnails.onToggle}
@@ -212,7 +214,7 @@ export function CanvasControls({
           <ViewControl
             data-secondary
             data-action="crop"
-            label="Crop image"
+            label={translate("cropImage", "Crop image")}
             onPress={startCrop}
           >
             <CropIcon />
@@ -230,14 +232,14 @@ export function CanvasControls({
         </ViewControl>
         <ViewControl
           data-action="in"
-          label="Zoom in"
+          label={translate("zoomIn", "Zoom in")}
           onPress={() => preset?.runtime.world.zoomTo(0.5)}
         >
           <PlusIcon />
         </ViewControl>
         <ViewControl
           data-action="out"
-          label="Zoom out"
+          label={translate("zoomOut", "Zoom out")}
           onPress={() => preset?.runtime.world.zoomTo(1 / 0.5)}
         >
           <MinusIcon />

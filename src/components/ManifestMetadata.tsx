@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import type { ReactNode } from "react";
 import { Button, Dialog, DialogTrigger } from "react-aria-components";
 import { Metadata } from "react-iiif-vault";
@@ -6,6 +7,7 @@ import { InfoIcon } from "../icons/InfoIcon";
 import { ThemedPopover } from "../theme/Themed";
 
 export function ManifestMetadata({ manifest }: { manifest: any }) {
+ const { t } = useBrowserI18n();
   const container = useBrowserContainer();
   if (!manifest) return null;
 
@@ -18,7 +20,7 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
   return (
     <DialogTrigger>
       <Button
-        aria-label="Show manifest information"
+        aria-label={t("showManifestInformation", "Show manifest information")}
         className="relative z-20 flex-shrink-0 rounded p-1 text-lg text-slate-400 outline-none hover:text-slate-600 focus:ring ring-blue-300 aria-expanded:bg-slate-100"
       >
         <InfoIcon />
@@ -29,10 +31,10 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
         placement="bottom end"
       >
         <Dialog
-          aria-label="Manifest information"
+          aria-label={t("manifestInformation", "Manifest information")}
           className="p-3 outline-none"
         >
-          <h2 className="font-medium text-gray-900">Manifest information</h2>
+          <h2 className="font-medium text-gray-900">{t("manifestInformation", "Manifest information")}</h2>
           <div className="mt-3 grid gap-3 [overflow-wrap:anywhere]">
             {metadata.length ? (
               <Metadata
@@ -44,7 +46,7 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
             ) : null}
 
             {manifest.rights ? (
-              <MetadataSection title="Rights">
+              <MetadataSection title={t("rights", "Rights")}>
                 <LinkOrText value={manifest.rights} />
               </MetadataSection>
             ) : null}

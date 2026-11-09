@@ -247,6 +247,8 @@ export interface NormalizedV2SearchConfig {
       ? never
       : NonNullable<V2SearchConfig["filterStrategy"]>["mapFiltersToExternalQuery"];
   };
+  withinSectionLabelMessage?: string;
+  externalSectionLabelMessage?: string;
   withinSectionLabel: string;
   externalSectionLabel: string;
   typesense?: V2TypesenseConfig;
@@ -271,7 +273,9 @@ export function normalizeV2SearchConfig(raw: V2SearchConfig | undefined): Normal
       mapFiltersToExternalQuery: raw?.filterStrategy?.mapFiltersToExternalQuery,
     },
     withinSectionLabel: raw?.withinSectionLabel ?? "In this collection",
+    withinSectionLabelMessage: raw?.withinSectionLabel === undefined ? "withinSection" : undefined,
     externalSectionLabel: raw?.externalSectionLabel ?? "Global results",
+    externalSectionLabelMessage: raw?.externalSectionLabel === undefined ? "externalSection" : undefined,
     typesense: raw?.typesense,
     adapter: raw?.adapter,
   };

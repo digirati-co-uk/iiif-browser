@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { getValue } from "@iiif/helpers";
 import { useEffect, useMemo } from "react";
 import {
@@ -12,6 +13,7 @@ import {
 } from "../utilities/painting-selection";
 
 export function CanvasImageSourceSelect() {
+ const { t } = useBrowserI18n();
   const canvas = useCanvas();
   const vault = useVault();
   const [paintables] = usePaintables();
@@ -50,8 +52,7 @@ export function CanvasImageSourceSelect() {
   if (choice?.type === "complex-choice") {
     return (
       <span className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-        Unsupported image alternatives
-      </span>
+        {t("unsupportedImageAlternatives", "Unsupported image alternatives")}</span>
     );
   }
 
@@ -63,9 +64,8 @@ export function CanvasImageSourceSelect() {
       "";
     return (
       <label className="flex items-center gap-1 rounded border border-gray-300 bg-white/95 px-2 py-1 text-xs text-gray-900">
-        Image
-        <select
-          aria-label="Image alternative"
+        {t("image", "Image")}<select
+          aria-label={t("imageAlternative", "Image alternative")}
           value={current}
           onChange={(event) => {
             const id = event.currentTarget.value;
@@ -88,9 +88,8 @@ export function CanvasImageSourceSelect() {
   if (images.length < 2) return null;
   return (
     <label className="flex items-center gap-1 rounded border border-gray-300 bg-white/95 px-2 py-1 text-xs text-gray-900">
-      Image source
-      <select
-        aria-label="Image source for output"
+      {t("imageSource", "Image source")}<select
+        aria-label={t("imageSourceForOutput", "Image source for output")}
         value={selected?.id || ""}
         onChange={(event) => {
           const painting = images.find(
@@ -102,7 +101,7 @@ export function CanvasImageSourceSelect() {
           );
         }}
       >
-        <option value="">Choose an image</option>
+        <option value="">{t("chooseAnImage", "Choose an image")}</option>
         {images.map((image) => (
           <option
             key={`${image.annotationId}:${image.resource.id}`}

@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import {
   Extension,
   Node,
@@ -591,6 +592,7 @@ function ResourceLinkContent({
   getPos,
   updateAttributes,
 }: NodeViewProps) {
+ const { t } = useBrowserI18n();
   const context = useContext(NotebookEditorContext);
   const supplied = useMemo(
     () => sanitizeNotebookResource(node.attrs.resource),
@@ -850,7 +852,7 @@ function ResourceLinkContent({
                   }
                 }}
               >
-                {busy === action.id ? "Working…" : action.label}
+                {busy === action.id ? t("working", "Working…") : action.label}
               </button>
             ))}
           {context.renderActions?.(ctx)}

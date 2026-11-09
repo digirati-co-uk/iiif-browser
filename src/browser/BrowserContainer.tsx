@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { ImageServiceLoader } from "@iiif/helpers/image-service";
 import mitt from "mitt";
 import { createContext, useContext, useId, useState } from "react";
@@ -33,6 +34,7 @@ export const BrowserContainer = function BrowserContainer(props: {
   );
   const [imageServiceLoader] = useState(() => new ImageServiceLoader());
   const theme = useThemeAttributes();
+  const { locale, direction } = useBrowserI18n();
 
   return (
     <EventsProvider emitter={atlasEvents}>
@@ -54,6 +56,8 @@ export const BrowserContainer = function BrowserContainer(props: {
                         ...theme.style,
                       } as any
                     }
+                    lang={locale}
+                    dir={direction}
                     ref={setRef}
                   >
                     {props.children}

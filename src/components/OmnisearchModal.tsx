@@ -1,3 +1,4 @@
+import { displayBrowserLabel, useBrowserI18n } from "../i18n";
 import { useCallback, useMemo, useRef } from "react";
 import {
   Autocomplete,
@@ -59,6 +60,7 @@ export function OmnisearchModal({
   onSelect: (result: SearchIndexItem) => void;
   onClose?: () => void;
 }) {
+ const { t } = useBrowserI18n();
   const container = useBrowserContainer();
   const [search, setSearch] = useSearchState();
   const { collectionSearchTagEnabled } = useUIConfig();
@@ -228,7 +230,7 @@ export function OmnisearchModal({
         shouldUpdatePosition={false}
       >
         <Dialog
-          aria-label="Omnisearch Modal"
+          aria-label={t("omnisearchModal", "Omnisearch Modal")}
           className="focus:outline-none flex-1 flex overflow-hidden"
         >
           <Autocomplete
@@ -244,7 +246,7 @@ export function OmnisearchModal({
                 </div>
 
                 <TextField
-                  aria-label="Search commands or enter a URL to a IIIF Manifest or Collection"
+                  aria-label={t("searchCommandsOrEnterAURLToAIIIFManifestOrCollection", "Search commands or enter a URL to a IIIF Manifest or Collection")}
                   className="relative flex-1 min-w-0 translate-y-[-1px] translate-x-[-1px] text-sm"
                 >
                   <Input
@@ -287,10 +289,10 @@ export function OmnisearchModal({
                   <div
                     className="flex items-center pr-2 text-xs text-blue-500 flex-shrink-0 gap-1"
                     aria-live="polite"
-                    aria-label="Searching external sources"
+                    aria-label={t("searchingExternalSources", "Searching external sources")}
                   >
                     <span className="inline-block w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="sr-only">Searching…</span>
+                    <span className="sr-only">{t("searching", "Searching…")}</span>
                   </div>
                 )}
 
@@ -298,15 +300,15 @@ export function OmnisearchModal({
                 {!!externalError && !isExternalLoading && (
                   <div
                     className="flex items-center pr-2 text-xs text-amber-500 flex-shrink-0"
-                    title="External search unavailable"
-                    aria-label="External search unavailable"
+                    title={t("externalSearchUnavailable", "External search unavailable")}
+                    aria-label={t("externalSearchUnavailable", "External search unavailable")}
                   >
                     <span aria-hidden="true">⚠</span>
                   </div>
                 )}
 
                 <Button
-                  aria-label="Close Omnisearch"
+                  aria-label={t("closeOmnisearch", "Close Omnisearch")}
                   onPress={() => closeModalAction()}
                   className="text-2xl rounded bg-gray-50 focus:outline-none focus:bg-gray-200 flex-shrink-0 px-3 text-slate-500 hover:text-slate-700 m-1"
                 >
@@ -363,7 +365,7 @@ export function OmnisearchModal({
                         <MenuItem
                           id={item.id}
                           data-search-id={item.id}
-                          aria-label={item.label}
+                          aria-label={displayBrowserLabel(item, t)}
                           className={({ isFocused }) =>
                             [
                               isFocused ? "bg-accent text-accent-text" : "",
@@ -384,23 +386,20 @@ export function OmnisearchModal({
                               <div className="flex-1 min-w-0 truncate select-none">
                                 <div className="flex items-center gap-2">
                                   <strong className="truncate">
-                                    {item.label}
+                                    {displayBrowserLabel(item, t)}
                                   </strong>
                                   {item.source === "collection" &&
                                   showCollectionTag ? (
                                     <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                      current collection
-                                    </span>
+                                      {t("currentCollection", "current collection")}</span>
                                   ) : null}
                                   {item.source === "history" ? (
                                     <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                      history
-                                    </span>
+                                      {t("historyTag", "history")}</span>
                                   ) : null}
                                   {isExternal ? (
                                     <span className="flex-shrink-0 text-xs bg-blue-50 text-blue-600 rounded-sm px-2">
-                                      external
-                                    </span>
+                                      {t("external", "external")}</span>
                                   ) : null}
                                 </div>
                                 {isExternal && item.subLabel ? (
@@ -431,7 +430,7 @@ export function OmnisearchModal({
                                 <div
                                   className={`text-sm ${isFocused ? "opacity-100" : "opacity-50"}`}
                                 >
-                                  {item.actionLabel ?? "Open"}
+                                  {item.actionLabel ?? t("open", "Open")}
                                 </div>
                                 <div className="flex items-center text-2xl rounded justify-center p-2 bg-gray-100 text-slate-500">
                                   <ArrowForwardIcon
@@ -452,8 +451,7 @@ export function OmnisearchModal({
                   combined.length === 0 &&
                   search.trim().length > 0 && (
                     <div className="p-4 text-sm text-gray-400 text-center select-none">
-                      No results found
-                    </div>
+                      {t("noResultsFound", "No results found")}</div>
                   )}
               </div>
             </div>
@@ -491,6 +489,7 @@ function GroupedMenu({
   search: string;
   isIndexing: boolean;
 }) {
+ const { t } = useBrowserI18n();
   // Split the flat rows array into segments, each with an optional header and
   // a list of result items.
   type Segment = { header: string | null; items: SearchIndexItem[] };
@@ -541,7 +540,7 @@ function GroupedMenu({
                   <MenuItem
                     id={item.id}
                     data-search-id={item.id}
-                    aria-label={item.label}
+                    aria-label={displayBrowserLabel(item, t)}
                     className={({ isFocused }) =>
                       [
                         isFocused ? "bg-accent text-accent-text" : "",
@@ -559,22 +558,19 @@ function GroupedMenu({
                         </div>
                         <div className="flex-1 min-w-0 truncate select-none">
                           <div className="flex items-center gap-2">
-                            <strong className="truncate">{item.label}</strong>
+                            <strong className="truncate">{displayBrowserLabel(item, t)}</strong>
                             {item.source === "collection" &&
                             showCollectionTag ? (
                               <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                current collection
-                              </span>
+                                {t("currentCollection", "current collection")}</span>
                             ) : null}
                             {item.source === "history" ? (
                               <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                history
-                              </span>
+                                {t("historyTag", "history")}</span>
                             ) : null}
                             {isExternal ? (
                               <span className="flex-shrink-0 text-xs bg-blue-50 text-blue-600 rounded-sm px-2">
-                                external
-                              </span>
+                                {t("external", "external")}</span>
                             ) : null}
                           </div>
                           {isExternal && item.subLabel ? (
@@ -605,7 +601,7 @@ function GroupedMenu({
                           <div
                             className={`text-sm ${isFocused ? "opacity-100" : "opacity-50"}`}
                           >
-                            {item.actionLabel ?? "Open"}
+                            {item.actionLabel ?? t("open", "Open")}
                           </div>
                           <div className="flex items-center text-2xl rounded justify-center p-2 bg-gray-100 text-slate-500">
                             <ArrowForwardIcon

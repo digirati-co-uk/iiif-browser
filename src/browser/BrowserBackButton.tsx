@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useMemo } from "react";
 import {
   Button,
@@ -13,6 +14,7 @@ import { BrowserToolbarButton } from "./BrowserToolbarButton";
 import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserBackButton() {
+ const { t } = useBrowserI18n();
   const history = useHistory();
   const historyList = useHistoryList();
   const historyIndex = useHistoryIndex();
@@ -31,7 +33,7 @@ export function BrowserBackButton() {
   return (
     <MenuTrigger trigger="longPress">
       <BrowserToolbarButton
-        aria-label="Go Back"
+        aria-label={t("goBack", "Go Back")}
         isDisabled={backHistoryList.length <= 0}
         onPress={() => {
           history.back();

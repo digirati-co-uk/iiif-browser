@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { Button } from "react-aria-components";
 import { LocaleString } from "react-iiif-vault";
 import TimeAgo from "react-timeago";
@@ -22,6 +23,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function HistoryPage() {
+ const { t, formatRelativeTime } = useBrowserI18n();
   const history = useLinearHistory();
   const clearHistory = useClearHistory();
   const resolve = useResolve();
@@ -39,10 +41,9 @@ export function HistoryPage() {
       <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white sticky top-0 z-10">
         <h1 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
           <HistoryIcon className="text-base text-gray-400" />
-          History
-          {items.length > 0 && (
+          {t("history", "History")}{items.length > 0 && (
             <span className="text-xs font-normal text-gray-400 ml-1">
-              {items.length} {items.length === 1 ? "item" : "items"}
+              {t("historyCount", items.length === 1 ? "{{value}} item" : "{{value}} items", { count: items.length, value: items.length })}
             </span>
           )}
         </h1>
@@ -51,8 +52,7 @@ export function HistoryPage() {
             className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50"
             onPress={clearHistory}
           >
-            Clear all
-          </Button>
+            {t("clearAll", "Clear all")}</Button>
         )}
       </div>
 
@@ -61,7 +61,7 @@ export function HistoryPage() {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
             <HistoryIcon className="text-4xl text-gray-200" />
-            <p className="text-sm text-gray-400">No history yet.</p>
+            <p className="text-sm text-gray-400">{t("noHistoryYet", "No history yet.")}</p>
           </div>
         ) : (
           <ul className="divide-y divide-gray-50">
@@ -115,7 +115,7 @@ export function HistoryPage() {
                       )}
                       {item.timestamp && (
                         <span className="text-xs text-gray-400 whitespace-nowrap">
-                          <TimeAgo date={item.timestamp} />
+                          <TimeAgo date={item.timestamp} formatter={formatRelativeTime} />
                         </span>
                       )}
                     </div>

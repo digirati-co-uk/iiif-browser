@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { Component, type ReactNode } from "react";
 import { useResolve, useUIConfig } from "../context";
 
@@ -12,6 +13,7 @@ function ErrorFallback({
   error: unknown;
   onDismiss: (navigateTo?: string) => void;
 }) {
+ const { t } = useBrowserI18n();
   const { homeLink } = useUIConfig();
   const resolve = useResolve();
 
@@ -22,7 +24,7 @@ function ErrorFallback({
     <div className="flex flex-1 flex-col items-center justify-center w-full h-full gap-5 p-8 text-center bg-gray-50">
       <img
         src={SAD_MAC_SRC}
-        alt="Error"
+        alt={t("error", "Error")}
         style={{
           border: "3px solid white",
           padding: 15,
@@ -35,8 +37,7 @@ function ErrorFallback({
       />
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold text-gray-600">
-          Something went wrong
-        </p>
+          {t("somethingWentWrong", "Something went wrong")}</p>
         <p className="text-xs text-gray-400 max-w-xs break-words">{message}</p>
       </div>
       <div className="flex gap-2">
@@ -49,16 +50,14 @@ function ErrorFallback({
               onDismiss();
             }}
           >
-            Go home
-          </button>
+            {t("goHomeLabel", "Go home")}</button>
         )}
         <button
           type="button"
           className="text-xs px-3 py-1.5 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
           onClick={() => onDismiss()}
         >
-          Try again
-        </button>
+          {t("tryAgain", "Try again")}</button>
       </div>
     </div>
   );

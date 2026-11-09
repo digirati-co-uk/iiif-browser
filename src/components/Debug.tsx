@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { Button, Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { createPortal } from "react-dom";
@@ -87,6 +88,7 @@ function DebugSelected() {
 }
 
 function DebugHistory() {
+ const { t } = useBrowserI18n();
   const lastUrl = useLastUrl();
   const linearHistory = useLinearHistory();
   const historyList = useHistoryList();
@@ -130,8 +132,7 @@ function DebugHistory() {
               onPress={() => history.go(-1)}
               className="bg-accent px-2 py-1 rounded text-accent-text"
             >
-              Back
-            </Button>
+              {t("back", "Back")}</Button>
             <Button
               onPress={() => history.go(1)}
               className="bg-accent px-2 py-1 rounded text-accent-text"
@@ -149,7 +150,7 @@ function DebugHistory() {
       </div>
       <Tabs>
         <TabList>
-          <Tab id="history">History</Tab>
+          <Tab id="history">{t("history", "History")}</Tab>
           <Tab id="linear-history">Linear History</Tab>
         </TabList>
         <TabPanel id="history">

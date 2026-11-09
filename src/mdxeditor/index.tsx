@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import {
   dropBrowserHistory,
   type IIIFDropTarget,
@@ -229,6 +230,7 @@ export function InsertIIIFBrowser({
 }
 
 function IIIFBrowserDialog() {
+ const { t } = useBrowserI18n();
   const config = useCellValue(config$);
   const dropTarget = useCellValue(dropTarget$);
   const activeEditor = useCellValue(activeEditor$);
@@ -403,8 +405,7 @@ function IIIFBrowserDialog() {
                 className="iiif-browser-mdx-back"
                 onClick={() => setScreen("browser")}
               >
-                <span aria-hidden="true">←</span> Back
-              </button>
+                <span aria-hidden="true">←</span> {t("back", "Back")}</button>
             ) : null}
             <Heading slot="title" className="iiif-browser-mdx-title">
               {title}
@@ -479,7 +480,7 @@ function IIIFBrowserDialog() {
               imageAction={
                 editingRequest
                   ? {
-                      label: "Save changes",
+                      label: t("saveChanges", "Save changes"),
                       onClick: (url) => confirm("image", url),
                     }
                   : image === false
@@ -494,7 +495,7 @@ function IIIFBrowserDialog() {
                   ? {
                       label:
                         config.canvasSnippet === true
-                          ? "Insert Canvas snippet"
+                          ? t("insertCanvasSnippet", "Insert Canvas snippet")
                           : (config.canvasSnippet.actionLabel ??
                             "Insert Canvas snippet"),
                       onClick: (url) => confirm("canvas", url),
@@ -527,6 +528,7 @@ function GenericImageForm({
     height?: number;
   }) => void;
 }) {
+ const { t } = useBrowserI18n();
   const initial = state.type === "editing" ? state.initialValues : {};
   const [src, setSrc] = useState(initial.src ?? "");
   const [altText, setAltText] = useState(initial.altText ?? "");
@@ -542,7 +544,7 @@ function GenericImageForm({
     <>
       <div className="iiif-browser-mdx-generic-form">
         <label className="iiif-browser-mdx-field">
-          <span>Image URL</span>
+          <span>{t("imageURL", "Image URL")}</span>
           <input
             type="url"
             value={src}
@@ -550,14 +552,14 @@ function GenericImageForm({
           />
         </label>
         <label className="iiif-browser-mdx-field">
-          <span>Alternative text</span>
+          <span>{t("alternativeText", "Alternative text")}</span>
           <input
             value={altText}
             onChange={(event) => setAltText(event.currentTarget.value)}
           />
         </label>
         <label className="iiif-browser-mdx-field">
-          <span>Title</span>
+          <span>{t("title", "Title")}</span>
           <input
             value={title}
             onChange={(event) => setTitle(event.currentTarget.value)}
@@ -570,16 +572,14 @@ function GenericImageForm({
           className="iiif-browser-mdx-secondary"
           onClick={onCancel}
         >
-          Cancel
-        </button>
+          {t("cancel", "Cancel")}</button>
         <button
           type="button"
           className="iiif-browser-mdx-primary"
           disabled={!src}
           onClick={() => onSave({ ...initial, src, altText, title })}
         >
-          Save image
-        </button>
+          {t("saveImage", "Save image")}</button>
       </footer>
     </>
   );
