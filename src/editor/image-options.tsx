@@ -275,15 +275,20 @@ export function ImageOptions({
                   }}
                 >
                   <option value="max">
-                    Maximum ({capabilities.sourceWidth} ×{" "}
-                    {capabilities.sourceHeight})
+                    {t("maximumSize", "Maximum ({{width}} × {{height}})", {
+                      width: capabilities.sourceWidth,
+                      height: capabilities.sourceHeight,
+                    })}
                   </option>
                   {capabilities.sizes.map((size) => (
                     <option
                       key={`${size.width}x${size.height}`}
                       value={`preset:${size.width}x${size.height}`}
                     >
-                      Preferred: {size.width} × {size.height}
+                      {t("preferredSize", "Preferred: {{width}} × {{height}}", {
+                        width: size.width,
+                        height: size.height,
+                      })}
                     </option>
                   ))}
                   {capabilities.customSize || sizeMode === "custom" ? (
@@ -296,7 +301,7 @@ export function ImageOptions({
               {sizeMode === "custom" ? (
                 <label className="iiif-browser-mdx-field">
                   <span>
-                    Width <output>{customWidth}px</output>
+                    {t("width", "Width {{width}} px", { width: customWidth })}
                   </span>
                   <input
                     className="iiif-browser-mdx-range"
