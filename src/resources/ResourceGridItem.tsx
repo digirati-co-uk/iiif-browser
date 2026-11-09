@@ -80,6 +80,7 @@ export function ResourceGridItem({
               {renderDotsMenu()}
               {showNavigationArrow && canNavigate ? (
                 <Button
+                  aria-label="Navigate to resource"
                   onPress={navigate}
                   className="ml-auto bg-gray-300/50 p-2 rounded hover:bg-gray-300/100"
                 >

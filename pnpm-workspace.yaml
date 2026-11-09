@@ -4,3 +4,4 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - react-iiif-vault@4.0.0
   - '@atlas-viewer/atlas@3.3.0'
+  - '@iiif/helpers@4.0.4'

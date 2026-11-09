@@ -32,6 +32,65 @@ function createHistoryItem(route: string, url: string): HistoryItem {
 }
 
 describe("history route invariants", () => {
+  it("fetches incomplete collection references rather than treating them as loaded", async () => {
+    const vault = new Vault();
+    const id = "https://example.org/not-loaded-manifest";
+    vault.loadSync("https://example.org/collection", {
+      id: "https://example.org/collection",
+      type: "Collection",
+      items: [{ id, type: "Manifest", label: { en: ["Reference"] } }],
+    });
+    const store = createBrowserStore({
+      ...baseConfig,
+      emitter: createEmitter({}),
+      vault,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+    });
+    await store.getState().resolve(id);
+    expect(store.getState().history.location.pathname).toBe("/loading");
+  });
+  it("restores crop and rotation from a Canvas route", () => {
+    const vault = new Vault();
+    const id = "https://example.org/manifest";
+    const canvas = `${id}/canvas`;
+    vault.loadSync(id, {
+      id,
+      type: "Manifest",
+      items: [
+        { id: canvas, type: "Canvas", width: 400, height: 200, items: [] },
+      ],
+    });
+    const emitter = createEmitter({});
+    const events: any[] = [];
+    emitter.on("canvas.change", (resource) => events.push(resource));
+    const store = createBrowserStore({
+      ...baseConfig,
+      emitter,
+      vault,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+    });
+    store
+      .getState()
+      .history.push(
+        `/manifest?id=${encodeURIComponent(id)}&canvas=${encodeURIComponent(canvas)}&xywh=40,20,100,50&rotation=270`,
+      );
+    expect(events.at(-1)).toMatchObject({
+      id: canvas,
+      rotation: 270,
+      selector: { spatial: { x: 40, y: 20, width: 100, height: 50 } },
+    });
+    store
+      .getState()
+      .history.push(
+        `/manifest?id=${encodeURIComponent(id)}&canvas=${encodeURIComponent(canvas)}`,
+      );
+    expect(events.at(-1)?.rotation).toBe(0);
+    store.getState().history.back();
+    expect(events.at(-1)?.rotation).toBe(270);
+  });
+
   it("routes an unfetchable Canvas identifier through its Manifest in the shared vault", async () => {
     const vault = new Vault();
     const manifest = "https://example.org/manifest";
@@ -52,7 +111,7 @@ describe("history route invariants", () => {
     });
     await store.getState().resolve(canvas);
     const { pathname, search } = store.getState().history.location;
-    expect(pathname).toBe("/loading");
+    expect(pathname).toBe("/manifest");
     expect(new URLSearchParams(search).get("id")).toBe(manifest);
     expect(new URLSearchParams(search).get("canvas")).toBe(canvas);
   });

@@ -60,6 +60,8 @@ export type DeepPartial<T> = {
 } & {};
 
 export interface IIIFBrowserProps {
+  /** Stable scope for saved preferences. Set distinct keys for identical browser configurations. */
+  preferenceKey?: string;
   ui?: DeepPartial<IIIFBrowserConfig>;
   history?: Partial<BrowserStoreConfig>;
   navigation?: Partial<BrowserLinkConfig>;
@@ -92,6 +94,7 @@ export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
 }
 
 export function IIIFBrowser({
+  preferenceKey,
   ui,
   history,
   navigation,
@@ -128,6 +131,7 @@ export function IIIFBrowser({
   return (
     <BrowserPluginsContext.Provider value={plugins}>
       <BrowserProvider
+        preferenceKey={preferenceKey}
         vault={vault}
         outputConfig={output}
         uiConfig={ui}

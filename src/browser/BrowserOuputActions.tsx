@@ -9,10 +9,17 @@ import {
 import { twMerge } from "tailwind-merge";
 import {
   useAvailableOutputs,
+  useAllOutputs,
+  usePreferenceScope,
   useSelectedActions,
   useUIConfig,
 } from "../context";
 import type { OutputTarget } from "../stores/output-store";
+
+import {
+  outputPreferenceKey,
+  usePreferredOutput,
+} from "../utilities/output-preference";
 
 export function BrowserOutputActions() {
   const availableOutputs = useAvailableOutputs();
@@ -20,7 +27,12 @@ export function BrowserOutputActions() {
   const { buttonClassName } = useUIConfig();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [first, ...others] = availableOutputs;
+  const allOutputs = useAllOutputs();
+  const scope = usePreferenceScope();
+  const { first, others, choose } = usePreferredOutput(
+    outputPreferenceKey(scope, allOutputs),
+    availableOutputs,
+  );
   if (!first)
     return (
       <div className="px-4 text-sm opacity-40 whitespace-nowrap">
@@ -78,21 +90,26 @@ export function BrowserOutputActions() {
           </Button>
           <Popover
             placement="top end"
-            className="iiif-browser rounded border border-gray-200 bg-white shadow-lg p-1"
+            offset={8}
+            className="iiif-browser"
             style={{ zIndex: 1000011 }}
           >
             <Menu
               aria-label="More actions"
-              className="outline-none"
+              className="min-w-[220px] max-w-[calc(100vw-16px)] rounded-md border border-slate-200 bg-white p-1 font-sans text-sm leading-5 text-slate-800 shadow-lg outline-none"
               onAction={(key) => {
-                void run(others[Number(key)]);
+                const output = others[Number(key)];
+                if (output) {
+                  choose(output);
+                  void run(output);
+                }
               }}
             >
               {others.map((output, index) => (
                 <MenuItem
                   key={index}
                   id={index}
-                  className="text-sm px-3 py-2 rounded cursor-pointer outline-none hover:bg-blue-50 focus:bg-blue-50 text-slate-700"
+                  className="block rounded px-3 py-2 cursor-pointer whitespace-normal outline-none data-[focused]:bg-blue-50 data-[focused]:text-blue-900"
                 >
                   {output.label}
                 </MenuItem>

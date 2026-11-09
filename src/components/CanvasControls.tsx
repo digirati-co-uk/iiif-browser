@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Button, Toolbar } from "react-aria-components";
+import {
+  Button,
+  type ButtonProps,
+  Group,
+  Toolbar,
+  Tooltip,
+  TooltipTrigger,
+} from "react-aria-components";
 import {
   type AnnotationResponse,
   useCanvas,
@@ -20,26 +27,46 @@ import { HomeIcon } from "../icons/HomeIcon";
 import { MinusIcon } from "../icons/MinusIcon";
 import { PlusIcon } from "../icons/PlusIcon";
 import { ReloadIcon } from "../icons/ReloadIcon";
-import { paste } from "../utilities/paste-util";
+import { MultiImageIcon } from "../icons/MultiImageIcon";
 import {
-  canvasToViewerBox,
-  rotatedCanvasBounds,
-  viewerToCanvasBox,
-} from "../utilities/rotation";
+  resetViewerHome,
+  rotateViewerTo,
+} from "../utilities/viewer-navigation";
 import { CanvasImageSourceSelect } from "./CanvasImageSourceSelect";
 import { CropAnnotationControls } from "./CropAnnotationControls";
 
-export function CanvasControls({ id }: { id?: string }) {
+function ViewControl({ label, ...props }: ButtonProps & { label: string }) {
+  return (
+    <TooltipTrigger delay={500}>
+      <Button {...props} aria-label={label} />
+      <Tooltip
+        placement="left"
+        offset={8}
+        className="iiif-browser-viewer-tooltip"
+      >
+        {label}
+      </Tooltip>
+    </TooltipTrigger>
+  );
+}
+
+export function CanvasControls({
+  id,
+  thumbnails,
+}: {
+  id?: string;
+  thumbnails?: { visible: boolean; controls: string; onToggle(): void };
+}) {
   const canvas = useCanvas();
   const preset = useViewerPreset();
   const { canCropImage } = useLinkConfig();
   const setRotation = useSetRotation();
   const { mode, setEditMode } = useMode();
-  const rotation = useCanvasOutputRotation(canvas);
-  const canvasOutputSelector = useCanvasOutputSelector(canvas);
+  const subject = id ? { id } : canvas;
+  const rotation = useCanvasOutputRotation(subject);
+  const canvasOutputSelector = useCanvasOutputSelector(subject);
   const refine = useRefineSelectedItem();
   const editMode = mode === "sketch";
-  const canvasButton = paste();
   const t = useRequestAnnotation();
   const cancelRequest = useRef(t.cancelRequest);
   cancelRequest.current = t.cancelRequest;
@@ -47,9 +74,8 @@ export function CanvasControls({ id }: { id?: string }) {
   const saveAnnotationResponse = useCallback(
     (resp: AnnotationResponse | null) => {
       if (!resp?.cancelled && resp?.boundingBox) {
-        const spatial = canvas
-          ? viewerToCanvasBox(resp.boundingBox, canvas, rotation)
-          : resp.boundingBox;
+        // Camera rotation preserves Canvas coordinates, including pointer input.
+        const spatial = resp.boundingBox;
         if (id) {
           refine(id, {
             type: "BoxSelector",
@@ -64,98 +90,159 @@ export function CanvasControls({ id }: { id?: string }) {
       }
       setEditMode(false);
     },
-    [id, canvas, refine, rotation, setEditMode],
+    [id, canvas, refine, setEditMode],
   );
 
   useEffect(() => () => cancelRequest.current(), []);
+
+  useEffect(() => {
+    if (!preset) return;
+    const enabled = preset.runtime.touchRotationEnabled;
+    // Rotation is controlled by selection state, so exported state matches the view.
+    preset.runtime.setTouchRotationEnabled(false);
+    return () => preset.runtime.setTouchRotationEnabled(enabled);
+  }, [preset]);
+
+  const rotationRef = useRef(rotation);
+  rotationRef.current = rotation;
+
+  useEffect(() => {
+    if (!preset) return;
+    rotateViewerTo(preset.runtime, rotation);
+  }, [preset, rotation]);
+
+  useEffect(() => {
+    if (!preset) return;
+    let frame = 0;
+    const fit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() =>
+        resetViewerHome(preset.runtime, rotationRef.current),
+      );
+    };
+    fit();
+    // Fit after Atlas processes the new size, including its initial default viewport.
+    const observer = new ResizeObserver(fit);
+    const surface = preset.canvas || preset.container;
+    if (surface) observer.observe(surface);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [preset]);
 
   if (editMode) {
     return null;
   }
 
-  return (
-    <Toolbar className="absolute bottom-0 flex gap-1 p-2 z-50">
-      <CanvasImageSourceSelect />
-      <Button
-        className={canvasButton.c(
-          "disabled:opacity-40 bg-white/90 hover:bg-white text-black text-2xl flex gap-2 items-center px-2 py-1 rounded border border-gray-300 shadow-sm transition",
-        )}
-        onPress={() => preset?.runtime.world.zoomTo(0.75)}
-      >
-        <PlusIcon />
-      </Button>
-      <Button
-        className={canvasButton.v()}
-        onPress={() => preset?.runtime.world.zoomTo(1 / 0.75)}
-      >
-        <MinusIcon />
-      </Button>
-      <Button
-        className={canvasButton.v()}
-        onPress={() => preset?.runtime.world.goHome()}
-      >
-        <HomeIcon />
-      </Button>
-      <Button
-        className={canvasButton.v()}
-        onPress={() => {
-          setRotation(id || canvas?.id || "", (rotation + 90) % 360);
-        }}
-      >
-        <ReloadIcon />
-      </Button>
+  const startCrop = () =>
+    t
+      .requestAnnotation({
+        type: "box",
+        ...(canvasOutputSelector
+          ? { selector: canvasOutputSelector.spatial }
+          : {}),
+        ...(canvas
+          ? {
+              bounds: {
+                x: 0,
+                y: 0,
+                width: canvas.width,
+                height: canvas.height,
+              },
+            }
+          : {}),
+        annotationPopup: <CropAnnotationControls />,
+      })
+      .then(saveAnnotationResponse)
+      .catch(() => setEditMode(false));
 
-      {canCropImage ? (
-        <>
-          <Button
-            className={canvasButton.v()}
-            onPress={() => {
-              const selector =
-                canvasOutputSelector && canvas
-                  ? canvasToViewerBox(
-                      canvasOutputSelector.spatial,
-                      canvas,
-                      rotation,
-                    )
-                  : canvasOutputSelector?.spatial;
-              return t
-                .requestAnnotation({
-                  type: "box",
-                  ...(selector ? { selector } : {}),
-                  ...(canvas
-                    ? { bounds: rotatedCanvasBounds(canvas, rotation) }
-                    : {}),
-                  annotationPopup: <CropAnnotationControls />,
-                })
-                .then(saveAnnotationResponse)
-                .catch(() => setEditMode(false));
-            }}
-            aria-label={canvasOutputSelector ? "Edit crop" : "Crop image"}
-          >
-            {canvasOutputSelector ? (
-              <span className="text-sm">Edit crop</span>
-            ) : (
+  return (
+    <Toolbar aria-label="Viewer controls" className="ib-viewer-controls">
+      <Group aria-label="Image tools" className="ib-viewer-controls__tools">
+        <CanvasImageSourceSelect />
+        {canCropImage && canvasOutputSelector ? (
+          <>
+            <Button
+              className="ib-viewer-controls__edit"
+              aria-label="Edit crop"
+              onPress={startCrop}
+            >
               <CropIcon />
-            )}
-          </Button>
-          <Button
-            className={canvasButton.v()}
-            isDisabled={!canvasOutputSelector}
-            onPress={() => {
-              if (confirm("Remove crop?")) {
-                if (id) {
-                  refine(id, null);
-                } else if (canvas) {
-                  refine(canvas.id, null);
-                }
-              }
-            }}
-            aria-label="Remove crop"
+              <span>Edit crop</span>
+            </Button>
+            <Button
+              className="ib-viewer-controls__delete"
+              aria-label="Remove crop"
+              onPress={() => {
+                if (confirm("Remove crop?"))
+                  refine(id || canvas?.id || "", null);
+              }}
+            >
+              <DeleteForeverIcon />
+            </Button>
+          </>
+        ) : null}
+      </Group>
+      <Group
+        aria-label="Zoom and view controls"
+        className="ib-viewer-controls__zoom"
+      >
+        <ViewControl
+          data-secondary
+          data-action="home"
+          label="Reset view"
+          onPress={() => preset && resetViewerHome(preset.runtime, rotation)}
+        >
+          <HomeIcon />
+        </ViewControl>
+        {thumbnails ? (
+          <ViewControl
+            data-secondary
+            data-action="thumbnails"
+            label={thumbnails.visible ? "Hide thumbnails" : "Show thumbnails"}
+            aria-expanded={thumbnails.visible}
+            aria-controls={thumbnails.controls}
+            onPress={thumbnails.onToggle}
           >
-            <DeleteForeverIcon />
-          </Button>
-        </>
-      ) : null}
+            <MultiImageIcon />
+          </ViewControl>
+        ) : null}
+        {canCropImage && !canvasOutputSelector ? (
+          <ViewControl
+            data-secondary
+            data-action="crop"
+            label="Crop image"
+            onPress={startCrop}
+          >
+            <CropIcon />
+          </ViewControl>
+        ) : null}
+        <ViewControl
+          data-secondary
+          data-action="rotate"
+          label="Rotate clockwise"
+          onPress={() =>
+            setRotation(id || canvas?.id || "", (rotation + 90) % 360)
+          }
+        >
+          <ReloadIcon />
+        </ViewControl>
+        <ViewControl
+          data-action="in"
+          label="Zoom in"
+          onPress={() => preset?.runtime.world.zoomTo(0.75)}
+        >
+          <PlusIcon />
+        </ViewControl>
+        <ViewControl
+          data-action="out"
+          label="Zoom out"
+          onPress={() => preset?.runtime.world.zoomTo(1 / 0.75)}
+        >
+          <MinusIcon />
+        </ViewControl>
+      </Group>
     </Toolbar>
   );
 }

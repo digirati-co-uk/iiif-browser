@@ -234,6 +234,6 @@ describe("painting selection", () => {
 
     expect(
       selectedPaintingThumbnail(vault, canvas, selected, imageSelector, 90),
-    ).toContain("/400,200,200,100/!120,/90/default.jpg");
+    ).toContain("/400,200,200,100/!120,100/90/default.jpg");
   });
 });

@@ -28,6 +28,7 @@ export type BrowserEvents = {
       label?: InternationalString;
     };
     selector?: BoxSelector;
+    rotation?: number;
     selectedPainting?: SelectedPainting;
   } | null;
   "image-service.change": {

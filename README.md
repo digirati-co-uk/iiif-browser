@@ -369,3 +369,50 @@ The optional [`iiif-browser/notebook`](./NOTEBOOK.md) plugin adds an embeddable
 Tiptap notebook with smart IIIF links, resource previews, interactive checklists,
 project context, and shared browser search/save integration. See
 **Integrations / Notebook / Manifest Editor** in Storybook for a working host app.
+
+## Selection, rotation and image URLs
+
+By default, resource clicks navigate until the first explicit checkbox or drag
+selection. With an active manual selection, clicks on selectable resources select
+instead. Set `navigation.clickToSelect` to `true` for immediate click selection,
+`false` for navigation-only clicks, or `"after-selection"` (the default). Clearing
+the manual selection restores ordinary browsing. Ctrl/Cmd/Shift clicks toggle
+items when `multiSelect` is enabled.
+
+With `clickToNavigate: false`, navigation arrows remain available in both grid and
+list views. Non-selectable collections and manifests still open on a click, and
+`doubleClickToNavigate` can also be enabled. Resource/domain navigation
+restrictions continue to apply.
+
+The viewer uses Atlas's `viewRotation` camera API. Crops remain in the original
+Canvas coordinate system; returned selection state includes `rotation` separately.
+Content State output includes the crop fragment and an `ImageApiSelector` for
+rotation. Canvas routes retain `xywh`, `rotation`, and the selected image choice.
+
+To return a rendered IIIF image request, use this output target:
+
+```tsx
+{
+  type: "callback",
+  label: "Select image",
+  supportedTypes: ["Canvas", "CanvasRegion"],
+  format: { type: "image-url", width: 600 },
+  cb: (url) => console.log(url),
+}
+```
+
+The URL uses the chosen painting's Image API service and includes its image-space
+crop and rotation. Small crops are limited to their source dimensions to avoid
+implicit upscaling. `image-service` continues to return the service identifier or
+information document, rather than rendered pixels. The image server must support
+the requested crop, size and rotation.
+
+See **IIIF Browser / Regression** in Storybook and [REGRESSION_TESTING.md](./REGRESSION_TESTING.md)
+for the test matrix and repeatable browser workflow.
+
+The output action selected from **More actions** becomes the primary action and
+is remembered in local storage. Preferences are scoped to the browser's
+configuration and complete output list; an unavailable preferred action falls
+back to the first available action without discarding the preference. Use a
+stable, distinct `preferenceKey` on each `IIIFBrowser` when multiple instances
+have otherwise identical configurations, for example `preferenceKey="notebook-image-picker"`.

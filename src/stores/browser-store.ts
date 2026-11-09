@@ -71,9 +71,9 @@ export type BrowserStore = {
     path: string,
     search: string,
   ): [
-      string | null,
-      null | { id: string; type: string; label?: InternationalString },
-    ];
+    string | null,
+    null | { id: string; type: string; label?: InternationalString },
+  ];
 
   // Omnibar state.
   omnibarValue: string;
@@ -190,9 +190,9 @@ function getLocalStorageHistory(
 
     return foundHistory.history.length === 0
       ? {
-        history: defaultHistory,
-        cursor: 0,
-      }
+          history: defaultHistory,
+          cursor: 0,
+        }
       : foundHistory;
   } catch (error) {
     //
@@ -247,13 +247,13 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
   const nonEmptyInitialHistory =
     initialHistory.length === 0
       ? [
-        {
-          resource: null,
-          route: "/",
-          url: "iiif://home",
-          timestamp: new Date().toISOString(),
-        },
-      ]
+          {
+            resource: null,
+            route: "/",
+            url: "iiif://home",
+            timestamp: new Date().toISOString(),
+          },
+        ]
       : initialHistory;
   const initialHistoryIndex = Math.min(
     Math.max(initialHistoryCursor, 0),
@@ -802,7 +802,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
           // Assume if the parent is a Manifest, then the URL must be a Canvas.
           // /manifest?id={manifest_id}&canvas={canvas_id}
-          const existing = get().loaded[manifestUrl];
+          const existing =
+            get().loaded[manifestUrl] ||
+            (vault.requestStatus(manifestUrl)?.loadingState === "RESOURCE_READY"
+              ? get().getLoadedResource(manifestUrl)
+              : undefined);
           if (existing && !force) {
             const fullResource = vault.get<ManifestNormalized>(parent as any);
             if (!fullResource) {
@@ -831,7 +835,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           // We _might_ have been passed a canvas id
           // We are dealing with a resource at this point.
           // 1. Do we already know about this resource?
-          const existing = get().loaded[url];
+          const existing =
+            get().loaded[url] ||
+            (vault.requestStatus(url)?.loadingState === "RESOURCE_READY"
+              ? get().getLoadedResource(url)
+              : undefined);
           if (existing && !force) {
             const resource = existing.resource;
             if (resource === null || existing.error) {
@@ -1018,14 +1026,14 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           currentPage.url === "iiif://home"
             ? [currentPage]
             : [
-              currentPage,
-              {
-                resource: null,
-                route: "/",
-                url: "iiif://home",
-                timestamp: new Date().toISOString(),
-              },
-            ];
+                currentPage,
+                {
+                  resource: null,
+                  route: "/",
+                  url: "iiif://home",
+                  timestamp: new Date().toISOString(),
+                },
+              ];
         set({
           historyList: newHistory,
           linearHistory: newHistory,
@@ -1039,21 +1047,37 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     };
   });
 
-  // Look into this again in the future (atm dead code.)
-  function dispatchHistoryItemEvents(historyItem: HistoryItem) {
-    const resourceRef = historyItem.resource;
-    const resource = vault.get(resourceRef as any);
-
-    // Emit events
-    emitter.emit("history.change", {
-      item: historyItem,
-      source: "history.listen.pop",
-    });
+  function dispatchResourceEvents(resource: any, search: string) {
     if (resource?.type === "Collection") {
       emitter.emit("collection.change", resource);
     }
     if (resource?.type === "Manifest") {
-      emitter.emit("manifest.change", resource);
+      const searchParams = new URLSearchParams(search);
+      const canvasId = searchParams.get("canvas");
+      const xywh = searchParams.get("xywh");
+      const choice = searchParams.get("choice");
+      if (canvasId) {
+        const selector = selectorFromXYWH(xywh);
+        const canvas = vault.get<any>({ id: canvasId, type: "Canvas" });
+
+        emitter.emit("canvas.change", {
+          id: canvasId,
+          type: "Canvas",
+          parent: resource,
+          selector,
+          rotation: Number(searchParams.get("rotation") || 0) || 0,
+          selectedPainting: canvas
+            ? selectedPaintingFromId(vault, canvas, choice)
+            : undefined,
+        });
+      } else {
+        emitter.emit("manifest.change", resource);
+      }
+    }
+    if (resource && (resource?.type || "").startsWith("ImageService")) {
+      emitter.emit("image-service.change", {
+        id: resource.id,
+      });
     }
   }
 
@@ -1081,8 +1105,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       const stackIndex = (history as IndexedHistory).index;
       const historyIndex =
         typeof stackIndex === "number" &&
-          stackIndex >= 0 &&
-          stackIndex < newHistoryList.length
+        stackIndex >= 0 &&
+        stackIndex < newHistoryList.length
           ? stackIndex
           : newHistoryList.findIndex((item) => item.route === locationUrl);
 
@@ -1099,12 +1123,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           item: historyItem,
           source: "history.listen.pop",
         });
-        if (resource?.type === "Collection") {
-          emitter.emit("collection.change", resource);
-        }
-        if (resource?.type === "Manifest") {
-          emitter.emit("manifest.change", resource);
-        }
+        dispatchResourceEvents(resource, r.location.search);
       }
     } else if (resolved) {
       // Extract parent from state if available
@@ -1210,36 +1229,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         }
       }
 
-      if (resource?.type === "Collection") {
-        emitter.emit("collection.change", resource);
-      }
-      if (resource?.type === "Manifest") {
-        const searchParams = new URLSearchParams(r.location.search);
-        const canvasId = searchParams.get("canvas");
-        const xywh = searchParams.get("xywh");
-        const choice = searchParams.get("choice");
-        if (canvasId) {
-          const selector = selectorFromXYWH(xywh);
-          const canvas = vault.get<any>({ id: canvasId, type: "Canvas" });
-
-          emitter.emit("canvas.change", {
-            id: canvasId,
-            type: "Canvas",
-            parent: resource,
-            selector,
-            selectedPainting: canvas
-              ? selectedPaintingFromId(vault, canvas, choice)
-              : undefined,
-          });
-        } else {
-          emitter.emit("manifest.change", resource);
-        }
-      }
-      if (resource && (resource?.type || "").startsWith("ImageService")) {
-        emitter.emit("image-service.change", {
-          id: resource.id,
-        });
-      }
+      dispatchResourceEvents(resource, r.location.search);
     }
 
     const newState: Partial<BrowserStore> = {

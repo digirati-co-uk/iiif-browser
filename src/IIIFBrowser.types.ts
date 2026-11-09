@@ -43,20 +43,27 @@ export type OutputFormat =
   | { type: "content-state"; encoded?: boolean; pretty?: boolean }
   | { type: "json"; pretty?: boolean }
   | {
-    type: "custom";
-    format: (
-      resource: HistoryItem,
-      parent: HistoryItem | null,
-      vault: Vault,
-    ) => any;
-  }
+      type: "custom";
+      format: (
+        resource: HistoryItem,
+        parent: HistoryItem | null,
+        vault: Vault,
+      ) => any;
+    }
   | { type: "thumbnail"; options?: ImageCandidateRequest }
+  | {
+      type: "image-url";
+      width?: number;
+      height?: number;
+      quality?: string;
+      format?: string;
+    }
   | { type: "url"; resolvable?: boolean }
   | {
-    type: "image-service";
-    allowImageFallback?: boolean;
-    skipCanonical?: boolean;
-  };
+      type: "image-service";
+      allowImageFallback?: boolean;
+      skipCanonical?: boolean;
+    };
 
 export type OutputTarget = {
   label?: string;
@@ -69,24 +76,24 @@ export type OutputTargetTypes =
   | { type: "clipboard" }
   | { type: "download"; filename?: string }
   | {
-    type: "eventEmitter";
-    bubbles?: boolean;
-    cancelable?: boolean;
-    eventName?: string;
-    eventTarget?: EventTarget;
-  }
+      type: "eventEmitter";
+      bubbles?: boolean;
+      cancelable?: boolean;
+      eventName?: string;
+      eventTarget?: EventTarget;
+    }
   | {
-    type: "input";
-    separator?: string;
-    el: { current: null | HTMLInputElement };
-  }
+      type: "input";
+      separator?: string;
+      el: { current: null | HTMLInputElement };
+    }
   | {
-    type: "open-new-window";
-    urlPattern?: string;
-    target?: string;
-    features?: string;
-    cb?: (resource: any, window: Window | null) => void;
-  };
+      type: "open-new-window";
+      urlPattern?: string;
+      target?: string;
+      features?: string;
+      cb?: (resource: any, window: Window | null) => void;
+    };
 
 export type GetOutputFormat<Type extends OutputFormat["type"]> = InferFromType<
   OutputFormat,

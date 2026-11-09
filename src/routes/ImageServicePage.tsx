@@ -35,7 +35,8 @@ export function ImageServicePage() {
           src={serviceId}
           fluid
           mode={editMode ? "sketch" : "explore"}
-          renderViewerControls={() => <CanvasControls />}
+          homeOnResize
+          renderViewerControls={() => <CanvasControls id={serviceId} />}
           className="flex-1"
           // @ts-expect-error
           height={"auto"}

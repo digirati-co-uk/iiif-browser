@@ -105,13 +105,20 @@ type OutputFormat =
   | { type: "json"; pretty?: boolean }
   | { type: "image-service" }
   | {
-    type: "custom";
-    format: (
-      resource: SelectedItem,
-      parent: SelectedItem | null,
-      vault: Vault,
-    ) => any;
-  }
+      type: "image-url";
+      width?: number;
+      height?: number;
+      quality?: string;
+      format?: string;
+    }
+  | {
+      type: "custom";
+      format: (
+        resource: SelectedItem,
+        parent: SelectedItem | null,
+        vault: Vault,
+      ) => any;
+    }
   | { type: "url"; resolvable?: boolean };
 
 export type OutputTarget = {
@@ -126,17 +133,17 @@ export type OutputTargetTypes =
   | { type: "callback"; cb: (resource: any) => void }
   | { type: "clipboard" }
   | {
-    type: "input";
-    separator?: string;
-    el: { current: null | HTMLInputElement };
-  }
+      type: "input";
+      separator?: string;
+      el: { current: null | HTMLInputElement };
+    }
   | {
-    type: "open-new-window";
-    urlPattern?: string;
-    target?: string;
-    features?: string;
-    cb?: (resource: any, window: Window | null) => void;
-  };
+      type: "open-new-window";
+      urlPattern?: string;
+      target?: string;
+      features?: string;
+      cb?: (resource: any, window: Window | null) => void;
+    };
 
 export type OutputConfig = OutputTarget[];
 
@@ -418,7 +425,7 @@ export function createOutputStore(options: OutputStoreOptions) {
       if (
         item.selectedPainting?.id === selectedPainting?.id &&
         item.selectedPainting?.annotationId ===
-        selectedPainting?.annotationId &&
+          selectedPainting?.annotationId &&
         item.selectedPainting?.service?.id === selectedPainting?.service?.id &&
         item.selectedPainting?.choice === selectedPainting?.choice
       ) {
@@ -514,7 +521,7 @@ export function createOutputStore(options: OutputStoreOptions) {
       type: "Canvas",
       parent: canvas.parent,
       selector: canvas.selector,
-      rotation: previousItem?.rotation,
+      rotation: canvas.rotation ?? previousItem?.rotation,
     };
     const fullCanvas = vault.get<any>(item);
     item.selectedPainting =

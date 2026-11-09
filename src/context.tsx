@@ -1,3 +1,4 @@
+import { preferenceSignature } from "./utilities/output-preference";
 import type { ViewerMode } from "@atlas-viewer/atlas";
 import { getValue, Vault } from "@iiif/helpers";
 import {
@@ -42,6 +43,11 @@ import {
   OutputType,
 } from "./stores/output-store";
 
+const PreferenceScopeContext = createContext("default");
+export function usePreferenceScope() {
+  return useContext(PreferenceScopeContext);
+}
+
 const UIConfigContext = createContext<IIIFBrowserConfig | null>(null);
 const LinkConfigContext = createContext<BrowserLinkConfig | null>(null);
 const StoreContext = createContext<StoreApi<BrowserStore> | null>(null);
@@ -53,7 +59,11 @@ const SearchConfigContext = createContext<NormalizedV2SearchConfig | null>(
   null,
 );
 
-export function useMode() {
+export function useMode(): {
+  mode: ViewerMode;
+  setMode: (mode: ViewerMode) => void;
+  setEditMode: (editing: boolean) => void;
+} {
   const store = useAtlasStore();
   const [mode, changeMode] = useStore(store, (m) => [m.mode, m.changeMode]);
 
@@ -487,6 +497,7 @@ export function useSearchConfig(): NormalizedV2SearchConfig {
 }
 
 export function BrowserProvider({
+  preferenceKey,
   vault: customVault,
   uiConfig,
   browserConfig,
@@ -496,6 +507,7 @@ export function BrowserProvider({
   debug,
   children,
 }: {
+  preferenceKey?: string;
   vault?: Vault;
   uiConfig?: DeepPartial<IIIFBrowserConfig>;
   browserConfig?: Partial<BrowserStoreConfig>;
@@ -523,14 +535,9 @@ export function BrowserProvider({
   );
 
   const uiConfigValue: IIIFBrowserConfig = useMemo(() => {
-    const {
-      defaultPages,
-      manifestInfoButton,
-      showManifestMetadata,
-      ...rest
-    } = uiConfig || {};
-    const showManifestInfo =
-      manifestInfoButton ?? showManifestMetadata ?? true;
+    const { defaultPages, manifestInfoButton, showManifestMetadata, ...rest } =
+      uiConfig || {};
+    const showManifestInfo = manifestInfoButton ?? showManifestMetadata ?? true;
     return {
       defaultPages: {
         about: true,
@@ -670,7 +677,7 @@ export function BrowserProvider({
           markedResources: [],
           disallowedResources: [],
           doubleClickToNavigate: false,
-          clickToSelect: false,
+          clickToSelect: "after-selection",
           clickToNavigate: true,
           canNavigateToCollection: true,
           canNavigateToManifest: true,
@@ -776,26 +783,38 @@ export function BrowserProvider({
   }
 
   return (
-    <UIConfigContext.Provider value={uiConfigValue}>
-      <BrowserEventsContext.Provider value={emitter}>
-        <BrowserConfigContext.Provider value={browserStoreConfig}>
-          <LinkConfigContext.Provider value={linkConfigValue}>
-            <OutputContext.Provider value={outputStore}>
-              <VaultProvider vault={vault}>
-                <StoreContext.Provider value={store}>
-                  <OmnisearchContext.Provider value={omnisearchStore}>
-                    <SearchConfigContext.Provider
-                      value={normalizedSearchConfig}
-                    >
-                      {children}
-                    </SearchConfigContext.Provider>
-                  </OmnisearchContext.Provider>
-                </StoreContext.Provider>
-              </VaultProvider>
-            </OutputContext.Provider>
-          </LinkConfigContext.Provider>
-        </BrowserConfigContext.Provider>
-      </BrowserEventsContext.Provider>
-    </UIConfigContext.Provider>
+    <PreferenceScopeContext.Provider
+      value={
+        preferenceKey ??
+        preferenceSignature({
+          uiConfig,
+          linkConfig,
+          browserConfig,
+          searchConfig,
+        })
+      }
+    >
+      <UIConfigContext.Provider value={uiConfigValue}>
+        <BrowserEventsContext.Provider value={emitter}>
+          <BrowserConfigContext.Provider value={browserStoreConfig}>
+            <LinkConfigContext.Provider value={linkConfigValue}>
+              <OutputContext.Provider value={outputStore}>
+                <VaultProvider vault={vault}>
+                  <StoreContext.Provider value={store}>
+                    <OmnisearchContext.Provider value={omnisearchStore}>
+                      <SearchConfigContext.Provider
+                        value={normalizedSearchConfig}
+                      >
+                        {children}
+                      </SearchConfigContext.Provider>
+                    </OmnisearchContext.Provider>
+                  </StoreContext.Provider>
+                </VaultProvider>
+              </OutputContext.Provider>
+            </LinkConfigContext.Provider>
+          </BrowserConfigContext.Provider>
+        </BrowserEventsContext.Provider>
+      </UIConfigContext.Provider>
+    </PreferenceScopeContext.Provider>
   );
 }
