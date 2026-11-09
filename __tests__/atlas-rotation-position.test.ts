@@ -112,6 +112,24 @@ describe("Delft landscape Canvas rotation in a wide viewer", () => {
       h.cleanup();
     }
   });
+  it("animates home from a panned and zoomed viewport", () => {
+    const h = setup();
+    try {
+      h.runtime.setViewport({ x: 700, y: 400, width: 900, height: 600 });
+      const before = { ...h.runtime.getViewport() };
+      resetViewerHome(h.runtime, 0, false);
+      expect(h.runtime.getViewport()).toEqual(before);
+      expect(h.runtime.transitionManager.hasPending()).toBe(true);
+      h.runtime.transitionManager.runTransition(h.runtime.target, 100);
+      expect(h.runtime.getViewport().width).toBeGreaterThan(before.width);
+      h.settle();
+      const target = h.runtime.getHomeTarget();
+      expect(h.runtime.getViewport().x).toBeCloseTo(target.x);
+      expect(h.runtime.getViewport().width).toBeCloseTo(target.width);
+    } finally {
+      h.cleanup();
+    }
+  });
   it.each([0, 90, 180, 270])(
     "homes to the centre with all corners visible at %d degrees",
     (rotation) => {

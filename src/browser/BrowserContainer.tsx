@@ -12,6 +12,7 @@ import {
   ResourceReactContext,
 } from "react-iiif-vault";
 import { twMerge } from "tailwind-merge";
+import { useThemeAttributes } from "../theme/context";
 
 const BrowserContainerContext = createContext<HTMLDivElement | null>(null);
 
@@ -31,6 +32,7 @@ export const BrowserContainer = function BrowserContainer(props: {
     createAtlasStore({ events: atlasEvents }),
   );
   const [imageServiceLoader] = useState(() => new ImageServiceLoader());
+  const theme = useThemeAttributes();
 
   return (
     <EventsProvider emitter={atlasEvents}>
@@ -45,9 +47,11 @@ export const BrowserContainer = function BrowserContainer(props: {
                       "iiif-browser iiif-browser-root",
                       props.className,
                     )}
+                    data-ib-theme={theme["data-ib-theme"]}
                     style={
                       {
                         "--ib-icon-count": 0,
+                        ...theme.style,
                       } as any
                     }
                     ref={setRef}

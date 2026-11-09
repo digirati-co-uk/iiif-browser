@@ -1,9 +1,10 @@
 import { useId, useState } from "react";
-import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
+import { Dialog, Heading, Modal } from "react-aria-components";
 import { VaultProvider } from "react-iiif-vault";
 import { IIIFBrowser, type IIIFBrowserProps } from "../IIIFBrowser";
 import { IIIFCollection } from "../mdxeditor-snippet/components";
 import { resourceLabel, type Selection } from "./image-options";
+import { ThemedModalOverlay } from "../theme/Themed";
 
 export interface VirtualCollectionItem {
   id: string;
@@ -108,7 +109,7 @@ export function IIIFVirtualCollection({
           onSizeChange={(width, height) => onChange?.({ width, height })}
         />
       </VaultProvider>
-      <ModalOverlay
+      <ThemedModalOverlay
         isOpen={open && !!onChange}
         isDismissable
         onOpenChange={(next) => {
@@ -202,7 +203,7 @@ export function IIIFVirtualCollection({
             </div>
           </Dialog>
         </Modal>
-      </ModalOverlay>
+      </ThemedModalOverlay>
     </div>
   );
 }

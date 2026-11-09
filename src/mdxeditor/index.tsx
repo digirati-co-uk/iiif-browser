@@ -63,8 +63,7 @@ import {
   Modal as AriaModal,
   Dialog,
   Heading,
-  ModalOverlay,
-} from "react-aria-components";
+  } from "react-aria-components";
 import { IIIFBrowser } from "../IIIFBrowser";
 import { IIIFPluginLogo } from "../icons/IIIFPluginLogos";
 import {
@@ -75,6 +74,7 @@ import {
   parseIIIFImageUrl,
   requestAtWidth,
 } from "./image-api";
+import { ThemedModalOverlay } from "../theme/Themed";
 
 const config$ = Cell<IIIFBrowserPluginParams>({});
 const dropTarget$ = Cell<IIIFDropTarget | null>(null);
@@ -378,7 +378,7 @@ function IIIFBrowserDialog() {
         : (config.dialog?.title ?? "Insert from IIIF");
 
   return (
-    <ModalOverlay
+    <ThemedModalOverlay
       isOpen={open}
       isDismissable
       onOpenChange={(nextOpen) => {
@@ -505,7 +505,7 @@ function IIIFBrowserDialog() {
           ) : null}
         </Dialog>
       </AriaModal>
-    </ModalOverlay>
+    </ThemedModalOverlay>
   );
 }
 

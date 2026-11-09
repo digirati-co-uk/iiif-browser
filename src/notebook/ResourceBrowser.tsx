@@ -1,10 +1,11 @@
-import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
+import { Dialog, Heading, Modal } from "react-aria-components";
 import { IIIFBrowser, type IIIFBrowserProps } from "../IIIFBrowser";
 import type { OutputTarget } from "../stores/output-store";
 import { notebookSelection } from "./selection";
 import { contentStateFormat } from "../formats/content-state";
 import { notebookResourceHistory } from "./navigation";
 import { isNotebookUrl, type NotebookResource } from "./resources";
+import { ThemedModalOverlay } from "../theme/Themed";
 
 export const notebookBrowserOutputs: OutputTarget[] = [
   {
@@ -69,7 +70,7 @@ export function NotebookResourceBrowser({
   browserProps?: IIIFBrowserProps;
 }) {
   return (
-    <ModalOverlay
+    <ThemedModalOverlay
       isOpen={!!resource}
       isDismissable
       onOpenChange={(open) => {
@@ -131,6 +132,6 @@ export function NotebookResourceBrowser({
           </div>
         </Dialog>
       </Modal>
-    </ModalOverlay>
+    </ThemedModalOverlay>
   );
 }

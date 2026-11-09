@@ -53,9 +53,9 @@ export function MediaControls() {
       >
         <div
           ref={progress}
-          className="h-full bg-blue-600 relative rounded-full w-full transition-all duration-100 pointer-events-none"
+          className="h-full bg-accent relative rounded-full w-full transition-all duration-100 pointer-events-none"
         >
-          <div className="absolute right-0 opacity-0 transition-opacity bg-blue-700 group-hover:opacity-100 h-full w-1"></div>
+          <div className="absolute right-0 opacity-0 transition-opacity bg-accent-hover group-hover:opacity-100 h-full w-1"></div>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export function MediaControls() {
             onChange={handleVolumeChange}
             className="iiif-browser-range w-20 h-1 rounded-full outline-none cursor-pointer bg-gray-200 appearance-none"
             style={{
-              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(isMuted ? 0 : volume) * 100}%, #e5e7eb ${(isMuted ? 0 : volume) * 100}%, #e5e7eb 100%)`
+              background: `linear-gradient(to right, rgb(var(--ib-accent, 37 99 235)) 0%, rgb(var(--ib-accent, 37 99 235)) ${(isMuted ? 0 : volume) * 100}%, rgb(var(--ib-gray-200, 229 231 235)) ${(isMuted ? 0 : volume) * 100}%, rgb(var(--ib-gray-200, 229 231 235)) 100%)`
             }}
           />
         </div>

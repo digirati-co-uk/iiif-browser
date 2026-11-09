@@ -1,11 +1,13 @@
 import type { Runtime } from "@atlas-viewer/atlas";
 
 /** Fit using the measured frame, rather than the previous viewport's aspect ratio. */
-export function resetViewerHome(runtime: Runtime, rotation: number) {
+export function resetViewerHome(runtime: Runtime, rotation: number, immediate = true) {
   runtime.transitionManager.stopTransition();
   runtime.viewRotation = rotation;
   runtime.updateRendererScreenPosition();
-  runtime.setViewport(runtime.getHomeTarget());
+  const target = runtime.getHomeTarget();
+  if (immediate) runtime.setViewport(target);
+  else runtime.transitionManager.goToRegion(target);
   runtime.updateControllerPosition();
   runtime.updateNextFrame();
 }

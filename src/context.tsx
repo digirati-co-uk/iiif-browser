@@ -549,6 +549,7 @@ export function BrowserProvider({
       },
       reloadButton: false,
       menuButton: true,
+      themeToggle: true,
       backButton: true,
       homeButton: true,
       forwardButton: true,

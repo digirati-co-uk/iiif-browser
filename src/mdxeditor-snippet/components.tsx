@@ -2,7 +2,7 @@ import type { Vault } from "@iiif/helpers/vault";
 import type { Collection } from "@iiif/parser/presentation-3/types";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
+import { Button, Dialog, DialogTrigger } from "react-aria-components";
 import {
   CanvasContext,
   CanvasPanel,
@@ -20,6 +20,7 @@ import {
 import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { InfoIcon } from "../icons/InfoIcon";
+import { ThemedPopover } from "../theme/Themed";
 
 export interface IIIFSnippetProviderProps {
   collectionId?: string;
@@ -585,7 +586,7 @@ function ResourceInfo({
       >
         <InfoIcon />
       </Button>
-      <Popover className="iiif-snippet__info-popover" placement="bottom end">
+      <ThemedPopover className="iiif-snippet__info-popover" placement="bottom end">
         <Dialog
           aria-label={`${resourceType} information`}
           className="iiif-snippet__info-panel"
@@ -625,7 +626,7 @@ function ResourceInfo({
             <p>No descriptive metadata.</p>
           ) : null}
         </Dialog>
-      </Popover>
+      </ThemedPopover>
     </DialogTrigger>
   );
 }

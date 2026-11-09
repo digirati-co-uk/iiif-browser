@@ -25,6 +25,8 @@ import { ManifestPage } from "./routes/ManifestPage";
 import type { V2SearchConfig } from "./search/types";
 import type { BrowserStoreConfig } from "./stores/browser-store";
 import type { OutputTarget } from "./stores/output-store";
+import { ThemeProvider } from "./theme/context";
+import type { ThemePreference } from "./theme/theme";
 
 export interface IIIFBrowserConfig {
   defaultPages: {
@@ -40,6 +42,8 @@ export interface IIIFBrowserConfig {
   homeButton: boolean;
   bookmarkButton: boolean;
   menuButton: boolean;
+  /** Show the light/dark mode toggle in the menu. Hidden when `theme` is set without `onThemeChange`. */
+  themeToggle: boolean;
 
   // Other
   collectionPaginationSize: number;
@@ -62,6 +66,18 @@ export type DeepPartial<T> = {
 export interface IIIFBrowserProps {
   /** Stable scope for saved preferences. Set distinct keys for identical browser configurations. */
   preferenceKey?: string;
+  /**
+   * Colour theme: `light`, `dark` or `system` (follow the OS). When set the host owns the theme and
+   * the menu toggle is hidden unless `onThemeChange` is also given. When unset the browser starts
+   * light and the menu toggle switches it, remembering the choice.
+   */
+  theme?: ThemePreference;
+  onThemeChange?: (theme: ThemePreference) => void;
+  /**
+   * Accent colour for buttons, links and selection: hex (`#0d9488`), `rgb(13 148 136)` or `13 148 136`.
+   * Text on filled accents is chosen automatically so it stays readable.
+   */
+  accentColor?: string;
   ui?: DeepPartial<IIIFBrowserConfig>;
   history?: Partial<BrowserStoreConfig>;
   navigation?: Partial<BrowserLinkConfig>;
@@ -95,6 +111,9 @@ export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
 
 export function IIIFBrowser({
   preferenceKey,
+  theme,
+  onThemeChange,
+  accentColor,
   ui,
   history,
   navigation,
@@ -129,35 +148,46 @@ export function IIIFBrowser({
   );
 
   return (
-    <BrowserPluginsContext.Provider value={plugins}>
-      <BrowserProvider
-        preferenceKey={preferenceKey}
-        vault={vault}
-        outputConfig={output}
-        uiConfig={ui}
-        browserConfig={browserHistory}
-        linkConfig={navigation}
-        searchConfig={search}
-        debug={debug}
-      >
-        <BrowserContainer className={className} innerClassName={innerClassName}>
-          <WindowErrorBoundary>
-            <BrowserHeader />
+    <ThemeProvider
+      theme={theme}
+      onThemeChange={onThemeChange}
+      accentColor={accentColor}
+      allowToggle={ui?.themeToggle ?? true}
+      preferenceKey={preferenceKey}
+    >
+      <BrowserPluginsContext.Provider value={plugins}>
+        <BrowserProvider
+          preferenceKey={preferenceKey}
+          vault={vault}
+          outputConfig={output}
+          uiConfig={ui}
+          browserConfig={browserHistory}
+          linkConfig={navigation}
+          searchConfig={search}
+          debug={debug}
+        >
+          <BrowserContainer
+            className={className}
+            innerClassName={innerClassName}
+          >
+            <WindowErrorBoundary>
+              <BrowserHeader />
 
-            <BrowserWindow>
-              <RouterSwitch routes={allCustomPages} />
-            </BrowserWindow>
-            <BrowserFooter
-              // onSelect={onSelect}
-              targets={targets}
-              types={types as any}
-              format={format}
-            />
-            <Debug />
-          </WindowErrorBoundary>
-        </BrowserContainer>
-      </BrowserProvider>
-    </BrowserPluginsContext.Provider>
+              <BrowserWindow>
+                <RouterSwitch routes={allCustomPages} />
+              </BrowserWindow>
+              <BrowserFooter
+                // onSelect={onSelect}
+                targets={targets}
+                types={types as any}
+                format={format}
+              />
+              <Debug />
+            </WindowErrorBoundary>
+          </BrowserContainer>
+        </BrowserProvider>
+      </BrowserPluginsContext.Provider>
+    </ThemeProvider>
   );
 }
 

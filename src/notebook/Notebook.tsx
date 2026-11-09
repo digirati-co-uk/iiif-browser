@@ -12,6 +12,8 @@ import {
 import { useStore } from "zustand";
 import { IIIFImageDialog, IIIFSnippetDialog } from "../tiptap";
 import { InsertIIIFLink } from "../tiptap/link";
+import { ThemeProvider, useThemeAttributes } from "../theme/context";
+import type { ThemePreference } from "../theme/theme";
 import { NotebookResourceBrowser } from "./ResourceBrowser";
 import { PlusIcon } from "../icons/PlusIcon";
 import { SearchIcon } from "../icons/SearchIcon";
@@ -34,6 +36,14 @@ import {
 } from "./store";
 
 export interface IIIFNotebookProps extends NotebookEditorOptions {
+  /**
+   * Colour theme: `light`, `dark` or `system`. Unset follows a surrounding IIIFBrowser (when the
+   * notebook is a browser plugin page) and is light otherwise.
+   */
+  theme?: ThemePreference;
+  onThemeChange?(theme: ThemePreference): void;
+  /** Accent colour for buttons, links and selection (hex, `rgb()` or `r g b`). */
+  accentColor?: string;
   notebook?: NotebookStore | string;
   projectId?: string;
   /** Controlled active note, for hosts with note-specific routes. */
@@ -73,6 +83,24 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 export function IIIFNotebook({
+  theme,
+  onThemeChange,
+  accentColor,
+  ...props
+}: IIIFNotebookProps) {
+  return (
+    <ThemeProvider
+      theme={theme}
+      onThemeChange={onThemeChange}
+      accentColor={accentColor}
+      allowToggle={false}
+    >
+      <NotebookWorkspace {...props} />
+    </ThemeProvider>
+  );
+}
+
+function NotebookWorkspace({
   notebook: input = "global",
   projectId,
   noteId,
@@ -85,7 +113,8 @@ export function IIIFNotebook({
   defaultSidebarCollapsed = false,
   renderNoteActions,
   ...options
-}: IIIFNotebookProps) {
+}: Omit<IIIFNotebookProps, "theme" | "onThemeChange" | "accentColor">) {
+  const themeAttributes = useThemeAttributes();
   const notebook = typeof input === "string" ? getNotebook(input) : input;
   const state = useStore(notebook);
   const [preview, setPreview] = useState<NotebookResource | null>(null);
@@ -139,7 +168,8 @@ export function IIIFNotebook({
   return (
     <section
       className={`iiif-notebook iiif-notebook__editor ${className}`}
-      style={{ height, maxHeight }}
+      data-ib-theme={themeAttributes["data-ib-theme"]}
+      style={{ height, maxHeight, ...themeAttributes.style }}
       aria-label="IIIF notebook"
     >
       <NotebookResourceBrowser

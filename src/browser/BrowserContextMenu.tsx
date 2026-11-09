@@ -1,17 +1,16 @@
-import {
-  Button,
-  Menu,
-  MenuItem,
-  MenuTrigger,
-  Popover,
-} from "react-aria-components";
+import { Button, Menu, MenuItem, MenuTrigger } from "react-aria-components";
 import { useLastUrl, useResolve, useUIConfig } from "../context";
 import { MenuIcon } from "../icons/MenuIcon";
+import { MoonIcon, SunIcon } from "../icons/ThemeIcons";
+import { useBrowserTheme } from "../theme/context";
+import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserContextMenu() {
   const resolve = useResolve();
   const lastUrl = useLastUrl();
   const ui = useUIConfig();
+  const theme = useBrowserTheme();
+  const isDark = theme.mode === "dark";
 
   return (
     <MenuTrigger>
@@ -21,7 +20,7 @@ export function BrowserContextMenu() {
       >
         <MenuIcon />
       </Button>
-      <Popover placement="bottom end" className="iiif-browser">
+      <ThemedPopover placement="bottom end" className="iiif-browser">
         <Menu className="flex flex-col gap-1 outline-none bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm w-36 text-slate-600">
           <MenuItem
             aria-label="Refresh"
@@ -70,8 +69,20 @@ export function BrowserContextMenu() {
               About
             </MenuItem>
           ) : null}
+          {ui.themeToggle && theme.canToggle ? (
+            <MenuItem
+              aria-label={
+                isDark ? "Switch to light mode" : "Switch to dark mode"
+              }
+              onAction={theme.toggle}
+              className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded flex items-center gap-2"
+            >
+              {isDark ? <SunIcon /> : <MoonIcon />}
+              {isDark ? "Light mode" : "Dark mode"}
+            </MenuItem>
+          ) : null}
         </Menu>
-      </Popover>
+      </ThemedPopover>
     </MenuTrigger>
   );
 }

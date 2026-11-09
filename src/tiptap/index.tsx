@@ -8,7 +8,7 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
-import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
+import { Dialog, Heading, Modal } from "react-aria-components";
 import {
   dropBrowserHistory,
   type IIIFDropTarget,
@@ -41,6 +41,7 @@ import {
   IIIFManifest,
   IIIFSnippetProvider,
 } from "../mdxeditor-snippet/components";
+import { ThemedModalOverlay } from "../theme/Themed";
 
 export type { IIIFDropTarget } from "../editor/content-state";
 export type { IIIFImageOptions } from "../editor/image-options";
@@ -449,7 +450,7 @@ function ImageView({
         position: "relative",
         width: "fit-content",
         maxWidth: "100%",
-        outline: selected ? "2px solid #2563eb" : undefined,
+        outline: selected ? "2px solid rgb(var(--ib-accent, 37 99 235))" : undefined,
       }}
     >
       <div
@@ -706,7 +707,7 @@ function BrowserDialog({
   };
   const browserProps = options.browserProps ?? {};
   return (
-    <ModalOverlay
+    <ThemedModalOverlay
       isOpen={!!state.dialog && state.editable}
       isDismissable
       onOpenChange={(open) => {
@@ -954,7 +955,7 @@ function BrowserDialog({
           )}
         </Dialog>
       </Modal>
-    </ModalOverlay>
+    </ThemedModalOverlay>
   );
 }
 

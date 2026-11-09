@@ -260,6 +260,24 @@ This example demonstrates how to configure the IIIF Browser with custom UI
 options, history settings, navigation behavior, and output targets. Adjust the
 configuration options to suit your specific requirements.
 
+## Theming: dark mode and accent colour
+
+The browser has a light theme (default) and a dark theme that uses the Theseus palette: surfaces keep a slight blue tint rather than going full black. Both the accent colour and the theme can be set from props.
+
+```tsx
+<IIIFBrowser
+  theme="dark"            // "light" | "dark" | "system" (follows prefers-color-scheme)
+  accentColor="#0d9488"   // hex, rgb(13 148 136) or "13 148 136"
+/>
+```
+
+- **Menu toggle** – when `theme` is not set, the 3-line menu has a Dark mode / Light mode item. The choice is remembered in `localStorage` (shared between browsers, or scoped with `preferenceKey`). Hide it with `ui={{ themeToggle: false }}`.
+- **Host controlled** – setting `theme` makes the host the owner and hides the menu toggle. Add `onThemeChange` to keep the toggle and receive the viewer's choice.
+- **Accent colour** – applies to buttons, links, selection and focus rings. The button label colour (white or black) is picked automatically so it has at least 4.5:1 contrast on the fill, the fill keeps 3:1 against the surface, and accent text is lightened/darkened to stay readable on the surface in each theme. The default accent is Tailwind blue-600 (`#2563eb`).
+- **Notebook** – `<IIIFNotebook theme="dark" accentColor="#e0457b" />`. A notebook rendered inside an `IIIFBrowser` (e.g. via `notebookPlugin`), or a browser opened inside a notebook dialog, follows the surrounding theme. If you render `NotebookResourceBrowser` or the editor dialogs yourself, wrap them in `ThemeProvider` (exported from `iiif-browser` and `iiif-browser/notebook`).
+
+Theming is implemented with `--ib-*` CSS variables (space separated channels, e.g. `--ib-gray-500`) that the stylesheet reads with Tailwind's colours as the fallback, so the default light theme adds no inline styles. Custom components can use the `bg-accent`, `hover:bg-accent-hover` and `text-accent-text` Tailwind classes for filled accent surfaces. See the **Theming** stories in Storybook.
+
 ## MDXEditor plugin
 
 `@mdxeditor/editor` is an optional peer dependency. Install it in the app that

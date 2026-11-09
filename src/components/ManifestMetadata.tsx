@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
+import { Button, Dialog, DialogTrigger } from "react-aria-components";
 import { Metadata } from "react-iiif-vault";
 import { useBrowserContainer } from "../browser/BrowserContainer";
 import { InfoIcon } from "../icons/InfoIcon";
+import { ThemedPopover } from "../theme/Themed";
 
 export function ManifestMetadata({ manifest }: { manifest: any }) {
   const container = useBrowserContainer();
@@ -22,7 +23,7 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
       >
         <InfoIcon />
       </Button>
-      <Popover
+      <ThemedPopover
         UNSTABLE_portalContainer={container || undefined}
         className="z-[70] w-[280px] max-w-[calc(100vw-1rem)] !max-h-[min(28rem,calc(100%-4rem))] overflow-y-auto rounded-md border border-gray-300 bg-white text-sm text-gray-800 shadow-lg"
         placement="bottom end"
@@ -58,7 +59,7 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
             ) : null}
           </div>
         </Dialog>
-      </Popover>
+      </ThemedPopover>
     </DialogTrigger>
   );
 }

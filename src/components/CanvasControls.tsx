@@ -192,7 +192,7 @@ export function CanvasControls({
           data-secondary
           data-action="home"
           label="Reset view"
-          onPress={() => preset && resetViewerHome(preset.runtime, rotation)}
+          onPress={() => preset && resetViewerHome(preset.runtime, rotation, false)}
         >
           <HomeIcon />
         </ViewControl>
@@ -231,14 +231,14 @@ export function CanvasControls({
         <ViewControl
           data-action="in"
           label="Zoom in"
-          onPress={() => preset?.runtime.world.zoomTo(0.75)}
+          onPress={() => preset?.runtime.world.zoomTo(0.5)}
         >
           <PlusIcon />
         </ViewControl>
         <ViewControl
           data-action="out"
           label="Zoom out"
-          onPress={() => preset?.runtime.world.zoomTo(1 / 0.75)}
+          onPress={() => preset?.runtime.world.zoomTo(1 / 0.5)}
         >
           <MinusIcon />
         </ViewControl>

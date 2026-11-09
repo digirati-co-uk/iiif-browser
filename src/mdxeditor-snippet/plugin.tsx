@@ -29,8 +29,7 @@ import {
   Modal as AriaModal,
   Dialog,
   Heading,
-  ModalOverlay,
-} from "react-aria-components";
+  } from "react-aria-components";
 import { registerIIIFDrop } from "../editor/mdx-drop";
 import { IIIFBrowser, type IIIFBrowserProps } from "../IIIFBrowser";
 import { IIIFPluginLogo } from "../icons/IIIFPluginLogos";
@@ -40,6 +39,7 @@ import {
   IIIFManifest,
   IIIFSnippetProvider,
 } from "./components";
+import { ThemedModalOverlay } from "../theme/Themed";
 
 const DEFAULT_SOURCE = "iiif-browser/mdxeditor-snippet";
 type ResourceType = "Collection" | "Manifest" | "Canvas";
@@ -224,7 +224,7 @@ export function IIIFSnippetDialog() {
   );
 
   return (
-    <ModalOverlay
+    <ThemedModalOverlay
       isOpen={open}
       isDismissable
       onOpenChange={(nextOpen) => {
@@ -288,7 +288,7 @@ export function IIIFSnippetDialog() {
           </div>
         </Dialog>
       </AriaModal>
-    </ModalOverlay>
+    </ThemedModalOverlay>
   );
 }
 

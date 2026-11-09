@@ -140,6 +140,10 @@ The **Notebook / Inside the browser / Workshop** story includes the full worksho
 
 `IIIFLink` and `InsertIIIFLink` are exported from both `iiif-browser/tiptap` and `iiif-browser/notebook`. Install the extension with `StarterKit`, then render `<InsertIIIFLink editor={editor} browserProps={...} />`. It inserts ordinary labelled link marks in a plain editor, and native notebook resource nodes when `NotebookResourceLink` is installed. `editor.commands.insertIIIFLink(resource)` and `editor.commands.openIIIFLink()` provide programmatic access.
 
+## Theme
+
+`<IIIFNotebook theme="dark" accentColor="#e0457b" />` – `theme` is `light` (default), `dark` or `system`; pass `onThemeChange` if you surface your own toggle. Unset, the notebook follows a surrounding `IIIFBrowser`. Hosts that render the resource browser or editor dialogs outside the notebook should wrap them in `ThemeProvider`. See the README's theming section.
+
 ## Persistence and host storage
 
 `createNotebook({ storageKey: false })` creates an in-memory notebook. Like browser history, it accepts `localStorageKey`, `restoreFromLocalStorage`, and `saveToLocalStorage`; both flags default to true. `storageKey` remains a shorthand, and `false` disables both. `initialNotes` seeds an empty store. `onChange(snapshot)` receives a serializable, versioned snapshot for host persistence; local storage remains the default. `NotebookNote.content` is Tiptap JSON, including widget attributes, resource metadata and checked state.

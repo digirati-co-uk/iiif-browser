@@ -4,7 +4,6 @@ import {
   Menu,
   MenuItem,
   MenuTrigger,
-  Popover,
 } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
 import {
@@ -20,6 +19,7 @@ import {
   outputPreferenceKey,
   usePreferredOutput,
 } from "../utilities/output-preference";
+import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserOutputActions() {
   const availableOutputs = useAvailableOutputs();
@@ -53,7 +53,7 @@ export function BrowserOutputActions() {
     }
   };
   const className = twMerge(
-    "bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded disabled:opacity-50",
+    "bg-accent hover:bg-accent-hover text-accent-text py-2 px-4 rounded disabled:opacity-50",
     first.buttonClassName || buttonClassName,
   );
   return (
@@ -88,7 +88,7 @@ export function BrowserOutputActions() {
           >
             ▾
           </Button>
-          <Popover
+          <ThemedPopover
             placement="top end"
             offset={8}
             className="iiif-browser"
@@ -115,7 +115,7 @@ export function BrowserOutputActions() {
                 </MenuItem>
               ))}
             </Menu>
-          </Popover>
+          </ThemedPopover>
         </MenuTrigger>
       )}
     </div>

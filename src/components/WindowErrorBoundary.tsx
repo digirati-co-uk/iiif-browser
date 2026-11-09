@@ -30,7 +30,7 @@ function ErrorFallback({
           width: 132,
           height: 96,
           opacity: 0.6,
-          background: "#e5e7eb",
+          background: "rgb(var(--ib-gray-200, 229 231 235))",
         }}
       />
       <div className="flex flex-col gap-1">

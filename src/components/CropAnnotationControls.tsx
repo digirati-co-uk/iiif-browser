@@ -53,7 +53,7 @@ export function CropAnnotationControls() {
       )}
 
       <Button
-        className="rounded-sm bg-blue-600 px-3 py-1.5 font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+        className="rounded-sm bg-accent px-3 py-1.5 font-medium text-accent-text shadow-sm transition hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
         onPress={save}
       >
         Save

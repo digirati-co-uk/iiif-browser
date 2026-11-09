@@ -2,7 +2,7 @@ import "../mdx-plugins.css";
 import { Extension, type Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
 import { useEffect, useRef, useState, type ComponentProps } from "react";
-import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
+import { Dialog, Heading, Modal } from "react-aria-components";
 import { IIIFBrowser, type IIIFBrowserProps } from "../IIIFBrowser";
 import { IIIFLogo } from "../icons/IIIFPluginLogos";
 import {
@@ -13,6 +13,7 @@ import {
 import { notebookSelection } from "../notebook/selection";
 import type { OutputTarget, SelectedItem } from "../stores/output-store";
 import type { Vault } from "@iiif/helpers";
+import { ThemedModalOverlay } from "../theme/Themed";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -181,7 +182,7 @@ export function InsertIIIFLink({
       >
         {children ?? <IIIFLogo />}
       </button>
-      <ModalOverlay
+      <ThemedModalOverlay
         isOpen={!!state?.open && !!state?.editable}
         isDismissable
         onOpenChange={(open) => {
@@ -237,7 +238,7 @@ export function InsertIIIFLink({
             </div>
           </Dialog>
         </Modal>
-      </ModalOverlay>
+      </ThemedModalOverlay>
     </>
   );
 }

@@ -25,7 +25,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Popover } from "react-aria-components";
 import { IIIFLogo } from "../icons/IIIFPluginLogos";
 import type { IIIFBrowserProps } from "../IIIFBrowser";
 import { IIIFImage, IIIFSnippet, IIIFVirtualCollection } from "../tiptap";
@@ -45,6 +44,7 @@ import {
   type NotebookResource,
 } from "./resources";
 import type { NotebookNote, NotebookStore } from "./store";
+import { ThemedPopover } from "../theme/Themed";
 
 export interface NotebookActionContext {
   resource: NotebookResource;
@@ -962,7 +962,7 @@ function ResourceLinkContent({
       {context.inlineActions !== false && error && !open && (
         <span role="alert">{error}</span>
       )}
-      <Popover
+      <ThemedPopover
         triggerRef={anchor}
         isOpen={open}
         onOpenChange={setOpen}
@@ -1002,7 +1002,7 @@ function ResourceLinkContent({
             }}
           />
         </div>
-      </Popover>
+      </ThemedPopover>
     </span>
   ) : (
     // Not (yet) a confirmed IIIF resource: an ordinary link, verified lazily.

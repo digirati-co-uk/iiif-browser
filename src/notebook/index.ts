@@ -42,3 +42,11 @@ export {
   notebookBrowserOutputs,
 } from "./ResourceBrowser";
 export { notebookResourceHistory } from "./navigation";
+
+export {
+  ThemeProvider,
+  useBrowserTheme,
+  type BrowserThemeValue,
+  type ThemeProviderProps,
+} from "../theme/context";
+export type { ThemeMode, ThemePreference } from "../theme/theme";

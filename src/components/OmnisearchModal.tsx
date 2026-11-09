@@ -7,7 +7,6 @@ import {
   Input,
   Menu,
   MenuItem,
-  Popover,
   TextField,
 } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
@@ -33,6 +32,7 @@ import { createExternalSearchAdapter } from "../search/adapter-factory";
 import { combineSearchResults, isExternalItem } from "../search/combine";
 import type { SearchIndexItem } from "../stores/omnisearch-store";
 import { SearchResultIcon } from "./SearchResultIcon";
+import { ThemedPopover } from "../theme/Themed";
 
 // ---------------------------------------------------------------------------
 // Row types used to build the ordered list for grouped rendering
@@ -219,7 +219,7 @@ export function OmnisearchModal({
       {children}
 
       {/* What is visible when the modal is open */}
-      <Popover
+      <ThemedPopover
         className={twMerge("inset-0 flex flex-col overflow-hidden", className)}
         UNSTABLE_portalContainer={container || undefined}
         style={{ position: "absolute" }}
@@ -366,7 +366,7 @@ export function OmnisearchModal({
                           aria-label={item.label}
                           className={({ isFocused }) =>
                             [
-                              isFocused ? "bg-blue-500 text-white" : "",
+                              isFocused ? "bg-accent text-accent-text" : "",
                               "flex items-center gap-4 py-2 px-4 rounded overflow-hidden",
                             ].join(" ")
                           }
@@ -433,7 +433,7 @@ export function OmnisearchModal({
                                 >
                                   {item.actionLabel ?? "Open"}
                                 </div>
-                                <div className="flex items-center text-2xl rounded justify-center p-2 bg-gray-100 text-black/50">
+                                <div className="flex items-center text-2xl rounded justify-center p-2 bg-gray-100 text-slate-500">
                                   <ArrowForwardIcon
                                     className={`h-4 w-4 ${isFocused ? "text-blue-500" : "text-gray-500"}`}
                                   />
@@ -459,7 +459,7 @@ export function OmnisearchModal({
             </div>
           </Autocomplete>
         </Dialog>
-      </Popover>
+      </ThemedPopover>
     </DialogTrigger>
   );
 }
@@ -544,7 +544,7 @@ function GroupedMenu({
                     aria-label={item.label}
                     className={({ isFocused }) =>
                       [
-                        isFocused ? "bg-blue-500 text-white" : "",
+                        isFocused ? "bg-accent text-accent-text" : "",
                         "flex items-center gap-4 py-2 px-4 rounded overflow-hidden",
                       ].join(" ")
                     }
@@ -607,7 +607,7 @@ function GroupedMenu({
                           >
                             {item.actionLabel ?? "Open"}
                           </div>
-                          <div className="flex items-center text-2xl rounded justify-center p-2 bg-gray-100 text-black/50">
+                          <div className="flex items-center text-2xl rounded justify-center p-2 bg-gray-100 text-slate-500">
                             <ArrowForwardIcon
                               className={`h-4 w-4 ${isFocused ? "text-blue-500" : "text-gray-500"}`}
                             />
