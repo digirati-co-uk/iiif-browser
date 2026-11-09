@@ -260,6 +260,24 @@ This example demonstrates how to configure the IIIF Browser with custom UI
 options, history settings, navigation behavior, and output targets. Adjust the
 configuration options to suit your specific requirements.
 
+## Theming: dark mode and accent colour
+
+The browser has a light theme (default) and a dark theme that uses the Theseus palette: surfaces keep a slight blue tint rather than going full black. Both the accent colour and the theme can be set from props.
+
+```tsx
+<IIIFBrowser
+  theme="dark"            // "light" | "dark" | "system" (follows prefers-color-scheme)
+  accentColor="#0d9488"   // hex, rgb(13 148 136) or "13 148 136"
+/>
+```
+
+- **Menu toggle** – when `theme` is not set, the 3-line menu has a Dark mode / Light mode item. The choice is remembered in `localStorage` (shared between browsers, or scoped with `preferenceKey`). Hide it with `ui={{ themeToggle: false }}`.
+- **Host controlled** – setting `theme` makes the host the owner and hides the menu toggle. Add `onThemeChange` to keep the toggle and receive the viewer's choice.
+- **Accent colour** – applies to buttons, links, selection and focus rings. The button label colour (white or black) is picked automatically so it has at least 4.5:1 contrast on the fill, the fill keeps 3:1 against the surface, and accent text is lightened/darkened to stay readable on the surface in each theme. The default accent is Tailwind blue-600 (`#2563eb`).
+- **Notebook** – `<IIIFNotebook theme="dark" accentColor="#e0457b" />`. A notebook rendered inside an `IIIFBrowser` (e.g. via `notebookPlugin`), or a browser opened inside a notebook dialog, follows the surrounding theme. If you render `NotebookResourceBrowser` or the editor dialogs yourself, wrap them in `ThemeProvider` (exported from `iiif-browser` and `iiif-browser/notebook`).
+
+Theming is implemented with `--ib-*` CSS variables (space separated channels, e.g. `--ib-gray-500`) that the stylesheet reads with Tailwind's colours as the fallback, so the default light theme adds no inline styles. Custom components can use the `bg-accent`, `hover:bg-accent-hover` and `text-accent-text` Tailwind classes for filled accent surfaces. See the **Theming** stories in Storybook.
+
 ## MDXEditor plugin
 
 `@mdxeditor/editor` is an optional peer dependency. Install it in the app that
@@ -358,3 +376,61 @@ editor preview for each resource type. Set `provider: false` for components
 that load their own resources, or `defaultSize: false` to omit dimensions.
 Normal IIIF Browser options are passed through `browserProps`; titles, classes,
 and styles can be customized through `dialog`.
+
+## Optional TipTap integration
+
+See [TIPTAP.md](./TIPTAP.md) for Image API images, interactive IIIF snippets, and IIIF Content State drag-and-drop support in TipTap and MDXEditor. Preview the integrations in Storybook under **Integrations**.
+
+## Project notebooks
+
+The optional [`iiif-browser/notebook`](./NOTEBOOK.md) plugin adds an embeddable
+Tiptap notebook with smart IIIF links, resource previews, interactive checklists,
+project context, and shared browser search/save integration. See
+**Integrations / Notebook / Manifest Editor** in Storybook for a working host app.
+
+## Selection, rotation and image URLs
+
+By default, resource clicks navigate until the first explicit checkbox or drag
+selection. With an active manual selection, clicks on selectable resources select
+instead. Set `navigation.clickToSelect` to `true` for immediate click selection,
+`false` for navigation-only clicks, or `"after-selection"` (the default). Clearing
+the manual selection restores ordinary browsing. Ctrl/Cmd/Shift clicks toggle
+items when `multiSelect` is enabled.
+
+With `clickToNavigate: false`, navigation arrows remain available in both grid and
+list views. Non-selectable collections and manifests still open on a click, and
+`doubleClickToNavigate` can also be enabled. Resource/domain navigation
+restrictions continue to apply.
+
+The viewer uses Atlas's `viewRotation` camera API. Crops remain in the original
+Canvas coordinate system; returned selection state includes `rotation` separately.
+Content State output includes the crop fragment and an `ImageApiSelector` for
+rotation. Canvas routes retain `xywh`, `rotation`, and the selected image choice.
+
+To return a rendered IIIF image request, use this output target:
+
+```tsx
+{
+  type: "callback",
+  label: "Select image",
+  supportedTypes: ["Canvas", "CanvasRegion"],
+  format: { type: "image-url", width: 600 },
+  cb: (url) => console.log(url),
+}
+```
+
+The URL uses the chosen painting's Image API service and includes its image-space
+crop and rotation. Small crops are limited to their source dimensions to avoid
+implicit upscaling. `image-service` continues to return the service identifier or
+information document, rather than rendered pixels. The image server must support
+the requested crop, size and rotation.
+
+See **IIIF Browser / Regression** in Storybook and [REGRESSION_TESTING.md](./REGRESSION_TESTING.md)
+for the test matrix and repeatable browser workflow.
+
+The output action selected from **More actions** becomes the primary action and
+is remembered in local storage. Preferences are scoped to the browser's
+configuration and complete output list; an unavailable preferred action falls
+back to the first available action without discarding the preference. Use a
+stable, distinct `preferenceKey` on each `IIIFBrowser` when multiple instances
+have otherwise identical configurations, for example `preferenceKey="notebook-image-picker"`.

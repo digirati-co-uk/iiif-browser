@@ -46,7 +46,7 @@
   min-width: 0;
   min-height: 0;
   --atlas-container-flex: 1 1 0px;
-  --atlas-background: rgb(248 250 252);
+  --atlas-background: rgb(var(--ib-viewer, 248 250 252));
 }
 
 /* Custom range slider styles for media controls */
@@ -55,15 +55,15 @@ input[type="range"].iiif-browser-range::-webkit-slider-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #2563eb;
+  background: rgb(var(--ib-accent, 37 99 235));
   cursor: pointer;
-  border: 2px solid #ffffff;
+  border: 2px solid rgb(var(--ib-white, 255 255 255));
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
 
 input[type="range"].iiif-browser-range::-webkit-slider-thumb:hover {
-  background: #1d4ed8;
+  background: rgb(var(--ib-accent-hover, 29 78 216));
   transform: scale(1.1);
 }
 
@@ -71,15 +71,15 @@ input[type="range"].iiif-browser-range::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #2563eb;
+  background: rgb(var(--ib-accent, 37 99 235));
   cursor: pointer;
-  border: 2px solid #ffffff;
+  border: 2px solid rgb(var(--ib-white, 255 255 255));
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
 
 input[type="range"].iiif-browser-range::-moz-range-thumb:hover {
-  background: #1d4ed8;
+  background: rgb(var(--ib-accent-hover, 29 78 216));
   transform: scale(1.1);
 }
 

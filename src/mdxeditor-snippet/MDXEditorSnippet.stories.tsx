@@ -1,7 +1,16 @@
 import { headingsPlugin, MDXEditor, toolbarPlugin } from "@mdxeditor/editor";
+import {
+  ContentStateDragSource,
+  cookbookManifest,
+} from "../editor/ContentStateDragSource";
 import "@mdxeditor/editor/style.css";
 import { useState } from "react";
-import { InsertIIIFSnippet, iiifSnippetPlugin } from "./index";
+import {
+  InsertIIIFSnippet,
+  InsertIIIFVirtualCollection,
+  iiifSnippetPlugin,
+  iiifVirtualCollectionPlugin,
+} from "./index";
 
 export default { title: "Integrations/MDXEditor IIIF snippets" };
 
@@ -168,3 +177,106 @@ function MarkdownPreview({ markdown }: { markdown: string }) {
     </section>
   );
 }
+
+export const ContentStateDrop = () => {
+  const [markdown, setMarkdown] = useState("Drop a cookbook resource here.\n");
+  const [readOnly, setReadOnly] = useState(false);
+  return (
+    <>
+      <ContentStateDragSource />
+      <label>
+        <input
+          type="checkbox"
+          checked={readOnly}
+          onChange={(event) => setReadOnly(event.target.checked)}
+        />{" "}
+        Read only
+      </label>
+      <MDXEditor
+        markdown="Drop a cookbook resource here.\n"
+        readOnly={readOnly}
+        onChange={setMarkdown}
+        plugins={[iiifSnippetPlugin()]}
+      />
+      <pre data-testid="markdown-output">{markdown}</pre>
+    </>
+  );
+};
+
+export const ReadOnly = () => (
+  <MDXEditor
+    readOnly
+    markdown={`<IIIFSnippetProvider manifestId="${cookbookManifest}"><IIIFManifest manifestId="${cookbookManifest}" /></IIIFSnippetProvider>`}
+    plugins={[iiifSnippetPlugin()]}
+  />
+);
+
+export const DropCanvas = {
+  render: ContentStateDrop,
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    const { expect, fireEvent, userEvent, waitFor, within } = await import(
+      "@storybook/test"
+    );
+    const { contentStatePayload } = await import(
+      "../editor/ContentStateDragSource"
+    );
+    const canvas = within(canvasElement);
+    const editor = canvasElement.querySelector('[contenteditable="true"]')!;
+    await userEvent.click(editor);
+    const dataTransfer = new DataTransfer();
+    dataTransfer.setData("text/plain", contentStatePayload(true));
+    const bounds = editor.querySelector("p")!.getBoundingClientRect();
+    fireEvent(
+      editor,
+      new DragEvent("drop", {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+        clientX: bounds.left + 20,
+        clientY: bounds.top + bounds.height / 2,
+      }),
+    );
+    await waitFor(() =>
+      expect(canvas.getByTestId("markdown-output")).toHaveTextContent(
+        "IIIFCanvas",
+      ),
+    );
+    await userEvent.click(canvas.getByRole("checkbox", { name: "Read only" }));
+    await waitFor(() =>
+      expect(
+        canvasElement.querySelector(".iiif-snippet[data-resizable]"),
+      ).toBeNull(),
+    );
+  },
+};
+
+export const VirtualCollection = () => {
+  const [markdown, setMarkdown] = useState(
+    "Create a collection, give it a title, and add IIIF resources.",
+  );
+  const [readOnly, setReadOnly] = useState(false);
+  return (
+    <>
+      <label>
+        <input
+          type="checkbox"
+          checked={readOnly}
+          onChange={(event) => setReadOnly(event.target.checked)}
+        />{" "}
+        Read only
+      </label>
+      <MDXEditor
+        markdown={markdown}
+        onChange={setMarkdown}
+        readOnly={readOnly}
+        plugins={[
+          iiifVirtualCollectionPlugin(),
+          toolbarPlugin({
+            toolbarContents: () => <InsertIIIFVirtualCollection />,
+          }),
+        ]}
+      />
+      <MarkdownPreview markdown={markdown} />
+    </>
+  );
+};

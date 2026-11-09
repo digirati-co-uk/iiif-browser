@@ -7,9 +7,9 @@ import {
 import {
   createImageServiceRequest,
   getImageServices,
-  imageServiceRequestToString,
 } from "@iiif/parser/image-3";
-import type { CanvasNormalized } from "@iiif/presentation-3-normalized";
+import { imageRequestUrl } from "../mdxeditor/image-api";
+import type { CanvasNormalized } from "@iiif/parser/presentation-3-normalized/types";
 
 export type SelectedPainting = {
   id: string;
@@ -211,7 +211,7 @@ export function selectedPaintingThumbnail(
   size = 120,
 ) {
   try {
-    if (!selected || !selector) return;
+    if (!selected || (!selector && !rotation)) return;
     const painting = findSelectedPainting(vault, canvas, selected);
     if (!painting) return;
     const service = getImageServices(painting.resource)[0];
@@ -224,25 +224,29 @@ export function selectedPaintingThumbnail(
     };
     const request = createImageServiceRequest(normalizedService);
     if (request.type !== "image") return;
-    return imageServiceRequestToString(
-      {
-        ...request,
-        region: {
-          x: Math.round(selector.spatial.x),
-          y: Math.round(selector.spatial.y),
-          w: Math.round(selector.spatial.width),
-          h: Math.round(selector.spatial.height),
-        },
-        size: {
-          width: size,
-          max: false,
-          upscaled: false,
-          confined: true,
-        },
-        rotation: { angle: rotation },
+    return imageRequestUrl({
+      ...request,
+      region: selector
+        ? {
+            x: Math.round(selector.spatial.x),
+            y: Math.round(selector.spatial.y),
+            w: Math.round(selector.spatial.width),
+            h: Math.round(selector.spatial.height),
+          }
+        : { full: true },
+      size: {
+        width: Math.min(size, selector?.spatial.width || service.width || size),
+        height: Math.min(
+          size,
+          selector?.spatial.height || service.height || size,
+        ),
+        max: false,
+        upscaled: false,
+        confined: true,
+        version: normalizedService.type === "ImageService3" ? 3 : 2,
       },
-      normalizedService,
-    );
+      rotation: { angle: rotation },
+    });
   } catch {
     return;
   }

@@ -128,19 +128,19 @@ function DebugHistory() {
           <div className="flex gap-1">
             <Button
               onPress={() => history.go(-1)}
-              className="bg-blue-500 px-2 py-1 rounded text-white"
+              className="bg-accent px-2 py-1 rounded text-accent-text"
             >
               Back
             </Button>
             <Button
               onPress={() => history.go(1)}
-              className="bg-blue-500 px-2 py-1 rounded text-white"
+              className="bg-accent px-2 py-1 rounded text-accent-text"
             >
               Forward
             </Button>
             <Button
               onPress={clearHistory}
-              className="bg-blue-500 px-2 py-1 rounded text-white"
+              className="bg-accent px-2 py-1 rounded text-accent-text"
             >
               Clear history
             </Button>
@@ -184,7 +184,7 @@ function DebugHistory() {
           <div className="whitespace-pre-wrap text-xs overflow-auto">
             <Button
               onPress={() => setEvents([])}
-              className="bg-blue-500 px-2 py-1 rounded text-white"
+              className="bg-accent px-2 py-1 rounded text-accent-text"
             >
               Clear
             </Button>

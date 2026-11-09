@@ -2,7 +2,7 @@ import {
   canonicalServiceUrl,
   getImageServices,
 } from "@atlas-viewer/iiif-image-api";
-import type { CanvasNormalized } from "@iiif/presentation-3-normalized";
+import type { CanvasNormalized } from "@iiif/parser/presentation-3-normalized/types";
 import type { ExplorerFormat } from "../IIIFBrowser.types";
 import { findSelectedPainting } from "../utilities/painting-selection";
 

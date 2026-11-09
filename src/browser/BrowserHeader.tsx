@@ -1,3 +1,4 @@
+import { BrowserPluginSlot } from "./plugins";
 import { useLayoutEffect } from "react";
 import { SkipToContent } from "../components/SkipToContent";
 import { useUIConfig } from "../context";
@@ -45,6 +46,7 @@ export function BrowserHeader() {
       {forwardButton && <BrowserForwardButton />}
       {reloadButton && <BrowserReloadButton />}
       <BrowserUrlBox showBookmarkButton={false} />
+      <BrowserPluginSlot slot="header" />
       {menuButton && <BrowserContextMenu />}
     </div>
   );

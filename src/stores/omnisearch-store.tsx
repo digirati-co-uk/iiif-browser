@@ -1,10 +1,10 @@
-import { type Vault, getValue } from "@iiif/helpers";
+import { getValue, type Vault } from "@iiif/helpers";
 import type {
   CollectionNormalized,
   ManifestNormalized,
-} from "@iiif/presentation-3-normalized";
+} from "@iiif/parser/presentation-3-normalized/types";
 import type { History } from "history";
-import MiniSearch, { type SearchResult, type Options } from "minisearch";
+import MiniSearch, { type Options, type SearchResult } from "minisearch";
 import type { ReactNode } from "react";
 import { createStore } from "zustand/vanilla";
 import type { BrowserEmitter } from "../events";
@@ -22,12 +22,14 @@ export interface OmnisearchStore {
   results: SearchIndexItem[] | null;
   rawResults: SearchResult[] | null;
   route: HistoryItem;
+  preferredResourceUrls: string[];
 
   enable(): void;
   disable(): void;
   updateQuery: (query: string) => void;
   setRoute: (item: HistoryItem) => void;
 
+  setSupplementalItems: (key: string, items: SearchIndexItem[]) => void;
   setDynamicItems: (items: SearchIndexItem[]) => void;
 
   getResult(id: string): SearchIndexItem | undefined;
@@ -55,7 +57,15 @@ type BaseAction = {
   actionLabel?: string;
   keywords?: string[];
   showWhenEmpty?: boolean;
-  source: "dynamic" | "history" | "static" | "custom" | "collection" | "external";
+  /** URLs represented by an application-owned resource action; preferred over history. */
+  resourceUrls?: string[];
+  source:
+    | "dynamic"
+    | "history"
+    | "static"
+    | "custom"
+    | "collection"
+    | "external";
 };
 
 type SearchAction = BaseAction & {
@@ -66,7 +76,19 @@ type SearchAction = BaseAction & {
 type ResourceAction = BaseAction & {
   type: "resource";
   resource: { id: string; type: string };
+  parent?: { id: string; type: string };
 };
+
+function resourceUrls(item: SearchIndexItem): string[] {
+  return (
+    item.resourceUrls ??
+    (item.type === "resource"
+      ? [item.resource.id]
+      : item.type === "page"
+        ? [item.url]
+        : [])
+  );
+}
 
 type PageAction = BaseAction & {
   type: "page";
@@ -111,6 +133,8 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
   const store = createStore<OmnisearchStore>((set, get) => {
     const $search = new MiniSearch<SearchIndexItem>(miniSearchOptions);
     const documentsById = new Map<string, SearchIndexItem>();
+    const supplementalItems = new Map<string, SearchIndexItem[]>();
+    const preferredByUrl = new Map<string, SearchIndexItem>();
     let dynamicItems: SearchIndexItem[] = [];
     let historyItems: HistoryItem[] = options.initialHistory;
     const emptyItems = options.staticItems.filter((t) => t.showWhenEmpty);
@@ -124,6 +148,11 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
     };
 
     const indexHistoryItem = (item: HistoryItem) => {
+      if (
+        preferredByUrl.has(item.url) ||
+        (item.resource && preferredByUrl.has(item.resource))
+      )
+        return;
       if (item.resource) {
         const resource = options.vault.get<
           CollectionNormalized | ManifestNormalized
@@ -136,10 +165,11 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
             id: item.url,
             label: getValue(label),
             resource: {
-              id: item.resource,
+              id: item.url,
               type: item.metadata?.type || resource?.type,
             },
             source: "history",
+            parent: item.parent,
             keywords: [],
           };
 
@@ -155,11 +185,26 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
 
     const reindex = () => {
       documentsById.clear();
+      preferredByUrl.clear();
+      for (const item of Array.from(supplementalItems.values()).flat()) {
+        for (const url of item.resourceUrls ?? [])
+          if (!preferredByUrl.has(url)) preferredByUrl.set(url, item);
+      }
       $search.removeAll();
       indexStaticRoutes();
       set({ isIndexing: true });
       emitter.emit("search.index-start");
-      for (const item of dynamicItems) {
+      for (const item of [
+        ...dynamicItems,
+        ...Array.from(supplementalItems.values()).flat(),
+      ]) {
+        if (
+          resourceUrls(item).some(
+            (url) =>
+              preferredByUrl.has(url) && preferredByUrl.get(url) !== item,
+          )
+        )
+          continue;
         documentsById.set(item.id, item);
       }
       for (const item of documentsById.values()) {
@@ -178,11 +223,22 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
           // ignore.
         }
       }
+      set({ preferredResourceUrls: [...preferredByUrl.keys()] });
       emitter.emit("search.index-complete");
     };
 
     const makeSearch = (query: string) => {
       const sourceFilter = get().sourceFilter;
+      const collectionIds = new Set(
+        dynamicItems.flatMap((item) => [
+          item.id,
+          ...resourceUrls(item).map((url) => preferredByUrl.get(url)?.id),
+        ]),
+      );
+      const matchesSource = (item: SearchIndexItem) =>
+        !sourceFilter ||
+        item.source === sourceFilter ||
+        (sourceFilter === "collection" && collectionIds.has(item.id));
 
       if ((!query && !sourceFilter) || query === get().currentCollectionId) {
         const results: SearchIndexItem[] = [];
@@ -193,18 +249,38 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
             0,
             numberOfResults - emptyItems.length,
           )) {
-            if (!ids.includes(dynamicItem.id)) {
-              ids.push(dynamicItem.id);
-              results.push(dynamicItem);
+            const item =
+              resourceUrls(dynamicItem)
+                .map((url) => preferredByUrl.get(url))
+                .find(Boolean) ?? dynamicItem;
+            if (!ids.includes(item.id)) {
+              ids.push(item.id);
+              results.push(item);
             }
           }
         }
 
         for (const historyItem of historyItems) {
-          const history = documentsById.get(historyItem.url)!;
+          const history =
+            preferredByUrl.get(historyItem.url) ??
+            (historyItem.resource
+              ? preferredByUrl.get(historyItem.resource)
+              : undefined) ??
+            documentsById.get(historyItem.url);
           if (history && !ids.includes(history.id)) {
             ids.push(history.id);
             results.push(history);
+          }
+        }
+
+        for (const item of Array.from(supplementalItems.values()).flat()) {
+          if (
+            item.showWhenEmpty &&
+            documentsById.has(item.id) &&
+            !ids.includes(item.id)
+          ) {
+            ids.push(item.id);
+            results.push(item);
           }
         }
 
@@ -218,11 +294,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
         set({
           query,
           rawResults: [],
-          results: sourceFilter
-            ? results.filter((result) => {
-                return result.source === sourceFilter;
-              })
-            : results,
+          results: results.filter(matchesSource),
         });
         return;
       }
@@ -233,22 +305,21 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
           query,
           rawResults: [],
           results: [
-            {
-              id: query,
-              resource: { id: query, type: "unknown" },
-              label: `Open ${query}`,
-              type: "resource",
-              source: "dynamic",
-            },
+            preferredByUrl.get(query) ??
+              documentsById.get(query) ?? {
+                id: query,
+                resource: { id: query, type: "unknown" },
+                label: `Open ${query}`,
+                type: "resource",
+                source: "dynamic",
+              },
           ],
         });
         return;
       }
 
       if (!query.trim() && sourceFilter) {
-        const allResults = dynamicItems.filter(
-          (item) => item.source === sourceFilter,
-        );
+        const allResults = [...documentsById.values()].filter(matchesSource);
 
         set({
           query,
@@ -269,12 +340,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
         results: results
           .slice(0, numberOfResults)
           .map((result) => documentsById.get(result.id)!)
-          .filter((result) => {
-            if (sourceFilter) {
-              return result.source === sourceFilter;
-            }
-            return true;
-          }),
+          .filter(matchesSource),
       });
     };
 
@@ -342,6 +408,7 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
       isEnabled: false,
       isOpen: false,
       isIndexing: false,
+      preferredResourceUrls: [],
       query: "",
       results: null,
       rawResults: null,
@@ -361,12 +428,17 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
       setRoute: (item: HistoryItem) => {
         set({ route: item });
       },
+      setSupplementalItems: (key, items) => {
+        if (items.length) supplementalItems.set(key, items);
+        else supplementalItems.delete(key);
+        reindex();
+      },
       setDynamicItems: (items: SearchIndexItem[]) => {
         dynamicItems = items;
         reindex();
       },
       getResult(id: string): SearchIndexItem | undefined {
-        return documentsById.get(id);
+        return preferredByUrl.get(id) ?? documentsById.get(id);
       },
       open(query) {
         set({ query, isOpen: true });

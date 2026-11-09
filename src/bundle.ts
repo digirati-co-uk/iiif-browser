@@ -28,3 +28,19 @@ export {
 export type { CombinedSearchResults } from "./search/combine";
 export { useExternalSearch } from "./hooks/use-external-search";
 export type { UseExternalSearchOptions, UseExternalSearchResult } from "./hooks/use-external-search";
+
+export {
+  ThemeProvider,
+  useBrowserTheme,
+  useThemeAttributes,
+  type BrowserThemeValue,
+  type ThemeProviderProps,
+} from "./theme/context";
+export {
+  createThemeAttributes,
+  createThemeVariables,
+  resolveAccent,
+  DEFAULT_ACCENT,
+  type ThemeMode,
+  type ThemePreference,
+} from "./theme/theme";

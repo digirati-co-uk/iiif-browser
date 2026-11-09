@@ -1,4 +1,4 @@
-import type { Collection, Manifest } from "@iiif/presentation-3";
+import type { Collection, Manifest } from "@iiif/parser/presentation-3/types";
 
 export type DigitalCollectionResource = {
   id: string;

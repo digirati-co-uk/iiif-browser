@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Vault } from "@iiif/helpers";
 import { getForwardHistoryList } from "../src/browser/BrowserForwardButton";
 import { getActiveHistoryEntry } from "../src/context";
 import { createEmitter } from "../src/events";
@@ -31,6 +32,122 @@ function createHistoryItem(route: string, url: string): HistoryItem {
 }
 
 describe("history route invariants", () => {
+  it("fetches incomplete collection references rather than treating them as loaded", async () => {
+    const vault = new Vault();
+    const id = "https://example.org/not-loaded-manifest";
+    vault.loadSync("https://example.org/collection", {
+      id: "https://example.org/collection",
+      type: "Collection",
+      items: [{ id, type: "Manifest", label: { en: ["Reference"] } }],
+    });
+    const store = createBrowserStore({
+      ...baseConfig,
+      emitter: createEmitter({}),
+      vault,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+    });
+    await store.getState().resolve(id);
+    expect(store.getState().history.location.pathname).toBe("/loading");
+  });
+  it("restores crop and rotation from a Canvas route", () => {
+    const vault = new Vault();
+    const id = "https://example.org/manifest";
+    const canvas = `${id}/canvas`;
+    vault.loadSync(id, {
+      id,
+      type: "Manifest",
+      items: [
+        { id: canvas, type: "Canvas", width: 400, height: 200, items: [] },
+      ],
+    });
+    const emitter = createEmitter({});
+    const events: any[] = [];
+    emitter.on("canvas.change", (resource) => events.push(resource));
+    const store = createBrowserStore({
+      ...baseConfig,
+      emitter,
+      vault,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+    });
+    store
+      .getState()
+      .history.push(
+        `/manifest?id=${encodeURIComponent(id)}&canvas=${encodeURIComponent(canvas)}&xywh=40,20,100,50&rotation=270`,
+      );
+    expect(events.at(-1)).toMatchObject({
+      id: canvas,
+      rotation: 270,
+      selector: { spatial: { x: 40, y: 20, width: 100, height: 50 } },
+    });
+    store
+      .getState()
+      .history.push(
+        `/manifest?id=${encodeURIComponent(id)}&canvas=${encodeURIComponent(canvas)}`,
+      );
+    expect(events.at(-1)?.rotation).toBe(0);
+    store.getState().history.back();
+    expect(events.at(-1)?.rotation).toBe(270);
+  });
+
+  it("routes an unfetchable Canvas identifier through its Manifest in the shared vault", async () => {
+    const vault = new Vault();
+    const manifest = "https://example.org/manifest";
+    const canvas = `${manifest}/canvas`;
+    vault.loadSync(manifest, {
+      id: manifest,
+      type: "Manifest",
+      items: [
+        { id: canvas, type: "Canvas", width: 100, height: 100, items: [] },
+      ],
+    });
+    const store = createBrowserStore({
+      ...baseConfig,
+      emitter: createEmitter({}),
+      vault,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+    });
+    await store.getState().resolve(canvas);
+    const { pathname, search } = store.getState().history.location;
+    expect(pathname).toBe("/manifest");
+    expect(new URLSearchParams(search).get("id")).toBe(manifest);
+    expect(new URLSearchParams(search).get("canvas")).toBe(canvas);
+  });
+  it("navigates custom pages through internal URLs and restores them with Back and Forward", async () => {
+    const store = createBrowserStore({
+      emitter: createEmitter({}),
+      ...baseConfig,
+      initialHistory: [createHistoryItem("/", "iiif://home")],
+      initialHistoryCursor: 0,
+      customRoutes: { "iiif://notes": "/notes" },
+    });
+    await store.getState().resolve("iiif://notes");
+    expect(store.getState().router.location.pathname).toBe("/notes");
+    expect(store.getState().lastUrl).toBe("iiif://notes");
+    expect(store.getState().mapToRoute("/notes", "")).toEqual([
+      "iiif://notes",
+      null,
+    ]);
+    await store.getState().resolve("iiif://home");
+    store.getState().history.back();
+    expect(store.getState().lastUrl).toBe("iiif://notes");
+    store.getState().history.forward();
+    expect(store.getState().lastUrl).toBe("iiif://home");
+    await store.getState().resolve("iiif://notes?note=first&view=collection");
+    expect(store.getState().history.location.pathname).toBe("/notes");
+    expect(store.getState().lastUrl).toBe(
+      "iiif://notes?note=first&view=collection",
+    );
+    await store.getState().resolve("iiif://notes?note=second");
+    store.getState().history.back();
+    expect(store.getState().lastUrl).toBe(
+      "iiif://notes?note=first&view=collection",
+    );
+    store.getState().history.forward();
+    expect(store.getState().lastUrl).toBe("iiif://notes?note=second");
+  });
   it("keeps duplicate route entries in forward/back traversal", () => {
     const historyItems = [
       createHistoryItem("/", "iiif://home"),

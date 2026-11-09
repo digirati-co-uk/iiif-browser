@@ -1,7 +1,7 @@
 import type { ImageCandidateRequest } from "@atlas-viewer/iiif-image-api";
 import type { SupportedSelector } from "@iiif/helpers";
 import type { Vault } from "@iiif/helpers/vault";
-import type { Reference } from "@iiif/presentation-3";
+import type { Reference } from "@iiif/parser/presentation-3/types";
 
 export type HistoryItem = Reference & {
   selector?: SupportedSelector;
@@ -51,6 +51,13 @@ export type OutputFormat =
       ) => any;
     }
   | { type: "thumbnail"; options?: ImageCandidateRequest }
+  | {
+      type: "image-url";
+      width?: number;
+      height?: number;
+      quality?: string;
+      format?: string;
+    }
   | { type: "url"; resolvable?: boolean }
   | {
       type: "image-service";

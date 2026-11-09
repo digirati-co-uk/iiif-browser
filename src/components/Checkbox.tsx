@@ -21,7 +21,7 @@ export function Checkbox({ children, ...props }: CheckboxProps) {
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
-              <rect x="4" y="4" width="16" height="16" fill="#fff" />
+              <rect x="4" y="4" width="16" height="16" className="fill-white" />
               {isSelected ? (
                 <path
                   fill="currentColor"

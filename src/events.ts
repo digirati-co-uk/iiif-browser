@@ -1,4 +1,4 @@
-import type { InternationalString } from "@iiif/presentation-3";
+import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import mitt, { type Emitter } from "mitt";
 import type { BoxSelector } from "react-iiif-vault";
 import type { HistoryItem } from "./stores/browser-store";
@@ -28,6 +28,7 @@ export type BrowserEvents = {
       label?: InternationalString;
     };
     selector?: BoxSelector;
+    rotation?: number;
     selectedPainting?: SelectedPainting;
   } | null;
   "image-service.change": {

@@ -1,5 +1,5 @@
 import { getValue } from "@iiif/helpers";
-import type { InternationalString } from "@iiif/presentation-3";
+import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import { useMemo } from "react";
 import { Button, GridListItem } from "react-aria-components";
 import { LocaleString } from "react-iiif-vault";
@@ -78,7 +78,7 @@ export function ResourceListItem({
               <LocaleString>{resource.label}</LocaleString>
             </div>
             {large ? (
-              <div className="overflow-hidden text-md truncate flex-1 text-sm text-black/50">
+              <div className="overflow-hidden text-md truncate flex-1 text-sm text-slate-500">
                 {resource.id}
               </div>
             ) : null}

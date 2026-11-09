@@ -1,6 +1,7 @@
-:root {
-  --combo-bg: #487af6;
-  --combo-bg-hover: #5d85f1;
+.ComboButtonContainer {
+  --combo-bg: rgb(var(--ib-accent, 72 122 246));
+  --combo-bg-hover: rgb(var(--ib-accent-hover, 93 133 241));
+  --combo-text: rgb(var(--ib-accent-text, 255 255 255));
 }
 
 .ComboButtonContainer {
@@ -15,7 +16,7 @@
 
 .ComboButtonMain {
   padding: 0.5em 1em;
-  color: #fff;
+  color: var(--combo-text);
   min-width: 4em;
 
   cursor: pointer;
@@ -49,18 +50,18 @@
 .ComboButtonChoice {
   padding: 0.5em;
   background: var(--combo-bg);
-  color: #000;
+  color: var(--combo-text);
 
   display: inline-flex;
   touch-action: manipulation;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   border-radius: 0px 3px 3px 0px;
-  border-left: 1px solid #3360cc;
+  border-left: 1px solid rgb(var(--ib-accent-hover, 51 96 204));
   white-space: nowrap;
 
   & > svg {
-    fill: #fff;
+    fill: var(--combo-text);
 
     inline-size: 1.5ch;
     box-sizing: content-box;
@@ -103,8 +104,8 @@
   right: 0;
 
   list-style-type: none;
-  background: #fff;
-  color: #000;
+  background: rgb(var(--ib-white, 255 255 255));
+  color: rgb(var(--ib-gray-900, 17 24 39));
   padding-inline: 0;
   padding-block: 0.5ch;
   overflow: hidden;
@@ -133,10 +134,10 @@
   white-space: nowrap;
 
   &:focus-visible {
-    background: #e6effd;
+    background: rgb(var(--ib-blue-50, 230 239 253));
   }
 
   &:hover {
-    background: #e6effd;
+    background: rgb(var(--ib-blue-50, 230 239 253));
   }
 }

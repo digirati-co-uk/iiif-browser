@@ -1,7 +1,8 @@
 import type { Vault } from "@iiif/helpers";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useHover, usePress } from "react-aria";
 import { useVault } from "react-iiif-vault";
+import { useStore } from "zustand";
 import { Checkbox } from "../components/Checkbox";
 import {
   useCanResolve,
@@ -10,6 +11,7 @@ import {
   useResolve,
   useSelectedActions,
   useSelectedItems,
+  useOutputStore,
 } from "../context";
 
 export type BrowserLinkConfig = {
@@ -23,7 +25,8 @@ export type BrowserLinkConfig = {
   canCropImage: boolean;
   alwaysShowNavigationArrow: boolean;
 
-  clickToSelect: boolean;
+  /** Select on click immediately, never, or after the first explicit selection. */
+  clickToSelect: boolean | "after-selection";
   doubleClickToNavigate: boolean;
   clickToNavigate: boolean;
 
@@ -172,72 +175,60 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     [inputResource, parent],
   );
 
-  const onAction = useCallback(() => {
-    if (config.clickToSelect) {
-      if (!config.multiSelect) {
-        selectedActions.replaceSelectedItems([resource]);
+  const canNavigate = canResolve(resource);
+  const canSelect = canSelectHook(resource);
+  const outputStore = useOutputStore();
+  const hasExplicitSelection = useStore(
+    outputStore,
+    (state) => state.wasManuallySelected && state.selectedItems.length > 0,
+  );
+  const selectOnClick =
+    config.clickToSelect === true ||
+    (config.clickToSelect === "after-selection" && hasExplicitSelection);
 
-        return;
-      }
-
-      selectedActions.replaceSelectedItems([resource]);
-      return;
-    }
-
-    if (config.clickToNavigate) {
-      resolve(resource.id, { parent });
-    }
-  }, [
-    config.clickToSelect,
-    selectedActions,
-    config.multiSelect,
-    config.clickToNavigate,
-    resolve,
-    resource,
-    parent,
-  ]);
-
-  const { isPressed, pressProps } = usePress({
-    onPress: (e) => {
-      const isShift = e.shiftKey;
-      const isCtrl = e.ctrlKey;
-      const isMeta = e.metaKey;
-
-      if (config.clickToSelect) {
-        if (!config.multiSelect) {
-          if (isCtrl || isMeta) {
-            selectedActions.toggleItemSelection(resource, true);
-          } else {
-            selectedActions.replaceSelectedItems([resource]);
-          }
-          return;
-        }
-        if (isShift) {
+  const activate = useCallback(
+    (modified = false, toggleSingle = false) => {
+      if (selectOnClick && canSelect) {
+        if (modified && config.multiSelect) {
           selectedActions.toggleItemSelection(resource);
-        } else if (isCtrl || isMeta) {
-          selectedActions.toggleItemSelection(resource);
+        } else if (toggleSingle) {
+          selectedActions.toggleItemSelection(resource, true);
         } else {
           selectedActions.replaceSelectedItems([resource]);
         }
-        return;
-      }
-
-      if (config.clickToNavigate) {
+      } else if (canNavigate && (config.clickToNavigate || !canSelect)) {
+        // Non-selectable containers must remain browsable in selection mode.
         resolve(resource.id, { parent });
       }
     },
+    [
+      selectOnClick,
+      canSelect,
+      canNavigate,
+      config.multiSelect,
+      config.clickToNavigate,
+      selectedActions,
+      resource,
+      resolve,
+      parent,
+    ],
+  );
+
+  const { pressProps } = usePress({
+    onPress: (event) =>
+      activate(
+        event.shiftKey || event.ctrlKey || event.metaKey,
+        event.ctrlKey || event.metaKey,
+      ),
   });
 
-  const doubleClickProps = useMemo(
-    () => ({
-      onDoubleClick: () => {
-        if (config.doubleClickToNavigate) {
-          resolve(resource.id, { parent });
-        }
-      },
-    }),
-    [config.doubleClickToNavigate, resolve, resource.id, parent],
-  );
+  const doubleClickProps = {
+    onDoubleClick: () => {
+      if (config.doubleClickToNavigate && canNavigate) {
+        resolve(resource.id, { parent });
+      }
+    },
+  };
 
   const { isHovered, hoverProps } = useHover({
     onHoverStart: () => {
@@ -252,18 +243,6 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     [config, resource.id],
   );
 
-  const canNavigate = useMemo(() => {
-    // @todo see if parent is required for this.
-    return canResolve(resource);
-  }, [canResolve, resource]);
-
-  const canSelect = useMemo(() => {
-    return canSelectHook(resource);
-  }, [canSelectHook, resource]);
-
-  // @todo - get the selected item handling (list, add, remove)
-  // @todo - get loading state of resource passed in.
-
   const isSelected = useMemo(() => {
     return !!selectedItems.find((item) => item.id === resource.id);
   }, [selectedItems, resource.id]);
@@ -274,9 +253,11 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     canSelect,
     canNavigate,
     isMarked,
-    showNavigationArrow: ignoreAlwaysShowNavigationArrow
-      ? config.doubleClickToNavigate
-      : config.alwaysShowNavigationArrow || config.doubleClickToNavigate,
+    showNavigationArrow:
+      !config.clickToNavigate ||
+      selectOnClick ||
+      config.doubleClickToNavigate ||
+      (!ignoreAlwaysShowNavigationArrow && config.alwaysShowNavigationArrow),
     doubleClickToNavigate: config.doubleClickToNavigate,
     renderCheckbox: () => {
       return (
@@ -293,7 +274,7 @@ export function BrowserLink<ET extends React.ElementType = "span">({
     renderDotsMenu: () => <div />,
     navigate: () => {
       // @todo handle parent.
-      resolve(resource.id, { parent });
+      if (canNavigate) resolve(resource.id, { parent });
     },
     setSelected: (selected) => {
       selectedActions.toggleItemSelection(resource, !config.multiSelect);
@@ -301,9 +282,26 @@ export function BrowserLink<ET extends React.ElementType = "span">({
   };
 
   const wrapperProps: any = {};
+  const actionModifiers = useRef({ modified: false, toggle: false });
 
   if (isReactAria) {
-    wrapperProps.onAction = onAction;
+    const recordModifiers = (event: {
+      shiftKey: boolean;
+      ctrlKey: boolean;
+      metaKey: boolean;
+    }) => {
+      actionModifiers.current = {
+        modified: event.shiftKey || event.ctrlKey || event.metaKey,
+        toggle: event.ctrlKey || event.metaKey,
+      };
+    };
+    wrapperProps.onClickCapture = recordModifiers;
+    wrapperProps.onKeyDownCapture = recordModifiers;
+    wrapperProps.onAction = () =>
+      activate(
+        actionModifiers.current.modified,
+        actionModifiers.current.toggle,
+      );
   } else {
     Object.assign(wrapperProps, pressProps);
   }

@@ -5,6 +5,7 @@ import { jsonFormat } from "./json";
 import { customFormat } from "./custom";
 import { thumbnailFormat } from "./thumbnail";
 import { imageServiceFormat } from "./image-service";
+import { imageUrlFormat } from "./image-url";
 
 export const formats: { [K in OutputFormat["type"]]: ExplorerFormat<K> } = {
   "content-state": contentStateFormat,
@@ -13,4 +14,5 @@ export const formats: { [K in OutputFormat["type"]]: ExplorerFormat<K> } = {
   url: urlFormat,
   thumbnail: thumbnailFormat,
   "image-service": imageServiceFormat,
+  "image-url": imageUrlFormat,
 };

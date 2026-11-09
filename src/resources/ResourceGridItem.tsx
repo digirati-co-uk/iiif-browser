@@ -1,5 +1,5 @@
 import { getValue } from "@iiif/helpers";
-import type { InternationalString } from "@iiif/presentation-3";
+import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import { type ReactNode, useMemo } from "react";
 import { Button, GridListItem } from "react-aria-components";
 import { LocaleString } from "react-iiif-vault";
@@ -80,6 +80,7 @@ export function ResourceGridItem({
               {renderDotsMenu()}
               {showNavigationArrow && canNavigate ? (
                 <Button
+                  aria-label="Navigate to resource"
                   onPress={navigate}
                   className="ml-auto bg-gray-300/50 p-2 rounded hover:bg-gray-300/100"
                 >

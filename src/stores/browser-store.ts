@@ -1,19 +1,15 @@
-import {
-  type BoxSelector,
-  createThumbnailHelper,
-  Vault,
-} from "@iiif/helpers";
+import { type BoxSelector, createThumbnailHelper, Vault } from "@iiif/helpers";
 import { isImageService } from "@iiif/parser/image-3";
-import { upgrade } from "@iiif/parser/upgrader";
 import type {
   Collection,
   InternationalString,
   Manifest,
-} from "@iiif/presentation-3";
+} from "@iiif/parser/presentation-3/types";
 import type {
   CollectionNormalized,
   ManifestNormalized,
-} from "@iiif/presentation-3-normalized";
+} from "@iiif/parser/presentation-3-normalized/types";
+import { upgrade } from "@iiif/parser/upgrader";
 import { Action, createMemoryHistory, type History } from "history";
 import { createStore } from "zustand/vanilla";
 import {
@@ -23,6 +19,7 @@ import {
 import type { BrowserEmitter } from "../events";
 import { routes } from "../routes";
 import { applyIdMapping } from "../utilities/apply-id-mapping";
+import { findCanvasParent } from "../utilities/find-canvas-parent";
 import { selectedPaintingFromId } from "../utilities/painting-selection";
 import { selectorFromXYWH } from "../utilities/selector-from-xywh";
 
@@ -74,9 +71,9 @@ export type BrowserStore = {
     path: string,
     search: string,
   ): [
-      string | null,
-      null | { id: string; type: string; label?: InternationalString },
-    ];
+    string | null,
+    null | { id: string; type: string; label?: InternationalString },
+  ];
 
   // Omnibar state.
   omnibarValue: string;
@@ -132,6 +129,8 @@ export type BrowserStoreConfig = {
   restoreFromLocalStorage: boolean;
   saveToLocalStorage: boolean;
   localStorageKey: string;
+  /** Internal URLs mapped to custom page paths, supplied automatically by IIIFBrowser. */
+  customRoutes?: Record<string, string>;
 
   preprocessManifest?: (manifest: Manifest) => Promise<Manifest>;
   preprocessCollection?: (collection: Collection) => Promise<Collection>;
@@ -191,9 +190,9 @@ function getLocalStorageHistory(
 
     return foundHistory.history.length === 0
       ? {
-        history: defaultHistory,
-        cursor: 0,
-      }
+          history: defaultHistory,
+          cursor: 0,
+        }
       : foundHistory;
   } catch (error) {
     //
@@ -248,13 +247,13 @@ function getInitialHistory(options: CreateBrowserStoreOptions): readonly [
   const nonEmptyInitialHistory =
     initialHistory.length === 0
       ? [
-        {
-          resource: null,
-          route: "/",
-          url: "iiif://home",
-          timestamp: new Date().toISOString(),
-        },
-      ]
+          {
+            resource: null,
+            route: "/",
+            url: "iiif://home",
+            timestamp: new Date().toISOString(),
+          },
+        ]
       : initialHistory;
   const initialHistoryIndex = Math.min(
     Math.max(initialHistoryCursor, 0),
@@ -346,7 +345,16 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     Promise<DigitalCollectionResource | null>
   >();
 
-  const fixedRoutes = routes.filter((route) => route.type === "fixed");
+  const fixedRoutes = [
+    ...routes.filter((route) => route.type === "fixed"),
+    ...Object.entries(options.customRoutes ?? {}).map(([router, url]) => ({
+      type: "fixed" as const,
+      router,
+      url,
+      title: router.replace("iiif://", ""),
+      fallback: false,
+    })),
+  ];
   const resourceRoutes = routes.filter((route) => route.type === "resource");
   const notFound404 = fixedRoutes.find((route) => route.fallback)!;
 
@@ -562,9 +570,12 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         }
 
         if (!digitalCollectionResource) {
-          digitalCollectionResource = getIIIFResourceFromDigitalCollection(url, {
-            requestInitOptions: fetchOptions,
-          })
+          digitalCollectionResource = getIIIFResourceFromDigitalCollection(
+            url,
+            {
+              requestInitOptions: fetchOptions,
+            },
+          )
             .then((resource) => {
               if (!resource) {
                 digitalCollectionResourceCache.delete(url);
@@ -578,14 +589,16 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
             });
           digitalCollectionResourceCache.set(url, digitalCollectionResource);
         }
-        const resolvedDigitalCollectionResource = await digitalCollectionResource;
+        const resolvedDigitalCollectionResource =
+          await digitalCollectionResource;
         if (abortController.signal.aborted) {
           return;
         }
 
         if (resolvedDigitalCollectionResource?.resource) {
           const route = resourceRoutes.find(
-            (route) => route.resource === resolvedDigitalCollectionResource.type,
+            (route) =>
+              route.resource === resolvedDigitalCollectionResource.type,
           );
           if (!route) {
             return browserResourceError(
@@ -776,7 +789,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           requestAbortController.abort();
         }
 
-        // Handle canvas with parent passed in.
+        parent ??= findCanvasParent(url, vault);
+        // Handle canvas with parent passed in or recovered from the shared vault.
         if (parent?.type === "Manifest") {
           const manifestUrl = parent.id;
           const canvasId = url;
@@ -788,7 +802,11 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
           // Assume if the parent is a Manifest, then the URL must be a Canvas.
           // /manifest?id={manifest_id}&canvas={canvas_id}
-          const existing = get().loaded[manifestUrl];
+          const existing =
+            get().loaded[manifestUrl] ||
+            (vault.requestStatus(manifestUrl)?.loadingState === "RESOURCE_READY"
+              ? get().getLoadedResource(manifestUrl)
+              : undefined);
           if (existing && !force) {
             const fullResource = vault.get<ManifestNormalized>(parent as any);
             if (!fullResource) {
@@ -815,15 +833,13 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
         if (url.startsWith("https://") || url.startsWith("http://")) {
           // We _might_ have been passed a canvas id
-          const canvasRef = vault.get({ id: url, type: "Canvas" });
-          if (canvasRef) {
-            // @todo Handle this with iiif-parser:hasPart property.
-            return;
-          }
-
           // We are dealing with a resource at this point.
           // 1. Do we already know about this resource?
-          const existing = get().loaded[url];
+          const existing =
+            get().loaded[url] ||
+            (vault.requestStatus(url)?.loadingState === "RESOURCE_READY"
+              ? get().getLoadedResource(url)
+              : undefined);
           if (existing && !force) {
             const resource = existing.resource;
             if (resource === null || existing.error) {
@@ -869,9 +885,12 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
 
         // imagine iiif://about is passed here. We need to navigate to that mapped route, or go to
         // the not found page.
+        const internalUrl = url.split("?")[0];
         for (const route of fixedRoutes) {
-          if (route.router === url) {
-            history.push(route.url, { parent });
+          if (route.router === internalUrl) {
+            history.push(`${route.url}${url.slice(internalUrl.length)}`, {
+              parent,
+            });
             browserSuccess(url);
             return;
           }
@@ -886,7 +905,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const lowerCaseUrl = (pathname || "").toLowerCase();
         for (const route of fixedRoutes) {
           if (route.url === lowerCaseUrl) {
-            return [route.router, null];
+            return [`${route.router}${search || ""}`, null];
           }
         }
 
@@ -1007,14 +1026,14 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           currentPage.url === "iiif://home"
             ? [currentPage]
             : [
-              currentPage,
-              {
-                resource: null,
-                route: "/",
-                url: "iiif://home",
-                timestamp: new Date().toISOString(),
-              },
-            ];
+                currentPage,
+                {
+                  resource: null,
+                  route: "/",
+                  url: "iiif://home",
+                  timestamp: new Date().toISOString(),
+                },
+              ];
         set({
           historyList: newHistory,
           linearHistory: newHistory,
@@ -1028,21 +1047,37 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
     };
   });
 
-  // Look into this again in the future (atm dead code.)
-  function dispatchHistoryItemEvents(historyItem: HistoryItem) {
-    const resourceRef = historyItem.resource;
-    const resource = vault.get(resourceRef as any);
-
-    // Emit events
-    emitter.emit("history.change", {
-      item: historyItem,
-      source: "history.listen.pop",
-    });
+  function dispatchResourceEvents(resource: any, search: string) {
     if (resource?.type === "Collection") {
       emitter.emit("collection.change", resource);
     }
     if (resource?.type === "Manifest") {
-      emitter.emit("manifest.change", resource);
+      const searchParams = new URLSearchParams(search);
+      const canvasId = searchParams.get("canvas");
+      const xywh = searchParams.get("xywh");
+      const choice = searchParams.get("choice");
+      if (canvasId) {
+        const selector = selectorFromXYWH(xywh);
+        const canvas = vault.get<any>({ id: canvasId, type: "Canvas" });
+
+        emitter.emit("canvas.change", {
+          id: canvasId,
+          type: "Canvas",
+          parent: resource,
+          selector,
+          rotation: Number(searchParams.get("rotation") || 0) || 0,
+          selectedPainting: canvas
+            ? selectedPaintingFromId(vault, canvas, choice)
+            : undefined,
+        });
+      } else {
+        emitter.emit("manifest.change", resource);
+      }
+    }
+    if (resource && (resource?.type || "").startsWith("ImageService")) {
+      emitter.emit("image-service.change", {
+        id: resource.id,
+      });
     }
   }
 
@@ -1070,8 +1105,8 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
       const stackIndex = (history as IndexedHistory).index;
       const historyIndex =
         typeof stackIndex === "number" &&
-          stackIndex >= 0 &&
-          stackIndex < newHistoryList.length
+        stackIndex >= 0 &&
+        stackIndex < newHistoryList.length
           ? stackIndex
           : newHistoryList.findIndex((item) => item.route === locationUrl);
 
@@ -1088,12 +1123,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
           item: historyItem,
           source: "history.listen.pop",
         });
-        if (resource?.type === "Collection") {
-          emitter.emit("collection.change", resource);
-        }
-        if (resource?.type === "Manifest") {
-          emitter.emit("manifest.change", resource);
-        }
+        dispatchResourceEvents(resource, r.location.search);
       }
     } else if (resolved) {
       // Extract parent from state if available
@@ -1120,13 +1150,19 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         const vaultRef = vault.get(resolved as any);
         if (vaultRef) {
           createThumbnailHelper(vault)
-            .getBestThumbnailAtSize(vaultRef, { width: 256, height: 256 }, false)
+            .getBestThumbnailAtSize(
+              vaultRef,
+              { width: 256, height: 256 },
+              false,
+            )
             .then((result) => {
               if (result.best?.id) {
                 historyItem.thumbnail = result.best.id;
               }
             })
-            .catch(() => { /* ignore */ });
+            .catch(() => {
+              /* ignore */
+            });
         }
       }
 
@@ -1193,36 +1229,7 @@ export function createBrowserStore(options: CreateBrowserStoreOptions) {
         }
       }
 
-      if (resource?.type === "Collection") {
-        emitter.emit("collection.change", resource);
-      }
-      if (resource?.type === "Manifest") {
-        const searchParams = new URLSearchParams(r.location.search);
-        const canvasId = searchParams.get("canvas");
-        const xywh = searchParams.get("xywh");
-        const choice = searchParams.get("choice");
-        if (canvasId) {
-          const selector = selectorFromXYWH(xywh);
-          const canvas = vault.get<any>({ id: canvasId, type: "Canvas" });
-
-          emitter.emit("canvas.change", {
-            id: canvasId,
-            type: "Canvas",
-            parent: resource,
-            selector,
-            selectedPainting: canvas
-              ? selectedPaintingFromId(vault, canvas, choice)
-              : undefined,
-          });
-        } else {
-          emitter.emit("manifest.change", resource);
-        }
-      }
-      if (resource && (resource?.type || "").startsWith("ImageService")) {
-        emitter.emit("image-service.change", {
-          id: resource.id,
-        });
-      }
+      dispatchResourceEvents(resource, r.location.search);
     }
 
     const newState: Partial<BrowserStore> = {

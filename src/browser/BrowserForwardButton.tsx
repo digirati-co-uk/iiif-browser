@@ -4,7 +4,6 @@ import {
   Menu,
   MenuItem,
   MenuTrigger,
-  Popover,
 } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
 import { HistoryListItem } from "../components/HistoryListItem";
@@ -12,6 +11,7 @@ import { useHistory, useHistoryIndex, useHistoryList } from "../context";
 import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
+import { ThemedPopover } from "../theme/Themed";
 
 export function getForwardHistoryList(
   historyList: ReturnType<typeof useHistoryList>,
@@ -46,7 +46,7 @@ export function BrowserForwardButton() {
       >
         <ArrowForwardIcon />
       </BrowserToolbarButton>
-      <Popover
+      <ThemedPopover
         placement="bottom start"
         className={twMerge(
           "bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm max-w-96 text-slate-600",
@@ -66,7 +66,7 @@ export function BrowserForwardButton() {
             );
           })}
         </Menu>
-      </Popover>
+      </ThemedPopover>
     </MenuTrigger>
   );
 }

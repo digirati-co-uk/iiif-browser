@@ -1,6 +1,7 @@
 import type { BoxSelector } from "@iiif/helpers";
 import { Vault } from "@iiif/helpers";
 import { describe, expect, it } from "vitest";
+import { imageService } from "../src/editor/image-options";
 import { outputTypesForItem } from "../src/stores/output-store";
 import {
   canvasToImageSelector,
@@ -57,6 +58,25 @@ const crop: BoxSelector = {
 };
 
 describe("painting selection", () => {
+  it("finds an image service among bare service references", () => {
+    const { vault } = loadCanvas({
+      id: "https://example.org/image",
+      type: "Image",
+      service: [
+        "https://example.org/other-service",
+        {
+          id: "https://example.org/image-service",
+          type: "ImageService3",
+          profile: "level1",
+        },
+      ],
+    });
+    expect(imageService({ id: canvasId, type: "Canvas" }, vault)).toEqual({
+      id: "https://example.org/image-service",
+      version: 3,
+    });
+  });
+
   it("maps a Canvas-space crop into the selected image coordinates", () => {
     const { vault, canvas } = loadCanvas(
       {
@@ -214,6 +234,6 @@ describe("painting selection", () => {
 
     expect(
       selectedPaintingThumbnail(vault, canvas, selected, imageSelector, 90),
-    ).toContain("/400,200,200,100/!120,/90/default.jpg");
+    ).toContain("/400,200,200,100/!120,100/90/default.jpg");
   });
 });
