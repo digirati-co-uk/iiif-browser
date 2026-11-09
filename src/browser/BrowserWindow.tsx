@@ -1,6 +1,6 @@
 import { useBrowserI18n } from "../i18n";
 export function BrowserWindow(props: { children: React.ReactNode }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   return (
     <div
       id="browser-container"

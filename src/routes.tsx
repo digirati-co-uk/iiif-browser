@@ -4,6 +4,7 @@ export interface FixedRouteDefinition {
   router: string;
   fallback?: boolean;
   title: string;
+  titleMessage?: string;
   description?: string;
 }
 
@@ -23,24 +24,28 @@ export const fixedRoutes: FixedRouteDefinition[] = [
     url: "/",
     router: "iiif://home",
     title: "Home",
+    titleMessage: "home",
   },
   {
     type: "fixed",
     url: "/about",
     router: "iiif://about",
     title: "About",
+    titleMessage: "about",
   },
   {
     type: "fixed",
     url: "/history",
     router: "iiif://history",
     title: "History",
+    titleMessage: "history",
   },
   {
     type: "fixed",
     url: "/not-found",
     router: "iiif://not-found",
     title: "Not Found",
+    titleMessage: "notFound",
     fallback: true,
   },
 ];

@@ -34,7 +34,7 @@ export function BrowserOutputPreview() {
 }
 
 function RenderSelectedManifest({ id }: { id: string }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const manifest = useManifest({ id });
 
   if (!manifest) {
@@ -65,7 +65,7 @@ function RenderSelectedManifest({ id }: { id: string }) {
 }
 
 function RenderSelectedCollection({ id }: { id: string }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const collection = useCollection({ id });
 
   if (!collection) {
@@ -96,7 +96,7 @@ function RenderSelectedCollection({ id }: { id: string }) {
 }
 
 function RenderSelectedCanvas({ item }: { item: SelectedItem }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const manifest = useManifest({ id: item.parent?.id! });
   const canvas = useCanvas({ id: item.id });
 
@@ -146,7 +146,7 @@ function RenderSelectedListOfType() {
 }
 
 function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   if (items.length === 0) {
     return <div />;
   }
@@ -155,7 +155,13 @@ function RenderSelectedListOfManyTypes({ items }: { items: SelectedItem[] }) {
     <div className="flex items-center gap-3">
       <MultiImageIcon className="text-2xl text-[#C63E75]" />
       <span aria-label={t("multipleItemsSelected", "Multiple items selected")}>
-        {t("selectedCount", items.length === 1 ? "{{value}} item selected" : "{{value}} items selected", { count: items.length, value: items.length })}
+        {t(
+          "selectedCount",
+          items.length === 1
+            ? "{{value}} item selected"
+            : "{{value}} items selected",
+          { count: items.length, value: items.length },
+        )}
       </span>
     </div>
   );

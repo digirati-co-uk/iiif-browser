@@ -7,7 +7,7 @@ import { InfoIcon } from "../icons/InfoIcon";
 import { ThemedPopover } from "../theme/Themed";
 
 export function ManifestMetadata({ manifest }: { manifest: any }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const container = useBrowserContainer();
   if (!manifest) return null;
 
@@ -34,7 +34,9 @@ export function ManifestMetadata({ manifest }: { manifest: any }) {
           aria-label={t("manifestInformation", "Manifest information")}
           className="p-3 outline-none"
         >
-          <h2 className="font-medium text-gray-900">{t("manifestInformation", "Manifest information")}</h2>
+          <h2 className="font-medium text-gray-900">
+            {t("manifestInformation", "Manifest information")}
+          </h2>
           <div className="mt-3 grid gap-3 [overflow-wrap:anywhere]">
             {metadata.length ? (
               <Metadata

@@ -22,7 +22,7 @@ export interface OmnisearchBoxConfig {
 }
 
 export function Omnisearch() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const [search, setSearch] = useSearchState();
   const { isIndexing } = useSearchIndex();
   const lastUrl = useLastUrl();

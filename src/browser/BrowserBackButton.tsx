@@ -1,11 +1,6 @@
 import { useBrowserI18n } from "../i18n";
 import { useMemo } from "react";
-import {
-  Button,
-  Menu,
-  MenuItem,
-  MenuTrigger,
-} from "react-aria-components";
+import { Button, Menu, MenuItem, MenuTrigger } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
 import { HistoryListItem } from "../components/HistoryListItem";
 import { useHistory, useHistoryIndex, useHistoryList } from "../context";
@@ -14,7 +9,7 @@ import { BrowserToolbarButton } from "./BrowserToolbarButton";
 import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserBackButton() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const history = useHistory();
   const historyList = useHistoryList();
   const historyIndex = useHistoryIndex();

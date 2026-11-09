@@ -60,7 +60,7 @@ export function OmnisearchModal({
   onSelect: (result: SearchIndexItem) => void;
   onClose?: () => void;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const container = useBrowserContainer();
   const [search, setSearch] = useSearchState();
   const { collectionSearchTagEnabled } = useUIConfig();
@@ -246,7 +246,10 @@ export function OmnisearchModal({
                 </div>
 
                 <TextField
-                  aria-label={t("searchCommandsOrEnterAURLToAIIIFManifestOrCollection", "Search commands or enter a URL to a IIIF Manifest or Collection")}
+                  aria-label={t(
+                    "searchCommandsOrEnterAURLToAIIIFManifestOrCollection",
+                    "Search commands or enter a URL to a IIIF Manifest or Collection",
+                  )}
                   className="relative flex-1 min-w-0 translate-y-[-1px] translate-x-[-1px] text-sm"
                 >
                   <Input
@@ -289,10 +292,15 @@ export function OmnisearchModal({
                   <div
                     className="flex items-center pr-2 text-xs text-blue-500 flex-shrink-0 gap-1"
                     aria-live="polite"
-                    aria-label={t("searchingExternalSources", "Searching external sources")}
+                    aria-label={t(
+                      "searchingExternalSources",
+                      "Searching external sources",
+                    )}
                   >
                     <span className="inline-block w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="sr-only">{t("searching", "Searching…")}</span>
+                    <span className="sr-only">
+                      {t("searching", "Searching…")}
+                    </span>
                   </div>
                 )}
 
@@ -300,8 +308,14 @@ export function OmnisearchModal({
                 {!!externalError && !isExternalLoading && (
                   <div
                     className="flex items-center pr-2 text-xs text-amber-500 flex-shrink-0"
-                    title={t("externalSearchUnavailable", "External search unavailable")}
-                    aria-label={t("externalSearchUnavailable", "External search unavailable")}
+                    title={t(
+                      "externalSearchUnavailable",
+                      "External search unavailable",
+                    )}
+                    aria-label={t(
+                      "externalSearchUnavailable",
+                      "External search unavailable",
+                    )}
                   >
                     <span aria-hidden="true">⚠</span>
                   </div>
@@ -391,15 +405,21 @@ export function OmnisearchModal({
                                   {item.source === "collection" &&
                                   showCollectionTag ? (
                                     <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                      {t("currentCollection", "current collection")}</span>
+                                      {t(
+                                        "currentCollection",
+                                        "current collection",
+                                      )}
+                                    </span>
                                   ) : null}
                                   {item.source === "history" ? (
                                     <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                      {t("historyTag", "history")}</span>
+                                      {t("historyTag", "history")}
+                                    </span>
                                   ) : null}
                                   {isExternal ? (
                                     <span className="flex-shrink-0 text-xs bg-blue-50 text-blue-600 rounded-sm px-2">
-                                      {t("external", "external")}</span>
+                                      {t("external", "external")}
+                                    </span>
                                   ) : null}
                                 </div>
                                 {isExternal && item.subLabel ? (
@@ -451,7 +471,8 @@ export function OmnisearchModal({
                   combined.length === 0 &&
                   search.trim().length > 0 && (
                     <div className="p-4 text-sm text-gray-400 text-center select-none">
-                      {t("noResultsFound", "No results found")}</div>
+                      {t("noResultsFound", "No results found")}
+                    </div>
                   )}
               </div>
             </div>
@@ -489,7 +510,7 @@ function GroupedMenu({
   search: string;
   isIndexing: boolean;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   // Split the flat rows array into segments, each with an optional header and
   // a list of result items.
   type Segment = { header: string | null; items: SearchIndexItem[] };
@@ -558,19 +579,24 @@ function GroupedMenu({
                         </div>
                         <div className="flex-1 min-w-0 truncate select-none">
                           <div className="flex items-center gap-2">
-                            <strong className="truncate">{displayBrowserLabel(item, t)}</strong>
+                            <strong className="truncate">
+                              {displayBrowserLabel(item, t)}
+                            </strong>
                             {item.source === "collection" &&
                             showCollectionTag ? (
                               <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                {t("currentCollection", "current collection")}</span>
+                                {t("currentCollection", "current collection")}
+                              </span>
                             ) : null}
                             {item.source === "history" ? (
                               <span className="flex-shrink-0 text-xs bg-gray-50 text-gray-500 rounded-sm px-2">
-                                {t("historyTag", "history")}</span>
+                                {t("historyTag", "history")}
+                              </span>
                             ) : null}
                             {isExternal ? (
                               <span className="flex-shrink-0 text-xs bg-blue-50 text-blue-600 rounded-sm px-2">
-                                {t("external", "external")}</span>
+                                {t("external", "external")}
+                              </span>
                             ) : null}
                           </div>
                           {isExternal && item.subLabel ? (

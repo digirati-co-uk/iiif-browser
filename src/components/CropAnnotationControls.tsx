@@ -5,7 +5,7 @@ import { useAtlasStore } from "react-iiif-vault";
 import { useStore } from "zustand";
 
 export function CropAnnotationControls() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const store = useAtlasStore();
   const changeMode = useStore(store, (state) => state.changeMode);
   const mode = useStore(store, (state) => state.mode);
@@ -50,19 +50,22 @@ export function CropAnnotationControls() {
             changeMode("sketch");
           }}
         >
-          {t("edit", "Edit")}</Button>
+          {t("edit", "Edit")}
+        </Button>
       )}
 
       <Button
         className="rounded-sm bg-accent px-3 py-1.5 font-medium text-accent-text shadow-sm transition hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
         onPress={save}
       >
-        {t("save", "Save")}</Button>
+        {t("save", "Save")}
+      </Button>
       <Button
         className="rounded-sm px-3 py-1.5 font-medium transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
         onPress={cancel}
       >
-        {t("cancel", "Cancel")}</Button>
+        {t("cancel", "Cancel")}
+      </Button>
     </div>
   );
 }

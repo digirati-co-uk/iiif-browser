@@ -22,14 +22,16 @@ export function ResourceListItem({
   parent?: { id: string; type: string };
   large?: boolean;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const reference = useMemo(
     () => ({ id: resource.id, type: resource.type, parent }),
     [resource.id, resource.type, parent],
   );
   return (
     <BrowserLink
-      aria-label={resource.label ? getValue(resource.label) : t("resource", "Resource")}
+      aria-label={
+        resource.label ? getValue(resource.label) : t("resource", "Resource")
+      }
       as={GridListItem}
       isReactAria
       resource={reference}

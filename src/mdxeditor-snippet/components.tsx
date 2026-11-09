@@ -575,7 +575,7 @@ function ResourceInfo({
   resource: any;
   resourceType: "Collection" | "Manifest";
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   if (!resource) return null;
   const metadata = list(resource.metadata);
   const requiredStatement = resource.requiredStatement;
@@ -588,7 +588,10 @@ function ResourceInfo({
       >
         <InfoIcon />
       </Button>
-      <ThemedPopover className="iiif-snippet__info-popover" placement="bottom end">
+      <ThemedPopover
+        className="iiif-snippet__info-popover"
+        placement="bottom end"
+      >
         <Dialog
           aria-label={`${resourceType} information`}
           className="iiif-snippet__info-panel"

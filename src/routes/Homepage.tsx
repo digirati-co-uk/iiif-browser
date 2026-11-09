@@ -149,7 +149,7 @@ export function HomepageResourceRow({
 }
 
 export const Homepage = () => {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const history = useLinearHistory();
   const resolve = useResolve();
   const columns = useContainerColumns();
@@ -189,9 +189,14 @@ export const Homepage = () => {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-700">
-                  {t("iiifBrowser", "IIIF Browser")}</h1>
+                  {t("iiifBrowser", "IIIF Browser")}
+                </h1>
                 <p className="text-sm text-gray-400 mt-1">
-                  {t("pasteAIIIFURLAboveToGetStarted", "Paste a IIIF URL above to get started.")}</p>
+                  {t(
+                    "pasteAIIIFURLAboveToGetStarted",
+                    "Paste a IIIF URL above to get started.",
+                  )}
+                </p>
               </div>
             </div>
           ) : null}
@@ -203,7 +208,8 @@ export const Homepage = () => {
                   className="text-lg shrink-0"
                 />
                 <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                  {t("recentManifests", "Recent Manifests")}</h2>
+                  {t("recentManifests", "Recent Manifests")}
+                </h2>
               </div>
               <div
                 className="grid gap-1"
@@ -231,7 +237,8 @@ export const Homepage = () => {
                   className="text-lg shrink-0"
                 />
                 <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                  {t("recentCollections", "Recent Collections")}</h2>
+                  {t("recentCollections", "Recent Collections")}
+                </h2>
               </div>
               <div className="flex flex-col gap-1">
                 {recentCollections.map((item) => (
@@ -252,7 +259,8 @@ export const Homepage = () => {
                 onPress={() => resolve("iiif://history")}
               >
                 <HistoryIcon className="text-base" />
-                {t("viewFullHistory", "View full history")}</Button>
+                {t("viewFullHistory", "View full history")}
+              </Button>
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import type {
   CollectionNormalized,
   ManifestNormalized,
@@ -7,6 +8,7 @@ import { fixedRoutes } from "../routes";
 import type { HistoryItem } from "../stores/browser-store";
 
 export function HistoryListItem({ historyItem }: { historyItem: HistoryItem }) {
+  const { t } = useBrowserI18n();
   const fullResource = useVaultSelector(
     (_, v) => {
       if (!historyItem.resource) return null;
@@ -31,12 +33,14 @@ export function HistoryListItem({ historyItem }: { historyItem: HistoryItem }) {
       <div>
         <div className="flex gap-3 items-center">
           <div className="truncate flex-1">
-            {foundFixedRoute?.title ||
+            {(foundFixedRoute?.titleMessage
+              ? t(foundFixedRoute.titleMessage, foundFixedRoute.title)
+              : foundFixedRoute?.title) ||
               (historyItem.url.startsWith("iiif://")
                 ? historyItem.url
                     .slice(7)
                     .replace(/^./, (letter) => letter.toUpperCase())
-                : "Unknown")}
+                : t("unknown", "Unknown"))}
           </div>
           <div className="flex-shrink-0 rounded text-sm px-2 py-0.5 text-gray-500">
             {foundFixedRoute?.router || historyItem.url}

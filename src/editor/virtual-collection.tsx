@@ -63,7 +63,7 @@ export function IIIFVirtualCollection({
   IIIFVirtualCollectionOptions & {
     onChange?: (attributes: Partial<IIIFVirtualCollectionAttributes>) => void;
   }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const id = `urn:iiif:virtual:${useId()}`;
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");

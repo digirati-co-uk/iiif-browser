@@ -26,7 +26,7 @@ import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { useLocalStorage } from "../utilities/use-local-storage";
 
 export function ManifestCanvasViewer() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const manifest = useManifest()!;
   const outputCtx = useContext(OutputContext);
   const {

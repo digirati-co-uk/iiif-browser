@@ -17,7 +17,7 @@ export function getReloadRequest(searchParams: URLSearchParams) {
 }
 
 export function BrowserReloadButton() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const [searchParams] = useSearchParams();
   const reloadRequest = getReloadRequest(searchParams);
   const loadResource = useLoadResource();

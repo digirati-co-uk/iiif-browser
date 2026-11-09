@@ -25,7 +25,7 @@ export function ResourceGridItem({
   thumbnail?: ReactNode;
   parent?: { id: string; type: string };
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const reference = useMemo(
     () => ({ id: resource.id, type: resource.type, parent }),
     [resource.id, resource.type, parent],
@@ -33,7 +33,9 @@ export function ResourceGridItem({
   return (
     <BrowserLink
       as={GridListItem}
-      aria-label={resource.label ? getValue(resource.label) : t("resource", "Resource")}
+      aria-label={
+        resource.label ? getValue(resource.label) : t("resource", "Resource")
+      }
       isReactAria
       ignoreAlwaysShowNavigationArrow
       resource={reference}

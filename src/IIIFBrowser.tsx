@@ -200,28 +200,33 @@ const targets = [
     type: "open-new-window",
     urlPattern: "https://theseusviewer.org/?iiif-content={MANIFEST}",
     label: "Open in Theseus",
+    labelMessage: "openInTheseus",
   },
   {
     type: "open-new-window",
     urlPattern:
       "https://universalviewer.dev/#?iiifManifestId={MANIFEST}&cv={CANVAS_INDEX}&xywh={XYWH}",
     label: "Open in UV",
+    labelMessage: "openInUV",
   },
   {
     type: "open-new-window",
     label: "Open in Clover",
+    labelMessage: "openInClover",
     urlPattern:
       "https://samvera-labs.github.io/clover-iiif/?iiif-content={MANIFEST}",
   },
   {
     type: "open-new-window",
     label: "Open in Mirador",
+    labelMessage: "openInMirador",
     urlPattern:
       "https://tomcrane.github.io/scratch/mirador3/index.html?iiif-content={MANIFEST}",
   },
   {
     type: "open-new-window",
     label: "Open JSON-LD",
+    labelMessage: "openJSONLD",
     urlPattern: "{RESULT}",
   },
 ] as any;
@@ -229,5 +234,9 @@ const targets = [
 const format = { type: "url", resolvable: false } as any;
 
 export function IIIFBrowser({ i18n, ...props }: IIIFBrowserProps) {
- return <BrowserI18nProvider i18n={i18n}><IIIFBrowserContent {...props} /></BrowserI18nProvider>;
+  return (
+    <BrowserI18nProvider i18n={i18n}>
+      <IIIFBrowserContent {...props} />
+    </BrowserI18nProvider>
+  );
 }

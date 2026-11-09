@@ -81,7 +81,7 @@ export function InsertIIIFLink({
   editor: Editor | null;
   browserProps?: IIIFBrowserProps;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const request = useRef(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -199,7 +199,8 @@ export function InsertIIIFLink({
           >
             <header className="iiif-browser-mdx-header">
               <Heading slot="title" className="iiif-browser-mdx-title">
-                {t("insertIIIFLink", "Insert IIIF link")}</Heading>
+                {t("insertIIIFLink", "Insert IIIF link")}
+              </Heading>
               <button
                 type="button"
                 className="iiif-browser-mdx-close"
@@ -216,7 +217,8 @@ export function InsertIIIFLink({
             )}
             {busy && (
               <p role="status" className="iiif-browser-mdx-alert">
-                {t("preparingLink", "Preparing link…")}</p>
+                {t("preparingLink", "Preparing link…")}
+              </p>
             )}
             <div
               className="iiif-browser-mdx-browser iiif-browser"

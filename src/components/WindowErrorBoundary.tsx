@@ -13,7 +13,7 @@ function ErrorFallback({
   error: unknown;
   onDismiss: (navigateTo?: string) => void;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const { homeLink } = useUIConfig();
   const resolve = useResolve();
 
@@ -37,7 +37,8 @@ function ErrorFallback({
       />
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold text-gray-600">
-          {t("somethingWentWrong", "Something went wrong")}</p>
+          {t("somethingWentWrong", "Something went wrong")}
+        </p>
         <p className="text-xs text-gray-400 max-w-xs break-words">{message}</p>
       </div>
       <div className="flex gap-2">
@@ -50,14 +51,16 @@ function ErrorFallback({
               onDismiss();
             }}
           >
-            {t("goHomeLabel", "Go home")}</button>
+            {t("goHomeLabel", "Go home")}
+          </button>
         )}
         <button
           type="button"
           className="text-xs px-3 py-1.5 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
           onClick={() => onDismiss()}
         >
-          {t("tryAgain", "Try again")}</button>
+          {t("tryAgain", "Try again")}
+        </button>
       </div>
     </div>
   );

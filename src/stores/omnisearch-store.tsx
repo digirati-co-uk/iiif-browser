@@ -147,7 +147,11 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
 
     const indexStaticRoutes = () => {
       for (const item of options.staticItems) {
-        $search.add(translateUi && item.labelMessage ? { ...item, label: displayBrowserLabel(item, translateUi) } : item);
+        $search.add(
+          translateUi && item.labelMessage
+            ? { ...item, label: displayBrowserLabel(item, translateUi) }
+            : item,
+        );
         documentsById.set(item.id, item);
       }
     };
@@ -315,7 +319,8 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
                 id: query,
                 resource: { id: query, type: "unknown" },
                 label: `Open ${query}`,
-                labelMessage: "openUrl", labelValues: { url: query },
+                labelMessage: "openUrl",
+                labelValues: { url: query },
                 type: "resource",
                 source: "dynamic",
               },
@@ -411,7 +416,10 @@ export function createOmnisearchStore(options: OmnisearchStoreOptions) {
     }
 
     return {
-      setUITranslation(translate) { translateUi = translate; reindex(); },
+      setUITranslation(translate) {
+        translateUi = translate;
+        reindex();
+      },
       isEnabled: false,
       isOpen: false,
       isIndexing: false,
