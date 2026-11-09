@@ -7,7 +7,7 @@ import {
 } from "../context";
 
 export function NotFoundPage() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const store = useBrowserStoreContext();
   const lastUrl = useLastUrl();
   const [searchParams] = useSearchParams();

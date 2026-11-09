@@ -58,7 +58,7 @@ export function CanvasControls({
   id?: string;
   thumbnails?: { visible: boolean; controls: string; onToggle(): void };
 }) {
- const { t: translate } = useBrowserI18n();
+  const { t: translate } = useBrowserI18n();
   const canvas = useCanvas();
   const preset = useViewerPreset();
   const { canCropImage } = useLinkConfig();
@@ -194,7 +194,9 @@ export function CanvasControls({
           data-secondary
           data-action="home"
           label={translate("resetView", "Reset view")}
-          onPress={() => preset && resetViewerHome(preset.runtime, rotation, false)}
+          onPress={() =>
+            preset && resetViewerHome(preset.runtime, rotation, false)
+          }
         >
           <HomeIcon />
         </ViewControl>
@@ -202,7 +204,11 @@ export function CanvasControls({
           <ViewControl
             data-secondary
             data-action="thumbnails"
-            label={thumbnails.visible ? translate("hideThumbnails", "Hide thumbnails") : translate("showThumbnails", "Show thumbnails")}
+            label={
+              thumbnails.visible
+                ? translate("hideThumbnails", "Hide thumbnails")
+                : translate("showThumbnails", "Show thumbnails")
+            }
             aria-expanded={thumbnails.visible}
             aria-controls={thumbnails.controls}
             onPress={thumbnails.onToggle}

@@ -12,7 +12,7 @@ import { CanvasGridSnippet } from "./CanvasGridSnippet";
 import { CanvasListSnippet } from "./CanvasListSnippet";
 
 export function ManifestItemList() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const manifest = useManifest();
   const config = useLinkConfig();
   const [items, actions] = usePaginateArray(manifest?.items || [], 48);
@@ -54,7 +54,8 @@ export function ManifestItemList() {
             isDisabled={actions.currentPage === 1}
             aria-label={t("previousPage", "Previous page")}
           >
-            {t("previous", "Previous")}</Button>
+            {t("previous", "Previous")}
+          </Button>
           <div
             className="text-center text-sm text-gray-400"
             aria-label={t("pageNumber", "Page number")}
@@ -67,7 +68,8 @@ export function ManifestItemList() {
             isDisabled={actions.currentPage === actions.totalPages}
             aria-label={t("nextPage", "Next page")}
           >
-            {t("next", "Next")}</Button>
+            {t("next", "Next")}
+          </Button>
         </div>
       ) : null}
 

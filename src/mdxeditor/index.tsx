@@ -60,11 +60,7 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  Modal as AriaModal,
-  Dialog,
-  Heading,
-  } from "react-aria-components";
+import { Modal as AriaModal, Dialog, Heading } from "react-aria-components";
 import { IIIFBrowser } from "../IIIFBrowser";
 import { IIIFPluginLogo } from "../icons/IIIFPluginLogos";
 import {
@@ -230,7 +226,7 @@ export function InsertIIIFBrowser({
 }
 
 function IIIFBrowserDialog() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const config = useCellValue(config$);
   const dropTarget = useCellValue(dropTarget$);
   const activeEditor = useCellValue(activeEditor$);
@@ -405,7 +401,8 @@ function IIIFBrowserDialog() {
                 className="iiif-browser-mdx-back"
                 onClick={() => setScreen("browser")}
               >
-                <span aria-hidden="true">←</span> {t("back", "Back")}</button>
+                <span aria-hidden="true">←</span> {t("back", "Back")}
+              </button>
             ) : null}
             <Heading slot="title" className="iiif-browser-mdx-title">
               {title}
@@ -528,7 +525,7 @@ function GenericImageForm({
     height?: number;
   }) => void;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const initial = state.type === "editing" ? state.initialValues : {};
   const [src, setSrc] = useState(initial.src ?? "");
   const [altText, setAltText] = useState(initial.altText ?? "");
@@ -572,14 +569,16 @@ function GenericImageForm({
           className="iiif-browser-mdx-secondary"
           onClick={onCancel}
         >
-          {t("cancel", "Cancel")}</button>
+          {t("cancel", "Cancel")}
+        </button>
         <button
           type="button"
           className="iiif-browser-mdx-primary"
           disabled={!src}
           onClick={() => onSave({ ...initial, src, altText, title })}
         >
-          {t("saveImage", "Save image")}</button>
+          {t("saveImage", "Save image")}
+        </button>
       </footer>
     </>
   );

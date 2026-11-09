@@ -363,7 +363,7 @@ function ImageView({
   updateAttributes,
   extension,
 }: NodeViewProps) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor.isEditable,
@@ -452,7 +452,9 @@ function ImageView({
         position: "relative",
         width: "fit-content",
         maxWidth: "100%",
-        outline: selected ? "2px solid rgb(var(--ib-accent, 37 99 235))" : undefined,
+        outline: selected
+          ? "2px solid rgb(var(--ib-accent, 37 99 235))"
+          : undefined,
       }}
     >
       <div
@@ -496,7 +498,8 @@ function ImageView({
             })
           }
         >
-          {t("editIIIFImage", "Edit IIIF image")}</button>
+          {t("editIIIFImage", "Edit IIIF image")}
+        </button>
       )}
     </NodeViewWrapper>
   );
@@ -507,7 +510,7 @@ function SnippetView({
   updateAttributes,
   getPos,
 }: NodeViewProps) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor.isEditable,
@@ -567,7 +570,8 @@ function SnippetView({
             })
           }
         >
-          {t("editIIIFSnippet", "Edit IIIF snippet")}</button>
+          {t("editIIIFSnippet", "Edit IIIF snippet")}
+        </button>
       )}
     </NodeViewWrapper>
   );
@@ -584,7 +588,7 @@ type InsertProps = Omit<ComponentProps<"button">, "onClick"> & {
   editor: Editor | null;
 };
 export function InsertIIIFImage({ editor, children, ...props }: InsertProps) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor?.isEditable ?? false,
@@ -605,7 +609,7 @@ export function InsertIIIFImage({ editor, children, ...props }: InsertProps) {
   );
 }
 export function InsertIIIFSnippet({ editor, children, ...props }: InsertProps) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor?.isEditable ?? false,
@@ -633,7 +637,7 @@ function BrowserDialog({
   editor: Editor;
   kind: "iiifImage" | "iiifSnippet";
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const state = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -794,7 +798,9 @@ function BrowserDialog({
                       })
                     }
                   />{" "}
-                  <span>{t("keepImageAspectRatio", "Keep image aspect ratio")}</span>
+                  <span>
+                    {t("keepImageAspectRatio", "Keep image aspect ratio")}
+                  </span>
                 </label>
                 {!layout.lockAspectRatio && (
                   <label className="iiif-browser-mdx-field">
@@ -809,9 +815,17 @@ function BrowserDialog({
                       }
                     >
                       <option value="contain">
-                        {t("containShowTheWholeImage", "Contain — show the whole image")}</option>
+                        {t(
+                          "containShowTheWholeImage",
+                          "Contain — show the whole image",
+                        )}
+                      </option>
                       <option value="cover">
-                        {t("coverFillTheFrameAndCrop", "Cover — fill the frame and crop")}</option>
+                        {t(
+                          "coverFillTheFrameAndCrop",
+                          "Cover — fill the frame and crop",
+                        )}
+                      </option>
                     </select>
                   </label>
                 )}

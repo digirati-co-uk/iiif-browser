@@ -4,7 +4,7 @@ import { HomeIcon } from "../icons/HomeIcon";
 import { BrowserToolbarButton } from "./BrowserToolbarButton";
 
 export function BrowserHomeButton({ href }: { href?: string }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const resolve = useResolve();
   const lastUrl = useLastUrl();
   const homeUrl = href || "iiif://home";

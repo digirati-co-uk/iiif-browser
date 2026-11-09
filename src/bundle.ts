@@ -16,7 +16,10 @@ export type {
   NormalizedV2SearchConfig,
 } from "./search/types";
 export { normalizeV2SearchConfig } from "./search/types";
-export { createExternalSearchAdapter, resolveAdapterFromNormalized } from "./search/adapter-factory";
+export {
+  createExternalSearchAdapter,
+  resolveAdapterFromNormalized,
+} from "./search/adapter-factory";
 export { createTypesenseAdapter } from "./search/typesense-adapter";
 export {
   combineSearchResults,
@@ -27,7 +30,10 @@ export {
 } from "./search/combine";
 export type { CombinedSearchResults } from "./search/combine";
 export { useExternalSearch } from "./hooks/use-external-search";
-export type { UseExternalSearchOptions, UseExternalSearchResult } from "./hooks/use-external-search";
+export type {
+  UseExternalSearchOptions,
+  UseExternalSearchResult,
+} from "./hooks/use-external-search";
 
 export {
   ThemeProvider,

@@ -14,7 +14,7 @@ import { ManifestGridSnippet } from "./ManifestGridSnippet";
 import { ManifestListSnippet } from "./ManifestListSnippet";
 
 export function CollectionItemList({ id }: { id: string }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const collection = useCollection({ id });
   const canSelect = useCanSelect();
@@ -54,7 +54,8 @@ export function CollectionItemList({ id }: { id: string }) {
             isDisabled={actions.currentPage === 1}
             aria-label={t("previousPage", "Previous page")}
           >
-            {t("previous", "Previous")}</Button>
+            {t("previous", "Previous")}
+          </Button>
           <div
             className="text-center text-sm text-gray-400"
             aria-label={t("pageNumber", "Page number")}
@@ -67,14 +68,18 @@ export function CollectionItemList({ id }: { id: string }) {
             isDisabled={actions.currentPage === actions.totalPages}
             aria-label={t("nextPage", "Next page")}
           >
-            {t("next", "Next")}</Button>
+            {t("next", "Next")}
+          </Button>
         </div>
       ) : null}
 
       <div className="flex px-4 py-4 justify-between">
         <div>
           <Button
-            aria-label={t("searchCurrentCollection", "Search current collection")}
+            aria-label={t(
+              "searchCurrentCollection",
+              "Search current collection",
+            )}
             className="text-blue-600 hover:underline flex items-center gap-2"
             onPress={() => openWithFilter("", "collection")}
           >
@@ -85,7 +90,10 @@ export function CollectionItemList({ id }: { id: string }) {
         <div className="flex items-center gap-1">
           {showFilterButton ? (
             <Button
-              aria-label={t("filterItemsNotSelectable", "Filter items not selectable")}
+              aria-label={t(
+                "filterItemsNotSelectable",
+                "Filter items not selectable",
+              )}
               onPress={() => setHideDisabled(!hideDisabled)}
               className="border rounded border-gray-300 overflow-hidden py-1 px-3 self-stretch"
             >

@@ -134,7 +134,7 @@ export function ImageOptions({
   imageAction: { label: string; onClick: (url: string) => void } | null;
   canvasAction: { label: string; onClick: (url: string) => void } | null;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const { info, loading, error } = useImageInfo(
     cache,
     imageServiceId(draft.request),
@@ -208,7 +208,11 @@ export function ImageOptions({
         </section>
 
         <div className="iiif-browser-mdx-controls">
-          {loading ? <output>{t("loadingImageAPIOptions", "Loading Image API options…")}</output> : null}
+          {loading ? (
+            <output>
+              {t("loadingImageAPIOptions", "Loading Image API options…")}
+            </output>
+          ) : null}
           {error ? (
             <p className="iiif-browser-mdx-inline-alert" role="alert">
               {error} The current request can still be used, but service options
@@ -283,7 +287,9 @@ export function ImageOptions({
                     </option>
                   ))}
                   {capabilities.customSize || sizeMode === "custom" ? (
-                    <option value="custom">{t("customWidth", "Custom width")}</option>
+                    <option value="custom">
+                      {t("customWidth", "Custom width")}
+                    </option>
                   ) : null}
                 </select>
               </label>
@@ -320,7 +326,8 @@ export function ImageOptions({
               <div className="iiif-browser-mdx-crop">
                 <span>{regionLabel(draft.request.region)}</span>
                 <button type="button" onClick={removeCrop}>
-                  {t("removeCrop", "Remove crop")}</button>
+                  {t("removeCrop", "Remove crop")}
+                </button>
               </div>
               {invalidCrop ? (
                 <p className="iiif-browser-mdx-inline-alert" role="alert">
@@ -413,7 +420,8 @@ export function ImageOptions({
           className="iiif-browser-mdx-secondary"
           onClick={onCancel}
         >
-          {t("cancel", "Cancel")}</button>
+          {t("cancel", "Cancel")}
+        </button>
         {canvasAction ? (
           <button
             type="button"

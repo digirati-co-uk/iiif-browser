@@ -592,7 +592,7 @@ function ResourceLinkContent({
   getPos,
   updateAttributes,
 }: NodeViewProps) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const context = useContext(NotebookEditorContext);
   const supplied = useMemo(
     () => sanitizeNotebookResource(node.attrs.resource),

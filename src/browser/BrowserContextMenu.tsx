@@ -7,7 +7,7 @@ import { useBrowserTheme } from "../theme/context";
 import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserContextMenu() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const resolve = useResolve();
   const lastUrl = useLastUrl();
   const ui = useUIConfig();
@@ -29,14 +29,16 @@ export function BrowserContextMenu() {
             onAction={() => resolve(lastUrl)}
             className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
           >
-            {t("refresh", "Refresh")}</MenuItem>
+            {t("refresh", "Refresh")}
+          </MenuItem>
           {ui.defaultPages.homepage ? (
             <MenuItem
               aria-label={t("viewHomepage", "View Homepage")}
               onAction={() => resolve("iiif://home")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
-              {t("viewHomepage", "View Homepage")}</MenuItem>
+              {t("viewHomepage", "View Homepage")}
+            </MenuItem>
           ) : null}
           {ui.defaultPages.history ? (
             <MenuItem
@@ -44,7 +46,8 @@ export function BrowserContextMenu() {
               onAction={() => resolve("iiif://history")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
-              {t("viewHistory", "View History")}</MenuItem>
+              {t("viewHistory", "View History")}
+            </MenuItem>
           ) : null}
           {ui.defaultPages.viewSource ? (
             <MenuItem
@@ -56,7 +59,8 @@ export function BrowserContextMenu() {
               }
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 aria-disabled:opacity-30 px-3 py-1.5 rounded"
             >
-              {t("viewSource", "View Source")}</MenuItem>
+              {t("viewSource", "View Source")}
+            </MenuItem>
           ) : null}
           {ui.defaultPages.about ? (
             <MenuItem
@@ -64,7 +68,8 @@ export function BrowserContextMenu() {
               onAction={() => resolve("iiif://about")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
-              {t("about", "About")}</MenuItem>
+              {t("about", "About")}
+            </MenuItem>
           ) : null}
           {ui.themeToggle && theme.canToggle ? (
             <MenuItem

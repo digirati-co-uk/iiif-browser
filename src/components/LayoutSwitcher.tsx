@@ -10,7 +10,7 @@ export function LayoutSwitcher({
   isListView: boolean;
   setIsListView: (value: boolean) => void;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   return (
     <Toolbar className="inline-flex border rounded border-gray-300 overflow-hidden p-0.5">
       <Button

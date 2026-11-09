@@ -17,8 +17,10 @@ import { LockIcon } from "../icons/LockIcon";
 
 export function BrowserUrlBox({
   showBookmarkButton,
-}: { showBookmarkButton?: boolean }) {
- const { t } = useBrowserI18n();
+}: {
+  showBookmarkButton?: boolean;
+}) {
+  const { t } = useBrowserI18n();
   const loading = useIsPageLoading();
   const { manifestInfoButton } = useUIConfig();
   const location = useLocation();

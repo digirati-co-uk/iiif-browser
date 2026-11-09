@@ -19,7 +19,7 @@ export function NotebookImageSize({
   src: string;
   onChange(src: string): void;
 }) {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const request = parseIIIFImageUrl(src);
   const info = resource.imageInfo;
   if (!request || !info) return null;

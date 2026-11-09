@@ -89,7 +89,10 @@ export interface V2ExternalSearchAdapter {
    * This function should handle its own error handling and return an empty
    * array (not throw) on failure so the omnibox degrades gracefully.
    */
-  search(query: string, options: V2ExternalSearchAdapterSearchOptions): Promise<V2SearchResult[]>;
+  search(
+    query: string,
+    options: V2ExternalSearchAdapterSearchOptions,
+  ): Promise<V2SearchResult[]>;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,7 +145,10 @@ export interface V2TypesenseConfig {
    * Typesense `filter_by` expression string.
    * When omitted a simple default (type field mapping) is attempted.
    */
-  mapFiltersToFilterBy?(filters: V2FilterState, query: string): string | undefined;
+  mapFiltersToFilterBy?(
+    filters: V2FilterState,
+    query: string,
+  ): string | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -206,7 +212,10 @@ export interface V2SearchConfig {
    */
   filterStrategy?: {
     passActiveFilters?: boolean;
-    mapFiltersToExternalQuery?(filters: V2FilterState, context: { searchText: string }): Record<string, unknown>;
+    mapFiltersToExternalQuery?(
+      filters: V2FilterState,
+      context: { searchText: string },
+    ): Record<string, unknown>;
   };
 
   /**
@@ -245,7 +254,9 @@ export interface NormalizedV2SearchConfig {
     passActiveFilters: boolean;
     mapFiltersToExternalQuery?: V2SearchConfig["filterStrategy"] extends undefined
       ? never
-      : NonNullable<V2SearchConfig["filterStrategy"]>["mapFiltersToExternalQuery"];
+      : NonNullable<
+          V2SearchConfig["filterStrategy"]
+        >["mapFiltersToExternalQuery"];
   };
   withinSectionLabelMessage?: string;
   externalSectionLabelMessage?: string;
@@ -259,7 +270,9 @@ export interface NormalizedV2SearchConfig {
  * Resolve raw `V2SearchConfig` (or undefined) into a fully-filled
  * `NormalizedV2SearchConfig` with all defaults applied.
  */
-export function normalizeV2SearchConfig(raw: V2SearchConfig | undefined): NormalizedV2SearchConfig {
+export function normalizeV2SearchConfig(
+  raw: V2SearchConfig | undefined,
+): NormalizedV2SearchConfig {
   return {
     enableWithinCollection: raw?.enableWithinCollection ?? true,
     enableExternal: raw?.enableExternal ?? false,
@@ -273,9 +286,11 @@ export function normalizeV2SearchConfig(raw: V2SearchConfig | undefined): Normal
       mapFiltersToExternalQuery: raw?.filterStrategy?.mapFiltersToExternalQuery,
     },
     withinSectionLabel: raw?.withinSectionLabel ?? "In this collection",
-    withinSectionLabelMessage: raw?.withinSectionLabel === undefined ? "withinSection" : undefined,
+    withinSectionLabelMessage:
+      raw?.withinSectionLabel === undefined ? "withinSection" : undefined,
     externalSectionLabel: raw?.externalSectionLabel ?? "Global results",
-    externalSectionLabelMessage: raw?.externalSectionLabel === undefined ? "externalSection" : undefined,
+    externalSectionLabelMessage:
+      raw?.externalSectionLabel === undefined ? "externalSection" : undefined,
     typesense: raw?.typesense,
     adapter: raw?.adapter,
   };

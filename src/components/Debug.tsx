@@ -88,7 +88,7 @@ function DebugSelected() {
 }
 
 function DebugHistory() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const lastUrl = useLastUrl();
   const linearHistory = useLinearHistory();
   const historyList = useHistoryList();
@@ -132,7 +132,8 @@ function DebugHistory() {
               onPress={() => history.go(-1)}
               className="bg-accent px-2 py-1 rounded text-accent-text"
             >
-              {t("back", "Back")}</Button>
+              {t("back", "Back")}
+            </Button>
             <Button
               onPress={() => history.go(1)}
               className="bg-accent px-2 py-1 rounded text-accent-text"

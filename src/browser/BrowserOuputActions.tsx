@@ -1,11 +1,10 @@
-import { BrowserDiagnostic, displayBrowserLabel, useBrowserI18n } from "../i18n";
-import { useState } from "react";
 import {
-  Button,
-  Menu,
-  MenuItem,
-  MenuTrigger,
-} from "react-aria-components";
+  BrowserDiagnostic,
+  displayBrowserLabel,
+  useBrowserI18n,
+} from "../i18n";
+import { useState } from "react";
+import { Button, Menu, MenuItem, MenuTrigger } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
 import {
   useAvailableOutputs,
@@ -23,7 +22,7 @@ import {
 import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserOutputActions() {
- const { t } = useBrowserI18n();
+  const { t } = useBrowserI18n();
   const availableOutputs = useAvailableOutputs();
   const { runTargetAction } = useSelectedActions();
   const { buttonClassName } = useUIConfig();
@@ -38,7 +37,8 @@ export function BrowserOutputActions() {
   if (!first)
     return (
       <div className="px-4 text-sm opacity-40 whitespace-nowrap">
-        {t("noActionsAvailable", "No actions available")}</div>
+        {t("noActionsAvailable", "No actions available")}
+      </div>
     );
   const run = async (output: OutputTarget) => {
     setBusy(true);
