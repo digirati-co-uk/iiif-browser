@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { Button, Menu, MenuItem, MenuTrigger } from "react-aria-components";
 import { useLastUrl, useResolve, useUIConfig } from "../context";
 import { MenuIcon } from "../icons/MenuIcon";
@@ -6,6 +7,7 @@ import { useBrowserTheme } from "../theme/context";
 import { ThemedPopover } from "../theme/Themed";
 
 export function BrowserContextMenu() {
+ const { t } = useBrowserI18n();
   const resolve = useResolve();
   const lastUrl = useLastUrl();
   const ui = useUIConfig();
@@ -15,7 +17,7 @@ export function BrowserContextMenu() {
   return (
     <MenuTrigger>
       <Button
-        aria-label="Menu"
+        aria-label={t("menu", "Menu")}
         className="flex-shrink-0 aria-expanded:bg-slate-200 outline-none focus:ring ring-blue-300 text-2xl rounded hover:bg-slate-100 p-1.5 m-1"
       >
         <MenuIcon />
@@ -23,33 +25,30 @@ export function BrowserContextMenu() {
       <ThemedPopover placement="bottom end" className="iiif-browser">
         <Menu className="flex flex-col gap-1 outline-none bg-white drop-shadow-lg shadow-slate-600 p-1 rounded text-sm w-36 text-slate-600">
           <MenuItem
-            aria-label="Refresh"
+            aria-label={t("refresh", "Refresh")}
             onAction={() => resolve(lastUrl)}
             className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
           >
-            Refresh
-          </MenuItem>
+            {t("refresh", "Refresh")}</MenuItem>
           {ui.defaultPages.homepage ? (
             <MenuItem
-              aria-label="View Homepage"
+              aria-label={t("viewHomepage", "View Homepage")}
               onAction={() => resolve("iiif://home")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
-              View Homepage
-            </MenuItem>
+              {t("viewHomepage", "View Homepage")}</MenuItem>
           ) : null}
           {ui.defaultPages.history ? (
             <MenuItem
-              aria-label="View History"
+              aria-label={t("viewHistory", "View History")}
               onAction={() => resolve("iiif://history")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
-              View History
-            </MenuItem>
+              {t("viewHistory", "View History")}</MenuItem>
           ) : null}
           {ui.defaultPages.viewSource ? (
             <MenuItem
-              aria-label="View Source"
+              aria-label={t("viewSource", "View Source")}
               onAction={() => resolve(`view-source:${lastUrl}`)}
               isDisabled={
                 lastUrl.startsWith("iiif://") ||
@@ -57,17 +56,15 @@ export function BrowserContextMenu() {
               }
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 aria-disabled:opacity-30 px-3 py-1.5 rounded"
             >
-              View Source
-            </MenuItem>
+              {t("viewSource", "View Source")}</MenuItem>
           ) : null}
           {ui.defaultPages.about ? (
             <MenuItem
-              aria-label="View About"
+              aria-label={t("viewAbout", "View About")}
               onAction={() => resolve("iiif://about")}
               className="outline-none focus:bg-slate-100 hover:bg-slate-100 px-3 py-1.5 rounded"
             >
-              About
-            </MenuItem>
+              {t("about", "About")}</MenuItem>
           ) : null}
           {ui.themeToggle && theme.canToggle ? (
             <MenuItem

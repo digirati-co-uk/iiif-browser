@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import {
   fullSizeRequest,
   getImageCapabilities,
@@ -18,6 +19,7 @@ export function NotebookImageSize({
   src: string;
   onChange(src: string): void;
 }) {
+ const { t } = useBrowserI18n();
   const request = parseIIIFImageUrl(src);
   const info = resource.imageInfo;
   if (!request || !info) return null;
@@ -62,7 +64,7 @@ export function NotebookImageSize({
     );
   return (
     <label className="iiif-notebook__image-size">
-      <span>Image size</span>
+      <span>{t("imageSize", "Image size")}</span>
       <select value={src} onChange={(event) => onChange(event.target.value)}>
         {[...choices].map(([value, label]) => (
           <option key={value} value={value}>

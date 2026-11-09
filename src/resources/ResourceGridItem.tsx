@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { getValue } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import { type ReactNode, useMemo } from "react";
@@ -24,6 +25,7 @@ export function ResourceGridItem({
   thumbnail?: ReactNode;
   parent?: { id: string; type: string };
 }) {
+ const { t } = useBrowserI18n();
   const reference = useMemo(
     () => ({ id: resource.id, type: resource.type, parent }),
     [resource.id, resource.type, parent],
@@ -31,7 +33,7 @@ export function ResourceGridItem({
   return (
     <BrowserLink
       as={GridListItem}
-      aria-label={resource.label ? getValue(resource.label) : "Resource"}
+      aria-label={resource.label ? getValue(resource.label) : t("resource", "Resource")}
       isReactAria
       ignoreAlwaysShowNavigationArrow
       resource={reference}
@@ -80,7 +82,7 @@ export function ResourceGridItem({
               {renderDotsMenu()}
               {showNavigationArrow && canNavigate ? (
                 <Button
-                  aria-label="Navigate to resource"
+                  aria-label={t("navigateToResource", "Navigate to resource")}
                   onPress={navigate}
                   className="ml-auto bg-gray-300/50 p-2 rounded hover:bg-gray-300/100"
                 >

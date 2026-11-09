@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "./i18n";
 import { preferenceSignature } from "./utilities/output-preference";
 import type { ViewerMode } from "@atlas-viewer/atlas";
 import { getValue, Vault } from "@iiif/helpers";
@@ -493,7 +494,14 @@ export function useSelectedActions() {
 export function useSearchConfig(): NormalizedV2SearchConfig {
   const ctx = useContext(SearchConfigContext);
   // Return a safe default if called outside BrowserProvider (e.g. in tests).
-  return ctx ?? normalizeV2SearchConfig(undefined);
+  const { t } = useBrowserI18n();
+  return useMemo(() => {
+    const config = ctx ?? normalizeV2SearchConfig(undefined);
+    return { ...config,
+      withinSectionLabel: config.withinSectionLabelMessage ? t(config.withinSectionLabelMessage, config.withinSectionLabel) : config.withinSectionLabel,
+      externalSectionLabel: config.externalSectionLabelMessage ? t(config.externalSectionLabelMessage, config.externalSectionLabel) : config.externalSectionLabel,
+    };
+  }, [ctx, t]);
 }
 
 export function BrowserProvider({
@@ -517,6 +525,7 @@ export function BrowserProvider({
   debug?: boolean;
   children: React.ReactNode;
 }) {
+  const { t } = useBrowserI18n();
   const readyRef = useRef(false);
   const [vault] = useState(() => customVault ?? new Vault());
 
@@ -620,21 +629,21 @@ export function BrowserProvider({
         // Good defaults?.
         return [
           {
-            label: "Open Manifest in Theseus",
+            label: "Open Manifest in Theseus", labelMessage: "openManifestInTheseus",
             type: "open-new-window",
             urlPattern: "https://theseusviewer.org/?iiif-content={MANIFEST}",
             format: { type: "url", resolvable: true },
             supportedTypes: ["Manifest"],
           },
           {
-            label: "Open Collection in Theseus",
+            label: "Open Collection in Theseus", labelMessage: "openCollectionInTheseus",
             type: "open-new-window",
             urlPattern: "https://theseusviewer.org/?iiif-content={COLLECTION}",
             format: { type: "url", resolvable: false },
             supportedTypes: ["Collection"],
           },
           {
-            label: "Open Canvas in Theseus",
+            label: "Open Canvas in Theseus", labelMessage: "openCanvasInTheseus",
             type: "open-new-window",
             urlPattern:
               "https://theseusviewer.org/?iiif-content={MANIFEST}&canvas={CANVAS}",
@@ -645,7 +654,7 @@ export function BrowserProvider({
             supportedTypes: ["Canvas"],
           },
           {
-            label: "Open Image in Theseus",
+            label: "Open Image in Theseus", labelMessage: "openImageInTheseus",
             type: "open-new-window",
             urlPattern: "https://theseusviewer.org/?iiif-content={MANIFEST}",
             format: { type: "url", resolvable: true },
@@ -656,7 +665,7 @@ export function BrowserProvider({
 
       return [
         {
-          label: "Open",
+          label: "Open", labelMessage: "open",
           type: "open-new-window",
           urlPattern: "{RESULT}",
           format: { type: "url", resolvable: true },
@@ -744,7 +753,7 @@ export function BrowserProvider({
             ? {
                 id: "iiif://home",
                 type: "page",
-                label: "Homepage",
+                label: "Homepage", labelMessage: "homepage",
                 url: "iiif://home",
                 route: "/",
                 showWhenEmpty: true,
@@ -755,7 +764,7 @@ export function BrowserProvider({
             ? {
                 id: "iiif://about",
                 type: "page",
-                label: "About IIIF Browser",
+                label: "About IIIF Browser", labelMessage: "aboutIIIFBrowser",
                 url: "iiif://about",
                 route: "/about",
                 showWhenEmpty: true,
@@ -766,7 +775,7 @@ export function BrowserProvider({
             ? {
                 id: "iiif://history",
                 type: "page",
-                label: "History",
+                label: "History", labelMessage: "history",
                 url: "iiif://history",
                 route: "/history",
                 showWhenEmpty: true,
@@ -777,6 +786,8 @@ export function BrowserProvider({
       }),
     [],
   );
+
+  useEffect(() => { omnisearchStore.getState().setUITranslation(t); }, [omnisearchStore, t]);
 
   if (!readyRef.current) {
     emitter.emit("ready");

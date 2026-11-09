@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import {
   canonicalServiceUrl,
   isImageService,
@@ -133,6 +134,7 @@ export function ImageOptions({
   imageAction: { label: string; onClick: (url: string) => void } | null;
   canvasAction: { label: string; onClick: (url: string) => void } | null;
 }) {
+ const { t } = useBrowserI18n();
   const { info, loading, error } = useImageInfo(
     cache,
     imageServiceId(draft.request),
@@ -195,18 +197,18 @@ export function ImageOptions({
       <div className={classNames("iiif-browser-mdx-options", className)}>
         <section
           className="iiif-browser-mdx-preview"
-          aria-label="Image preview"
+          aria-label={t("imagePreview", "Image preview")}
         >
           {!draft.autoSize || !loading ? (
             <img src={previewUrl} alt="" />
           ) : (
-            <output>Loading image…</output>
+            <output>{t("loadingImage", "Loading image…")}</output>
           )}
           <p title={outputUrl}>{outputUrl}</p>
         </section>
 
         <div className="iiif-browser-mdx-controls">
-          {loading ? <output>Loading Image API options…</output> : null}
+          {loading ? <output>{t("loadingImageAPIOptions", "Loading Image API options…")}</output> : null}
           {error ? (
             <p className="iiif-browser-mdx-inline-alert" role="alert">
               {error} The current request can still be used, but service options
@@ -215,7 +217,7 @@ export function ImageOptions({
           ) : null}
 
           <label className="iiif-browser-mdx-field">
-            <span>Alternative text</span>
+            <span>{t("alternativeText", "Alternative text")}</span>
             <input
               type="text"
               value={draft.label}
@@ -229,9 +231,9 @@ export function ImageOptions({
 
           {capabilities ? (
             <fieldset className="iiif-browser-mdx-fieldset">
-              <legend>Image size</legend>
+              <legend>{t("imageSize", "Image size")}</legend>
               <label className="iiif-browser-mdx-field">
-                <span>Request size</span>
+                <span>{t("requestSize", "Request size")}</span>
                 <select
                   value={sizeMode}
                   onChange={(event) => {
@@ -281,7 +283,7 @@ export function ImageOptions({
                     </option>
                   ))}
                   {capabilities.customSize || sizeMode === "custom" ? (
-                    <option value="custom">Custom width</option>
+                    <option value="custom">{t("customWidth", "Custom width")}</option>
                   ) : null}
                 </select>
               </label>
@@ -314,12 +316,11 @@ export function ImageOptions({
 
           {hasCrop ? (
             <fieldset className="iiif-browser-mdx-fieldset">
-              <legend>Crop</legend>
+              <legend>{t("crop", "Crop")}</legend>
               <div className="iiif-browser-mdx-crop">
                 <span>{regionLabel(draft.request.region)}</span>
                 <button type="button" onClick={removeCrop}>
-                  Remove crop
-                </button>
+                  {t("removeCrop", "Remove crop")}</button>
               </div>
               {invalidCrop ? (
                 <p className="iiif-browser-mdx-inline-alert" role="alert">
@@ -332,7 +333,7 @@ export function ImageOptions({
 
           {capabilities?.rotation ? (
             <fieldset className="iiif-browser-mdx-fieldset">
-              <legend>Rotation</legend>
+              <legend>{t("rotation", "Rotation")}</legend>
               <div className="iiif-browser-mdx-segmented">
                 {[0, 90, 180, 270].map((rotation) => (
                   <button
@@ -361,7 +362,7 @@ export function ImageOptions({
             capabilities.qualities.length > 1) ? (
             <div className="iiif-browser-mdx-field-row">
               <label className="iiif-browser-mdx-field">
-                <span>Format</span>
+                <span>{t("format", "Format")}</span>
                 <select
                   value={draft.request.format}
                   onChange={(event) =>
@@ -381,7 +382,7 @@ export function ImageOptions({
                 </select>
               </label>
               <label className="iiif-browser-mdx-field">
-                <span>Quality</span>
+                <span>{t("quality", "Quality")}</span>
                 <select
                   value={draft.request.quality}
                   onChange={(event) =>
@@ -412,8 +413,7 @@ export function ImageOptions({
           className="iiif-browser-mdx-secondary"
           onClick={onCancel}
         >
-          Cancel
-        </button>
+          {t("cancel", "Cancel")}</button>
         {canvasAction ? (
           <button
             type="button"

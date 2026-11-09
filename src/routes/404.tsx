@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useStore } from "zustand";
 import {
   useBrowserStoreContext,
@@ -6,6 +7,7 @@ import {
 } from "../context";
 
 export function NotFoundPage() {
+ const { t } = useBrowserI18n();
   const store = useBrowserStoreContext();
   const lastUrl = useLastUrl();
   const [searchParams] = useSearchParams();
@@ -18,7 +20,7 @@ export function NotFoundPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-4xl font-bold">Error</h1>
+        <h1 className="text-4xl font-bold">{t("error", "Error")}</h1>
         <p className="text-lg">{error}</p>
       </div>
     );
@@ -27,7 +29,7 @@ export function NotFoundPage() {
   if (resource?.error) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-4xl font-bold">Error</h1>
+        <h1 className="text-4xl font-bold">{t("error", "Error")}</h1>
         <p className="text-lg">{resource.error}</p>
       </div>
     );
@@ -36,7 +38,7 @@ export function NotFoundPage() {
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <h1 className="text-4xl font-bold">404</h1>
-      <p className="text-lg">Page not found</p>
+      <p className="text-lg">{t("pageNotFound", "Page not found")}</p>
       {id && (
         <a
           href={`/collections/${id}`}

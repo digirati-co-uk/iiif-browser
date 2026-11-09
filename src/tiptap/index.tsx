@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import "../mdx-plugins.css";
 import { type Editor, mergeAttributes, Node } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
@@ -362,6 +363,7 @@ function ImageView({
   updateAttributes,
   extension,
 }: NodeViewProps) {
+ const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor.isEditable,
@@ -494,8 +496,7 @@ function ImageView({
             })
           }
         >
-          Edit IIIF image
-        </button>
+          {t("editIIIFImage", "Edit IIIF image")}</button>
       )}
     </NodeViewWrapper>
   );
@@ -506,6 +507,7 @@ function SnippetView({
   updateAttributes,
   getPos,
 }: NodeViewProps) {
+ const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor.isEditable,
@@ -565,8 +567,7 @@ function SnippetView({
             })
           }
         >
-          Edit IIIF snippet
-        </button>
+          {t("editIIIFSnippet", "Edit IIIF snippet")}</button>
       )}
     </NodeViewWrapper>
   );
@@ -583,6 +584,7 @@ type InsertProps = Omit<ComponentProps<"button">, "onClick"> & {
   editor: Editor | null;
 };
 export function InsertIIIFImage({ editor, children, ...props }: InsertProps) {
+ const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor?.isEditable ?? false,
@@ -591,7 +593,7 @@ export function InsertIIIFImage({ editor, children, ...props }: InsertProps) {
     <>
       <button
         type="button"
-        aria-label="Insert IIIF image"
+        aria-label={t("insertIIIFImage", "Insert IIIF image")}
         {...props}
         disabled={!editable || props.disabled}
         onClick={() => editor?.commands.openIIIFImage()}
@@ -603,6 +605,7 @@ export function InsertIIIFImage({ editor, children, ...props }: InsertProps) {
   );
 }
 export function InsertIIIFSnippet({ editor, children, ...props }: InsertProps) {
+ const { t } = useBrowserI18n();
   const editable = useEditorState({
     editor,
     selector: ({ editor }) => editor?.isEditable ?? false,
@@ -611,7 +614,7 @@ export function InsertIIIFSnippet({ editor, children, ...props }: InsertProps) {
     <>
       <button
         type="button"
-        aria-label="Insert IIIF snippet"
+        aria-label={t("insertIIIFSnippet", "Insert IIIF snippet")}
         {...props}
         disabled={!editable || props.disabled}
         onClick={() => editor?.commands.openIIIFSnippet()}
@@ -630,6 +633,7 @@ function BrowserDialog({
   editor: Editor;
   kind: "iiifImage" | "iiifSnippet";
 }) {
+ const { t } = useBrowserI18n();
   const state = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -729,18 +733,18 @@ function BrowserDialog({
             )}
             <Heading slot="title" className="iiif-browser-mdx-title">
               {draft
-                ? "Image options"
+                ? t("imageOptions", "Image options")
                 : kind === "iiifImage"
-                  ? "Insert IIIF image"
+                  ? t("insertIIIFImage", "Insert IIIF image")
                   : state.dialog?.snippet
-                    ? "Edit IIIF snippet"
-                    : "Insert IIIF snippet"}
+                    ? t("editIIIFSnippet", "Edit IIIF snippet")
+                    : t("insertIIIFSnippet", "Insert IIIF snippet")}
             </Heading>
             <button
               type="button"
               className="iiif-browser-mdx-close"
               onClick={close}
-              aria-label="Close"
+              aria-label={t("close", "Close")}
             >
               ×
             </button>
@@ -760,7 +764,7 @@ function BrowserDialog({
               onCancel={close}
               imageAction={{
                 label: state.dialog?.image
-                  ? "Save changes"
+                  ? t("saveChanges", "Save changes")
                   : (options.image?.actionLabel ?? "Insert image"),
                 onClick: save,
               }}
@@ -769,7 +773,7 @@ function BrowserDialog({
                   ? {
                       label:
                         options.canvasSnippet === true
-                          ? "Insert Canvas snippet"
+                          ? t("insertCanvasSnippet", "Insert Canvas snippet")
                           : (options.canvasSnippet.actionLabel ??
                             "Insert Canvas snippet"),
                       onClick: (src) => save(src, true),
@@ -778,7 +782,7 @@ function BrowserDialog({
               }
             >
               <fieldset className="iiif-browser-mdx-fieldset">
-                <legend>Display layout</legend>
+                <legend>{t("displayLayout", "Display layout")}</legend>
                 <label className="iiif-browser-mdx-toggle">
                   <input
                     type="checkbox"
@@ -790,11 +794,11 @@ function BrowserDialog({
                       })
                     }
                   />{" "}
-                  <span>Keep image aspect ratio</span>
+                  <span>{t("keepImageAspectRatio", "Keep image aspect ratio")}</span>
                 </label>
                 {!layout.lockAspectRatio && (
                   <label className="iiif-browser-mdx-field">
-                    <span>Image fit</span>
+                    <span>{t("imageFit", "Image fit")}</span>
                     <select
                       value={layout.objectFit}
                       onChange={(event) =>
@@ -805,11 +809,9 @@ function BrowserDialog({
                       }
                     >
                       <option value="contain">
-                        Contain — show the whole image
-                      </option>
+                        {t("containShowTheWholeImage", "Contain — show the whole image")}</option>
                       <option value="cover">
-                        Cover — fill the frame and crop
-                      </option>
+                        {t("coverFillTheFrameAndCrop", "Cover — fill the frame and crop")}</option>
                     </select>
                   </label>
                 )}
@@ -844,8 +846,8 @@ function BrowserDialog({
                         kind === "iiifImage"
                           ? (options.image?.selectLabel ?? "Continue")
                           : state.dialog?.snippet
-                            ? "Save changes"
-                            : "Insert snippet",
+                            ? t("saveChanges", "Save changes")
+                            : t("insertSnippet", "Insert snippet"),
                       supportedTypes:
                         kind === "iiifImage"
                           ? [

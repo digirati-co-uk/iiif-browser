@@ -122,6 +122,8 @@ type OutputFormat =
   | { type: "url"; resolvable?: boolean };
 
 export type OutputTarget = {
+  labelMessage?: string;
+  labelValues?: Record<string, string | number>;
   label: string;
   format: OutputFormat;
   supportedTypes: OutputType[];

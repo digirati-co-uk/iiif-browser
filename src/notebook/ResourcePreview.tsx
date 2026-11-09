@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { CloseIcon } from "../icons/CloseIcon";
 import { NotebookErrorBoundary } from "./ErrorBoundary";
@@ -155,6 +156,7 @@ function LabelEditor({
   label: string;
   onSave(label: string): void;
 }) {
+ const { t } = useBrowserI18n();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -207,8 +209,7 @@ function LabelEditor({
           Save label
         </button>
         <button type="button" onClick={() => setEditing(false)}>
-          Cancel
-        </button>
+          {t("cancel", "Cancel")}</button>
       </div>
     </form>
   );
@@ -233,6 +234,7 @@ export function ResourcePreview({
   onSaveLabel,
   onSwitchView,
 }: ResourcePreviewProps) {
+ const { t } = useBrowserI18n();
   const isCollection =
     resource?.type === "Collection" && !!resource.items?.length;
   const media =
@@ -370,8 +372,7 @@ export function ResourcePreview({
             className="iiif-notebook__primary"
             onClick={() => onOpen()}
           >
-            Open
-          </button>
+            {t("open", "Open")}</button>
         </div>
       )}
     </div>

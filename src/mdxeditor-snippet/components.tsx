@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import type { Vault } from "@iiif/helpers/vault";
 import type { Collection } from "@iiif/parser/presentation-3/types";
 import type { CSSProperties, ReactNode } from "react";
@@ -574,6 +575,7 @@ function ResourceInfo({
   resource: any;
   resourceType: "Collection" | "Manifest";
 }) {
+ const { t } = useBrowserI18n();
   if (!resource) return null;
   const metadata = list(resource.metadata);
   const requiredStatement = resource.requiredStatement;
@@ -609,7 +611,7 @@ function ResourceInfo({
           ) : null}
           {resource.rights ? (
             <p>
-              <strong>Rights</strong>
+              <strong>{t("rights", "Rights")}</strong>
               <br />
               <LinkOrText value={resource.rights} />
             </p>

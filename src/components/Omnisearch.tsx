@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Button, Label } from "react-aria-components";
 import {
@@ -21,6 +22,7 @@ export interface OmnisearchBoxConfig {
 }
 
 export function Omnisearch() {
+ const { t } = useBrowserI18n();
   const [search, setSearch] = useSearchState();
   const { isIndexing } = useSearchIndex();
   const lastUrl = useLastUrl();
@@ -119,14 +121,14 @@ export function Omnisearch() {
     >
       {/* What is visible when the modal is closed */}
       <div>
-        <Label className="sr-only">Search</Label>
+        <Label className="sr-only">{t("search", "Search")}</Label>
         <Button
-          aria-label="Edit URL and show search"
+          aria-label={t("editURLAndShowSearch", "Edit URL and show search")}
           onPress={() => setIsModalOpen(true)}
           className="p-1 text-sm focus:outline-none text-slate-600 z-10 w-full text-left"
         >
           <span
-            aria-label="Current URL"
+            aria-label={t("currentURL", "Current URL")}
             className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis block truncate"
           >
             {valueToShow}

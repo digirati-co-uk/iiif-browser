@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { getValue } from "@iiif/helpers";
 import type { InternationalString } from "@iiif/parser/presentation-3/types";
 import { useMemo } from "react";
@@ -21,13 +22,14 @@ export function ResourceListItem({
   parent?: { id: string; type: string };
   large?: boolean;
 }) {
+ const { t } = useBrowserI18n();
   const reference = useMemo(
     () => ({ id: resource.id, type: resource.type, parent }),
     [resource.id, resource.type, parent],
   );
   return (
     <BrowserLink
-      aria-label={resource.label ? getValue(resource.label) : "Resource"}
+      aria-label={resource.label ? getValue(resource.label) : t("resource", "Resource")}
       as={GridListItem}
       isReactAria
       resource={reference}
@@ -85,7 +87,7 @@ export function ResourceListItem({
           </div>
           {showNavigationArrow && canNavigate ? (
             <Button
-              aria-label="Navigate to resource"
+              aria-label={t("navigateToResource", "Navigate to resource")}
               onPress={navigate}
               className="ml-auto bg-gray-500/10 p-2"
             >

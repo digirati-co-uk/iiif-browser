@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import "../mdx-plugins.css";
 import { Extension, type Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
@@ -80,6 +81,7 @@ export function InsertIIIFLink({
   editor: Editor | null;
   browserProps?: IIIFBrowserProps;
 }) {
+ const { t } = useBrowserI18n();
   const request = useRef(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -171,8 +173,8 @@ export function InsertIIIFLink({
     <>
       <button
         type="button"
-        aria-label="Insert IIIF link"
-        title="Insert IIIF link"
+        aria-label={t("insertIIIFLink", "Insert IIIF link")}
+        title={t("insertIIIFLink", "Insert IIIF link")}
         {...props}
         disabled={!(state?.editable ?? editor.isEditable) || props.disabled}
         onClick={() => {
@@ -192,17 +194,16 @@ export function InsertIIIFLink({
       >
         <Modal className="iiif-browser-mdx-modal">
           <Dialog
-            aria-label="Insert IIIF link"
+            aria-label={t("insertIIIFLink", "Insert IIIF link")}
             className="iiif-browser-mdx-dialog"
           >
             <header className="iiif-browser-mdx-header">
               <Heading slot="title" className="iiif-browser-mdx-title">
-                Insert IIIF link
-              </Heading>
+                {t("insertIIIFLink", "Insert IIIF link")}</Heading>
               <button
                 type="button"
                 className="iiif-browser-mdx-close"
-                aria-label="Close link picker"
+                aria-label={t("closeLinkPicker", "Close link picker")}
                 onClick={close}
               >
                 ×
@@ -215,8 +216,7 @@ export function InsertIIIFLink({
             )}
             {busy && (
               <p role="status" className="iiif-browser-mdx-alert">
-                Preparing link…
-              </p>
+                {t("preparingLink", "Preparing link…")}</p>
             )}
             <div
               className="iiif-browser-mdx-browser iiif-browser"

@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { ModeContext, ModeProvider } from "@atlas-viewer/atlas";
 import { useContext, useEffect, useId } from "react";
 import {
@@ -25,6 +26,7 @@ import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { useLocalStorage } from "../utilities/use-local-storage";
 
 export function ManifestCanvasViewer() {
+ const { t } = useBrowserI18n();
   const manifest = useManifest()!;
   const outputCtx = useContext(OutputContext);
   const {
@@ -153,7 +155,7 @@ export function ManifestCanvasViewer() {
               className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 bg-white/90 text-2xl text-gray-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
               onClick={previousCanvas}
               disabled={!hasPrevious}
-              aria-label="Previous page"
+              aria-label={t("previousPage", "Previous page")}
             >
               <ArrowBackIcon />
             </button>
@@ -162,7 +164,7 @@ export function ManifestCanvasViewer() {
               className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 bg-white/90 text-2xl text-gray-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
               onClick={nextCanvas}
               disabled={!hasNext}
-              aria-label="Next page"
+              aria-label={t("nextPage", "Next page")}
             >
               <ArrowForwardIcon />
             </button>

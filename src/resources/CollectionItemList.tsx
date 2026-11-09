@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useCallback, useMemo, useState } from "react";
 import { Button, GridList } from "react-aria-components";
 import { LocaleString, ManifestContext, useCollection } from "react-iiif-vault";
@@ -13,6 +14,7 @@ import { ManifestGridSnippet } from "./ManifestGridSnippet";
 import { ManifestListSnippet } from "./ManifestListSnippet";
 
 export function CollectionItemList({ id }: { id: string }) {
+ const { t } = useBrowserI18n();
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const collection = useCollection({ id });
   const canSelect = useCanSelect();
@@ -50,13 +52,12 @@ export function CollectionItemList({ id }: { id: string }) {
             className="text-blue-600 hover:underline disabled:text-gray-300 text-start focus:outline-none px-4"
             onPress={actions.prevPage}
             isDisabled={actions.currentPage === 1}
-            aria-label="Previous page"
+            aria-label={t("previousPage", "Previous page")}
           >
-            Previous
-          </Button>
+            {t("previous", "Previous")}</Button>
           <div
             className="text-center text-sm text-gray-400"
-            aria-label="Page number"
+            aria-label={t("pageNumber", "Page number")}
           >
             Page {actions.currentPage} of {actions.totalPages}
           </div>
@@ -64,28 +65,27 @@ export function CollectionItemList({ id }: { id: string }) {
             className="text-blue-600 hover:underline disabled:text-gray-300 text-end focus:outline-none px-4"
             onPress={actions.nextPage}
             isDisabled={actions.currentPage === actions.totalPages}
-            aria-label="Next page"
+            aria-label={t("nextPage", "Next page")}
           >
-            Next
-          </Button>
+            {t("next", "Next")}</Button>
         </div>
       ) : null}
 
       <div className="flex px-4 py-4 justify-between">
         <div>
           <Button
-            aria-label="Search current collection"
+            aria-label={t("searchCurrentCollection", "Search current collection")}
             className="text-blue-600 hover:underline flex items-center gap-2"
             onPress={() => openWithFilter("", "collection")}
           >
             <SearchIcon />
-            <span>Search collection</span>
+            <span>{t("searchCollection", "Search collection")}</span>
           </Button>
         </div>
         <div className="flex items-center gap-1">
           {showFilterButton ? (
             <Button
-              aria-label="Filter items not selectable"
+              aria-label={t("filterItemsNotSelectable", "Filter items not selectable")}
               onPress={() => setHideDisabled(!hideDisabled)}
               className="border rounded border-gray-300 overflow-hidden py-1 px-3 self-stretch"
             >

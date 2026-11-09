@@ -1,3 +1,4 @@
+import { BrowserI18nProvider, type BrowserI18n } from "./i18n";
 import {
   BrowserPluginsContext,
   type IIIFBrowserPlugin,
@@ -64,6 +65,7 @@ export type DeepPartial<T> = {
 } & {};
 
 export interface IIIFBrowserProps {
+  i18n?: BrowserI18n;
   /** Stable scope for saved preferences. Set distinct keys for identical browser configurations. */
   preferenceKey?: string;
   /**
@@ -109,7 +111,7 @@ export function useDefaultPages(customPages: IIIFBrowserProps["customPages"]) {
   }, [customPages]);
 }
 
-export function IIIFBrowser({
+function IIIFBrowserContent({
   preferenceKey,
   theme,
   onThemeChange,
@@ -225,3 +227,7 @@ const targets = [
 ] as any;
 
 const format = { type: "url", resolvable: false } as any;
+
+export function IIIFBrowser({ i18n, ...props }: IIIFBrowserProps) {
+ return <BrowserI18nProvider i18n={i18n}><IIIFBrowserContent {...props} /></BrowserI18nProvider>;
+}

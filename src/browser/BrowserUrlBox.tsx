@@ -1,3 +1,4 @@
+import { useBrowserI18n } from "../i18n";
 import { useMemo } from "react";
 import { Button } from "react-aria-components";
 import { useVault } from "react-iiif-vault";
@@ -17,6 +18,7 @@ import { LockIcon } from "../icons/LockIcon";
 export function BrowserUrlBox({
   showBookmarkButton,
 }: { showBookmarkButton?: boolean }) {
+ const { t } = useBrowserI18n();
   const loading = useIsPageLoading();
   const { manifestInfoButton } = useUIConfig();
   const location = useLocation();
@@ -54,7 +56,7 @@ export function BrowserUrlBox({
       </div>
       {showBookmarkButton && (
         <Button
-          aria-label="Bookmark current resource"
+          aria-label={t("bookmarkCurrentResource", "Bookmark current resource")}
           className={twMerge(
             "text-xl relative rounded text-slate-300 hover:text-slate-500 z-20 flex-shrink-0",
           )}
