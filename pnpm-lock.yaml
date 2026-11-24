@@ -3455,13 +3455,9 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  baseline-browser-mapping@2.10.43:
-    resolution: {integrity: sha512-AjYpR78kDWAY3Efj+cDTFH9t9SCoL7OoTp1BOb0mQV7S+6CiLwnWM3FyxhJtdPufDFKzmCSFoUncKjWgJEZTCQ==}
+  baseline-browser-mapping@2.11.39:
+    resolution: {integrity: sha512-Q9buOYhr2ggrEZpImICecZTJHCCd8yXkRUokFlUEQ8uiD6oP82F4W4jWnhOHZYV+wlvrC51V7Wy0ULyWjil5Wg==}
     engines: {node: '>=6.0.0'}
-    hasBin: true
-
-  baseline-browser-mapping@2.8.9:
-    resolution: {integrity: sha512-hY/u2lxLrbecMEWSB0IpGzGyDyeoMFQhCvZd2jGFSE5I17Fh01sYUBPCJtkWERw7zrac9+cIghxm/ytJa2X8iA==}
     hasBin: true
 
   better-opn@3.0.2:
@@ -10188,9 +10184,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  baseline-browser-mapping@2.10.43: {}
-
-  baseline-browser-mapping@2.8.9: {}
+  baseline-browser-mapping@2.11.39: {}
 
   better-opn@3.0.2:
     dependencies:
@@ -10224,7 +10218,7 @@ snapshots:
 
   browserslist@4.26.2:
     dependencies:
-      baseline-browser-mapping: 2.8.9
+      baseline-browser-mapping: 2.11.39
       caniuse-lite: 1.0.30001746
       electron-to-chromium: 1.5.227
       node-releases: 2.0.21
@@ -10232,7 +10226,7 @@ snapshots:
 
   browserslist@4.28.6:
     dependencies:
-      baseline-browser-mapping: 2.10.43
+      baseline-browser-mapping: 2.11.39
       caniuse-lite: 1.0.30001805
       electron-to-chromium: 1.5.389
       node-releases: 2.0.51
