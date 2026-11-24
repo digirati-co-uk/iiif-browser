@@ -7,8 +7,9 @@ import {
 import {
   createImageServiceRequest,
   getImageServices,
+  parseRegionParameter,
 } from "@iiif/parser/image-3";
-import { imageRequestUrl } from "../mdxeditor/image-api";
+import { imageRequestUrl, parseIIIFImageUrl } from "../mdxeditor/image-api";
 import type { CanvasNormalized } from "@iiif/parser/presentation-3-normalized/types";
 
 export type SelectedPainting = {
@@ -137,67 +138,165 @@ function box(selector: any): BoxSelector | undefined {
   return parsed?.type === "BoxSelector" ? parsed : undefined;
 }
 
+function paintingImageTransform(painting: ImagePainting) {
+  const service = getImageServices(painting.resource)[0];
+  const serviceId = (
+    service?.id || (service?.["@id"] as string | undefined)
+  )?.replace(/(?:\/info\.json)?\/$|\/info\.json$/, "");
+  const request =
+    serviceId && painting.resource.id.startsWith(`${serviceId}/`)
+      ? parseIIIFImageUrl(painting.resource.id)
+      : null;
+  const selector = painting.selector as {
+    type?: string;
+    region?: string;
+    rotation?: string | number;
+  } | null;
+  const imageSelector =
+    selector?.type === "ImageApiSelector" ||
+    selector?.type === "iiif:ImageApiSelector"
+      ? selector
+      : null;
+  const angle = Number(
+    String(selector?.rotation ?? request?.rotation.angle ?? 0).replace(
+      /^!/,
+      "",
+    ),
+  );
+  return {
+    width: service?.width || painting.resource.width,
+    height: service?.height || painting.resource.height,
+    region:
+      typeof imageSelector?.region === "string"
+        ? parseRegionParameter(imageSelector.region)
+        : request?.region,
+    angle: Number.isFinite(angle) ? ((angle % 360) + 360) % 360 : 0,
+  };
+}
+
+export function paintingImageRotation(painting: ImagePainting, rotation = 0) {
+  return (
+    (((paintingImageTransform(painting).angle + rotation) % 360) + 360) % 360
+  );
+}
+
+function pixelBox(
+  spatial: BoxSelector["spatial"],
+  width: number,
+  height: number,
+) {
+  return spatial.unit === "percent"
+    ? {
+        x: (spatial.x * width) / 100,
+        y: (spatial.y * height) / 100,
+        width: (spatial.width * width) / 100,
+        height: (spatial.height * height) / 100,
+      }
+    : spatial;
+}
+
 export function canvasToImageSelector(
   canvas: CanvasNormalized,
   painting: ImagePainting,
   selector?: BoxSelector,
 ): BoxSelector | undefined {
-  if (!selector) return;
+  const target = pixelBox(
+    box(painting.target?.selector)?.spatial ?? {
+      x: 0,
+      y: 0,
+      width: canvas.width,
+      height: canvas.height,
+    },
+    canvas.width,
+    canvas.height,
+  );
+  const { width, height, region, angle } = paintingImageTransform(painting);
+  const fullWidth = width || target.width;
+  const fullHeight = height || target.height;
+  let source = box(painting.selector)?.spatial;
+  if (region?.square) {
+    const side = Math.min(fullWidth, fullHeight);
+    source = {
+      x: (fullWidth - side) / 2,
+      y: (fullHeight - side) / 2,
+      width: side,
+      height: side,
+    };
+  } else if (
+    region?.w &&
+    region.h &&
+    Number.isFinite(region.x) &&
+    Number.isFinite(region.y)
+  ) {
+    const scaleX = region.percent ? fullWidth / 100 : 1;
+    const scaleY = region.percent ? fullHeight / 100 : 1;
+    source = {
+      x: region.x! * scaleX,
+      y: region.y! * scaleY,
+      width: region.w * scaleX,
+      height: region.h * scaleY,
+    };
+  }
+  if (source) source = pixelBox(source, fullWidth, fullHeight);
+  if (!selector)
+    return source ? { type: "BoxSelector", spatial: source } : undefined;
+  source ??= { x: 0, y: 0, width: fullWidth, height: fullHeight };
+  const selection = pixelBox(selector.spatial, canvas.width, canvas.height);
 
-  const target =
-    box(painting.target?.selector) ||
-    ({
-      type: "BoxSelector",
-      spatial: {
-        x: 0,
-        y: 0,
-        width: canvas.width,
-        height: canvas.height,
-      },
-    } as BoxSelector);
-  const service = getImageServices(painting.resource)[0];
-  const source =
-    box(painting.selector) ||
-    ({
-      type: "BoxSelector",
-      spatial: {
-        x: 0,
-        y: 0,
-        width:
-          service?.width || painting.resource.width || target.spatial.width,
-        height:
-          service?.height || painting.resource.height || target.spatial.height,
-      },
-    } as BoxSelector);
-
-  const left = Math.max(selector.spatial.x, target.spatial.x);
-  const top = Math.max(selector.spatial.y, target.spatial.y);
+  const left = Math.max(selection.x, target.x);
+  const top = Math.max(selection.y, target.y);
   const right = Math.min(
-    selector.spatial.x + selector.spatial.width,
-    target.spatial.x + target.spatial.width,
+    selection.x + selection.width,
+    target.x + target.width,
   );
   const bottom = Math.min(
-    selector.spatial.y + selector.spatial.height,
-    target.spatial.y + target.spatial.height,
+    selection.y + selection.height,
+    target.y + target.height,
   );
-  if (
-    right <= left ||
-    bottom <= top ||
-    !target.spatial.width ||
-    !target.spatial.height
-  ) {
+  if (right <= left || bottom <= top || !target.width || !target.height) {
     return;
   }
 
-  const scaleX = source.spatial.width / target.spatial.width;
-  const scaleY = source.spatial.height / target.spatial.height;
+  const radians = (angle * Math.PI) / 180;
+  const cos =
+    angle % 90 === 0 ? Math.round(Math.cos(radians)) : Math.cos(radians);
+  const sin =
+    angle % 90 === 0 ? Math.round(Math.sin(radians)) : Math.sin(radians);
+  const rotatedWidth =
+    Math.abs(cos) * source.width + Math.abs(sin) * source.height;
+  const rotatedHeight =
+    Math.abs(sin) * source.width + Math.abs(cos) * source.height;
+  // Undo the painting rotation about its centre after removing the Canvas offset and scale.
+  const corners = [left, right].flatMap((x) =>
+    [top, bottom].map((y) => {
+      const dx =
+        ((x - target.x) * rotatedWidth) / target.width - rotatedWidth / 2;
+      const dy =
+        ((y - target.y) * rotatedHeight) / target.height - rotatedHeight / 2;
+      return {
+        x: cos * dx + sin * dy + source.width / 2,
+        y: -sin * dx + cos * dy + source.height / 2,
+      };
+    }),
+  );
+  const x = Math.max(0, Math.min(...corners.map((corner) => corner.x)));
+  const y = Math.max(0, Math.min(...corners.map((corner) => corner.y)));
+  const endX = Math.min(
+    source.width,
+    Math.max(...corners.map((corner) => corner.x)),
+  );
+  const endY = Math.min(
+    source.height,
+    Math.max(...corners.map((corner) => corner.y)),
+  );
+  if (endX <= x || endY <= y) return;
   return {
     type: "BoxSelector",
     spatial: {
-      x: source.spatial.x + (left - target.spatial.x) * scaleX,
-      y: source.spatial.y + (top - target.spatial.y) * scaleY,
-      width: (right - left) * scaleX,
-      height: (bottom - top) * scaleY,
+      x: source.x + x,
+      y: source.y + y,
+      width: endX - x,
+      height: endY - y,
     },
   };
 }
@@ -211,9 +310,12 @@ export function selectedPaintingThumbnail(
   size = 120,
 ) {
   try {
-    if (!selected || (!selector && !rotation)) return;
+    if (!selected) return;
     const painting = findSelectedPainting(vault, canvas, selected);
     if (!painting) return;
+    selector ??= canvasToImageSelector(canvas, painting);
+    rotation = paintingImageRotation(painting, rotation);
+    if (!selector && !rotation) return;
     const service = getImageServices(painting.resource)[0];
     const id = service?.id || (service?.["@id"] as string | undefined);
     if (!service || !id) return;

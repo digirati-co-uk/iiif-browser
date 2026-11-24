@@ -2,6 +2,7 @@ import type { BoxSelector } from "@iiif/helpers";
 import { Vault } from "@iiif/helpers";
 import { describe, expect, it } from "vitest";
 import { imageService } from "../src/editor/image-options";
+import { imageUrlFormat } from "../src/formats/image-url";
 import { outputTypesForItem } from "../src/stores/output-store";
 import {
   canvasToImageSelector,
@@ -126,6 +127,65 @@ describe("painting selection", () => {
       crop.spatial,
     );
   });
+
+  it.each([
+    [90, { x: 160, y: 320, width: 120, height: 60 }],
+    [180, { x: 280, y: 280, width: 90, height: 80 }],
+    [270, { x: 220, y: 220, width: 120, height: 60 }],
+  ])(
+    "recrops a painting already rotated by %i degrees",
+    async (rotation, expected) => {
+      const { vault, canvas } = loadCanvas(
+        {
+          type: "SpecificResource",
+          source: {
+            id: "https://example.org/image/100,200,300,200/max/90/default.jpg",
+            type: "Image",
+            width: 200,
+            height: 300,
+            service: [
+              {
+                id: "https://example.org/image",
+                type: "ImageService3",
+                profile: "level2",
+                width: 1200,
+                height: 800,
+              },
+            ],
+          },
+          selector: {
+            type: "ImageApiSelector",
+            region: "100,200,300,200",
+            rotation: String(rotation),
+          },
+        },
+        `${canvasId}#xywh=100,50,400,200`,
+      );
+      const selector: BoxSelector = {
+        type: "BoxSelector",
+        spatial: { x: 140, y: 90, width: 120, height: 80 },
+      };
+      const painting = getImagePaintings(vault, canvas)[0]!;
+      expect(
+        canvasToImageSelector(canvas, painting, selector)?.spatial,
+      ).toEqual(expected);
+
+      const url = await imageUrlFormat.format(
+        { id: canvasId, type: "Canvas", selector, rotation: 90 },
+        { type: "image-url" },
+        vault,
+      );
+      const region = [
+        expected.x,
+        expected.y,
+        expected.width,
+        expected.height,
+      ].join(",");
+      expect(url).toBe(
+        `https://example.org/image/${region}/max/${(rotation + 90) % 360}/default.jpg`,
+      );
+    },
+  );
 
   it("uses a deterministic Choice default and preserves another service by id", () => {
     const { vault, canvas } = loadCanvas({

@@ -169,3 +169,64 @@ The live examples use [TU Delft Academic Heritage](https://heritage.tudelft.nl/i
 Run `pnpm test --run`, `pnpm typecheck`, and `pnpm build`. After building,
 `node scripts/check-notebook-package.mjs` checks that the published entries share
 browser contexts and that the core entry does not import optional editor peers.
+
+## Shared editing
+
+Use a separate `createNotebook({ storageKey: false })` projection per participant.
+Seed it with the host's confirmed notes and use `applyNotebookContentSnapshot`
+to update notes while retaining that participant's view preferences. Applying a
+confirmed projection bypasses the standalone save callback.
+`getNotebookContentSnapshot` returns only notes and the snapshot version.
+A bound editor leaves the projection unchanged until the host applies a confirmed
+update. For workspace export, use that projection. For a recovery download,
+use the binding's `getDraft()`.
+
+`IIIFNotebook` and `notebookPlugin` accept `bindEditor`, `commands`,
+`capabilities` and `syncStatus`. `bindEditor(note)` returns a stable
+`NotebookEditorBinding` for the editor surface and note, or `null` while loading.
+Return a new key when resetting to a different checkpoint. `singleNote` hides
+note navigation and management chrome and keeps a controlled note ID selected
+until its host changes it. Note management and browser-plugin append require
+host commands in bound mode. A command resolves after the host accepts it
+and updates its projection. The host runs permission checks at acceptance
+and can reject a command with a message for the user.
+
+`createNotebookStepBinding(checkpoint, options)` implements the editor binding
+using ProseMirror collaboration. Give each independently editable surface its
+own binding and client ID, including two surfaces showing the same note.
+Deliver authoritative batches in acceptance order through `binding.receive()`,
+including the author's batches. An accepted batch has one client ID per step.
+Send each original authored batch separately when catching up a client.
+`getPending()` returns a submit-ready prefix of the outstanding steps and
+their base version, bounded by the codec limits.
+`onPendingChange` notifies the transport to check again after typing,
+acknowledgement or rebase. The transport can coalesce changes, cap batch size,
+keep one submission in flight, and deduplicate retries using its own operation IDs.
+A `gap` result asks the transport to fetch the missing steps. The binding retains
+pending steps across editor remounts. A host can journal `getUnconfirmed()`,
+the confirmed checkpoint and the editor client ID and restore them with
+`initialPending`. If the room has compacted the history needed to rebase,
+export the draft before replacing the binding with a fresh checkpoint.
+
+To apply a batch on a server, import the stock schema and codec from
+`iiif-browser/notebook/document`. `applyNotebookSteps(checkpoint, batch, limits)`
+checks the base version, validates the document and returns a new checkpoint
+for the host to commit atomically. `appendNotebookResourceSteps` builds a batch
+for a note with no mounted editor. Negotiate the content schema version and scope
+authorization, retention and delivery to the notebook and note. Hosts using a
+custom binding can provide their own editor extensions and turn off StarterKit
+history when those extensions own undo. Mark incoming transactions with
+`markNotebookRemoteTransaction` so they pass the read-only editor filter and
+skip local paste normalization.
+
+In bound mode preview fetches are local. `resolveSharedPreviews={false}` disables
+automatic resource resolution for previews. Explicit insertions, label edits and
+Text/Rich transformations still use editor transactions. Presence is optional.
+Publish local selections through the binding and pass note-scoped editor
+positions back as `presence` to render peer selections and carets. The step
+binding provides `toConfirmedSelection` and `mapPeerSelection` to translate
+between editor positions and versioned selections for the transport. Those updates
+never enter the document. See **Notebook → Collaboration → Two Editors** in
+Storybook for a simulated authority that can pause and resume delivery. Type
+or select text in either editor to see its colored caret or selection in the
+other editor.

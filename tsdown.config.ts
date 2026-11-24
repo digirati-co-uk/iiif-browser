@@ -12,6 +12,7 @@ export default defineConfig({
     index: "./src/bundle.ts",
     "digital-collections": "./src/digital-collections/index.ts",
     notebook: "./src/notebook/index.ts",
+    "notebook-document": "./src/notebook/document.ts",
     tiptap: "./src/tiptap/index.tsx",
     mdxeditor: "./src/mdxeditor/index.tsx",
     "mdxeditor-snippet": "./src/mdxeditor-snippet/index.ts",

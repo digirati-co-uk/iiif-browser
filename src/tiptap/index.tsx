@@ -1,6 +1,6 @@
 import { useBrowserI18n } from "../i18n";
 import "../mdx-plugins.css";
-import { type Editor, mergeAttributes, Node } from "@tiptap/core";
+import { type Editor } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import {
   type NodeViewProps,
@@ -16,7 +16,6 @@ import {
   parseIIIFDrop,
 } from "../editor/content-state";
 import {
-  type CanvasSnippetOptions,
   type Draft,
   type IIIFImageOptions,
   ImageOptions,
@@ -42,39 +41,28 @@ import {
   IIIFManifest,
   IIIFSnippetProvider,
 } from "../mdxeditor-snippet/components";
+import { captureEditorAnchor, type EditorAnchor } from "./editor-anchor";
 import { ThemedModalOverlay } from "../theme/Themed";
 
+import {
+  IIIFImageNode,
+  IIIFSnippetNode,
+  safeUrl,
+  validSnippet,
+  type IIIFImageAttributes,
+  type IIIFImageExtensionOptions,
+  type IIIFSnippetAttributes,
+  type IIIFSnippetExtensionOptions,
+} from "./nodes";
+export type {
+  IIIFImageAttributes,
+  IIIFImageExtensionOptions,
+  IIIFSnippetAttributes,
+  IIIFSnippetExtensionOptions,
+} from "./nodes";
 export type { IIIFDropTarget } from "../editor/content-state";
 export type { IIIFImageOptions } from "../editor/image-options";
 
-export interface IIIFImageAttributes {
-  src: string;
-  alt?: string;
-  lockAspectRatio?: boolean;
-  objectFit?: "contain" | "cover";
-  width?: number | null;
-  height?: number | null;
-}
-export interface IIIFSnippetAttributes {
-  resourceType: "Collection" | "Manifest" | "Canvas";
-  collectionId?: string | null;
-  manifestId?: string | null;
-  canvasId?: string | null;
-  width?: number;
-  height?: number;
-  navigation?: "breadcrumbs" | "button";
-}
-interface BrowserOptions {
-  browserProps?: Omit<IIIFBrowserProps, "output">;
-}
-export interface IIIFImageExtensionOptions extends BrowserOptions {
-  image?: IIIFImageOptions;
-  canvasSnippet?: boolean | CanvasSnippetOptions;
-}
-export interface IIIFSnippetExtensionOptions extends BrowserOptions {
-  defaultSize?: { width?: number; height?: number };
-  collectionNavigation?: "breadcrumbs" | "button";
-}
 type DialogState = {
   target?: IIIFDropTarget;
   position?: number;
@@ -83,6 +71,7 @@ type DialogState = {
 };
 interface DialogStorage {
   dialog: DialogState | null;
+  anchor?: EditorAnchor;
   mounted: number;
 }
 
@@ -103,21 +92,6 @@ declare module "@tiptap/core" {
   }
 }
 
-function safeUrl(value: unknown): value is string {
-  if (typeof value !== "string") return false;
-  try {
-    return ["http:", "https:"].includes(new URL(value).protocol);
-  } catch {
-    return false;
-  }
-}
-function validSnippet(attrs: IIIFSnippetAttributes) {
-  return attrs.resourceType === "Collection"
-    ? safeUrl(attrs.collectionId)
-    : (attrs.resourceType === "Manifest" || attrs.resourceType === "Canvas") &&
-        safeUrl(attrs.manifestId) &&
-        (attrs.resourceType !== "Canvas" || safeUrl(attrs.canvasId));
-}
 function snippetAttributes(
   target: IIIFDropTarget,
   options: IIIFSnippetExtensionOptions,
@@ -134,55 +108,11 @@ function snippetAttributes(
 }
 
 /** Image API images, with the same browser and image options as MDXEditor. */
-export const IIIFImage = Node.create<IIIFImageExtensionOptions, DialogStorage>({
-  name: "iiifImage",
-  group: "block",
-  atom: true,
-  draggable: true,
-  addOptions: () => ({}),
+export const IIIFImage = IIIFImageNode.extend<
+  IIIFImageExtensionOptions,
+  DialogStorage
+>({
   addStorage: () => ({ dialog: null, mounted: 0 }),
-  addAttributes() {
-    return {
-      src: { default: null },
-      alt: { default: "" },
-      lockAspectRatio: {
-        default: true,
-        parseHTML: (element) =>
-          element.getAttribute("data-lock-aspect-ratio") !== "false",
-        renderHTML: (attrs) => ({
-          "data-lock-aspect-ratio": String(attrs.lockAspectRatio),
-        }),
-      },
-      objectFit: {
-        default: "contain",
-        parseHTML: (element) =>
-          element.getAttribute("data-object-fit") === "cover"
-            ? "cover"
-            : "contain",
-        renderHTML: (attrs) => ({ "data-object-fit": attrs.objectFit }),
-      },
-      width: { default: null },
-      height: { default: null },
-    };
-  },
-  parseHTML() {
-    return [
-      {
-        tag: "img[data-iiif-image]",
-        getAttrs: (element) =>
-          safeUrl(element.getAttribute("src")) ? null : false,
-      },
-    ];
-  },
-  renderHTML({ node, HTMLAttributes }) {
-    return [
-      "img",
-      mergeAttributes(HTMLAttributes, {
-        "data-iiif-image": "true",
-        style: `max-width:100%;${node.attrs.lockAspectRatio ? "height:auto;" : ""}object-fit:${node.attrs.objectFit === "cover" ? "cover" : "contain"}`,
-      }),
-    ];
-  },
   addCommands() {
     return {
       insertIIIFImage:
@@ -196,6 +126,14 @@ export const IIIFImage = Node.create<IIIFImageExtensionOptions, DialogStorage>({
         ({ tr, dispatch }) => {
           if (!this.editor.isEditable) return false;
           if (dispatch) {
+            this.storage.anchor?.release();
+            const from = state.position ?? tr.selection.from;
+            this.storage.anchor = captureEditorAnchor(
+              this.editor,
+              from,
+              state.position ?? tr.selection.to,
+              !!(state.image || state.snippet),
+            );
             this.storage.dialog = state;
             tr.setMeta("iiif-dialog", true);
           }
@@ -233,78 +171,11 @@ export const IIIFImage = Node.create<IIIFImageExtensionOptions, DialogStorage>({
 });
 
 /** Interactive Collection, Manifest and Canvas blocks. */
-export const IIIFSnippet = Node.create<
+export const IIIFSnippet = IIIFSnippetNode.extend<
   IIIFSnippetExtensionOptions,
   DialogStorage
 >({
-  name: "iiifSnippet",
-  group: "block",
-  atom: true,
-  draggable: true,
-  // Prefer snippets when both extensions receive a Content State drop.
-  priority: 110,
-  addOptions: () => ({}),
   addStorage: () => ({ dialog: null, mounted: 0 }),
-  addAttributes() {
-    const defaults = {
-      resourceType: "Manifest",
-      collectionId: null,
-      manifestId: null,
-      canvasId: null,
-      width: this.options.defaultSize?.width ?? 640,
-      height: this.options.defaultSize?.height ?? 420,
-      navigation: this.options.collectionNavigation ?? "breadcrumbs",
-    };
-    return Object.fromEntries(
-      Object.entries(defaults).map(([name, value]) => [
-        name,
-        {
-          default: value,
-          parseHTML: (element: HTMLElement) => {
-            const attr = element.getAttribute(`data-${name.toLowerCase()}`);
-            return typeof value === "number"
-              ? Number(attr) > 0
-                ? Number(attr)
-                : value
-              : (attr ?? value);
-          },
-          renderHTML: (attributes: Record<string, unknown>) => ({
-            [`data-${name.toLowerCase()}`]: attributes[name],
-          }),
-        },
-      ]),
-    );
-  },
-  parseHTML() {
-    return [
-      {
-        tag: "div[data-iiif-snippet]",
-        getAttrs: (element) =>
-          validSnippet({
-            resourceType: element.getAttribute(
-              "data-resourcetype",
-            ) as IIIFSnippetAttributes["resourceType"],
-            collectionId: element.getAttribute("data-collectionid"),
-            manifestId: element.getAttribute("data-manifestid"),
-            canvasId: element.getAttribute("data-canvasid"),
-          })
-            ? null
-            : false,
-      },
-    ];
-  },
-  renderHTML({ node, HTMLAttributes }) {
-    const id = node.attrs.collectionId || node.attrs.manifestId;
-    return [
-      "div",
-      mergeAttributes(HTMLAttributes, { "data-iiif-snippet": "true" }),
-      [
-        "a",
-        { href: safeUrl(id) ? id : undefined },
-        `IIIF ${node.attrs.resourceType}`,
-      ],
-    ];
-  },
   addCommands() {
     return {
       insertIIIFSnippet:
@@ -318,6 +189,14 @@ export const IIIFSnippet = Node.create<
         ({ tr, dispatch }) => {
           if (!this.editor.isEditable) return false;
           if (dispatch) {
+            this.storage.anchor?.release();
+            const from = state.position ?? tr.selection.from;
+            this.storage.anchor = captureEditorAnchor(
+              this.editor,
+              from,
+              state.position ?? tr.selection.to,
+              !!(state.image || state.snippet),
+            );
             this.storage.dialog = state;
             tr.setMeta("iiif-dialog", true);
           }
@@ -659,6 +538,11 @@ function BrowserDialog({
     editor.storage[kind].mounted++;
     return () => {
       editor.storage[kind].mounted--;
+      if (!editor.storage[kind].mounted) {
+        editor.storage[kind].anchor?.release();
+        editor.storage[kind].anchor = undefined;
+        editor.storage[kind].dialog = null;
+      }
     };
   }, [editor, kind]);
   useEffect(() => {
@@ -672,23 +556,40 @@ function BrowserDialog({
     setError("");
   }, [state.dialog]);
   const close = () => {
+    editor.storage[kind].anchor?.release();
+    editor.storage[kind].anchor = undefined;
     editor.storage[kind].dialog = null;
     editor.view.dispatch(editor.state.tr.setMeta("iiif-dialog", true));
   };
   useEffect(() => {
     if (!state.editable && editor.storage[kind].dialog) {
+      editor.storage[kind].anchor?.release();
+      editor.storage[kind].anchor = undefined;
       editor.storage[kind].dialog = null;
       editor.view.dispatch(editor.state.tr.setMeta("iiif-dialog", true));
     }
   }, [editor, kind, state.editable]);
   const save = (src: string, caption = false) => {
-    if (!editor.isEditable || !state.dialog || !draft) return;
-    const attrs = { ...state.dialog.image, ...layout, src, alt: draft.label };
-    const pos = state.dialog.position;
-    if (state.dialog.image && pos !== undefined) {
+    const dialog = state.dialog;
+    if (
+      editor.isDestroyed ||
+      !editor.isEditable ||
+      !dialog ||
+      !draft ||
+      editor.storage[kind].dialog !== dialog
+    )
+      return;
+    const range = editor.storage[kind].anchor?.resolve();
+    if (!range) {
+      setError("The image insertion point changed. Reopen the editor.");
+      return;
+    }
+    const attrs = { ...dialog.image, ...layout, src, alt: draft.label };
+    const pos = range.from;
+    if (dialog.image) {
       if (
         editor.state.doc.nodeAt(pos)?.type.name !== "iiifImage" ||
-        editor.state.doc.nodeAt(pos)?.attrs.src !== state.dialog.image.src
+        editor.state.doc.nodeAt(pos)?.attrs.src !== dialog.image.src
       ) {
         setError("The image is no longer at this position. Reopen its editor.");
         return;
@@ -708,8 +609,7 @@ function BrowserDialog({
             ]
           : []),
       ];
-      if (pos !== undefined) editor.commands.insertContentAt(pos, content);
-      else editor.chain().focus().insertContent(content).run();
+      if (!editor.chain().focus().insertContentAt(range, content).run()) return;
     }
     close();
   };
@@ -881,6 +781,19 @@ function BrowserDialog({
                       },
                       cb: ({ resource, vault }: Selection) => {
                         try {
+                          const dialog = state.dialog;
+                          if (
+                            editor.isDestroyed ||
+                            !editor.isEditable ||
+                            !dialog ||
+                            editor.storage[kind].dialog !== dialog
+                          )
+                            return;
+                          const range = editor.storage[kind].anchor?.resolve();
+                          if (!range)
+                            throw new Error(
+                              "The insertion point changed. Reopen the editor.",
+                            );
                           if (Array.isArray(resource))
                             throw new Error("Select one IIIF resource");
                           if (kind === "iiifSnippet") {
@@ -892,11 +805,8 @@ function BrowserDialog({
                               throw new Error(
                                 "The selected resource needs a parent Manifest.",
                               );
-                            if (
-                              state.dialog?.snippet &&
-                              state.dialog.position !== undefined
-                            ) {
-                              const pos = state.dialog.position;
+                            if (dialog.snippet) {
+                              const pos = range.from;
                               const current = editor.state.doc.nodeAt(pos);
                               if (
                                 !editor.isEditable ||
@@ -917,7 +827,10 @@ function BrowserDialog({
                               !editor
                                 .chain()
                                 .focus()
-                                .insertIIIFSnippet(attrs)
+                                .insertContentAt(range, {
+                                  type: "iiifSnippet",
+                                  attrs,
+                                })
                                 .run()
                             )
                               return;
@@ -946,6 +859,7 @@ function BrowserDialog({
                                     editor.view.dom,
                                   ),
                                   rotation:
+                                    resource.imageRotation ??
                                     resource.rotation ??
                                     options.image?.rotation,
                                 },

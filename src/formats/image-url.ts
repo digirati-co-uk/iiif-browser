@@ -3,6 +3,7 @@ import { createIIIFRequest, imageRequestUrl } from "../mdxeditor/image-api";
 import {
   canvasToImageSelector,
   findSelectedPainting,
+  paintingImageRotation,
   paintingReference,
 } from "../utilities/painting-selection";
 
@@ -19,6 +20,7 @@ export const imageUrlFormat: ExplorerFormat<"image-url"> = {
     let id = resource.id;
     let version: 2 | 3 = resource.type.endsWith("2") ? 2 : 3;
     let selector = resource.imageSelector || resource.selector;
+    let rotation = resource.rotation;
     if (resource.type === "Canvas") {
       const canvas = vault.get<any>(resource);
       const painting = findSelectedPainting(
@@ -34,6 +36,10 @@ export const imageUrlFormat: ExplorerFormat<"image-url"> = {
       selector =
         resource.imageSelector ||
         canvasToImageSelector(canvas, painting, resource.selector);
+      if (resource.selector && !selector) {
+        throw new Error("The crop does not overlap the selected image");
+      }
+      rotation = paintingImageRotation(painting, rotation);
     } else {
       const service = vault.get<any>(resource, { skipSelfReturn: false });
       const type = service?.type || service?.["@type"];
@@ -61,7 +67,7 @@ export const imageUrlFormat: ExplorerFormat<"image-url"> = {
             h: Math.round(spatial.height),
           }
         : { full: true },
-      { ...options, width, height, rotation: resource.rotation },
+      { ...options, width, height, rotation },
     );
     return imageRequestUrl(request);
   },

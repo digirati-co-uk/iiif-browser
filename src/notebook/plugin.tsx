@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useId, useState, useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useId,
+  useState,
+  useMemo,
+  useRef,
+} from "react";
 import { useVault } from "react-iiif-vault";
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
@@ -352,6 +360,22 @@ function NotebookBridge(props: IntegrationProps) {
   const vault = useVault();
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const canAppend =
+    !options.readOnly &&
+    options.capabilities?.appendResources !== false &&
+    (!options.bindEditor || !!options.commands) &&
+    !["loading", "incompatible", "deleted"].includes(
+      options.syncStatus?.state ?? "",
+    );
+  const appendPermission = useRef(canAppend);
+  appendPermission.current = canAppend;
+  const active = useRef(false);
+  useLayoutEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
   useEffect(() => setMessage(""), [location.key]);
   const key = useId();
   useEffect(
@@ -409,7 +433,7 @@ function NotebookBridge(props: IntegrationProps) {
       ),
   );
   const save = async () => {
-    if (saving || loading || options.readOnly) return;
+    if (saving || loading || !canAppend) return;
     setSaving(true);
     setMessage("");
     try {
@@ -429,15 +453,26 @@ function NotebookBridge(props: IntegrationProps) {
             ]
           : [];
       let noteId = currentNote(notebook.getState(), options.projectId)?.id;
+      const resources: NotebookResource[] = [];
       for (const ref of refs) {
         const resource = await notebookSelection(
           { ...ref, parent: ref.parent ?? findCanvasParent(ref.id, vault) },
           vault,
         );
-        noteId = notebook
-          .getState()
-          .appendResource(resource, { noteId, projectId: options.projectId });
+        if (!active.current || !appendPermission.current) return;
+        if (options.commands) resources.push(resource);
+        else
+          noteId = notebook
+            .getState()
+            .appendResource(resource, { noteId, projectId: options.projectId });
       }
+      if (options.commands && resources.length)
+        noteId = await options.commands.appendResources({
+          noteId: noteId ?? null,
+          projectId: options.projectId,
+          resources,
+        });
+      if (!active.current || !noteId) return;
       const title =
         notebook.getState().notes.find((note) => note.id === noteId)?.title ||
         "Untitled note";
@@ -473,7 +508,7 @@ function NotebookBridge(props: IntegrationProps) {
             <NotebookIcon /> View in notes
           </button>
         ) : (
-          !options.readOnly && (
+          canAppend && (
             <button
               type="button"
               className="iiif-notebook__add"

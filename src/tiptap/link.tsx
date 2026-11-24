@@ -14,23 +14,27 @@ import {
 import { notebookSelection } from "../notebook/selection";
 import type { OutputTarget, SelectedItem } from "../stores/output-store";
 import type { Vault } from "@iiif/helpers";
+import { captureEditorAnchor, type EditorAnchor } from "./editor-anchor";
 import { ThemedModalOverlay } from "../theme/Themed";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     iiifLink: {
-      insertIIIFLink: (resource: NotebookResource) => ReturnType;
+      insertIIIFLink: (
+        resource: NotebookResource,
+        at?: { from: number; to: number },
+      ) => ReturnType;
       openIIIFLink: () => ReturnType;
     };
   }
   interface Storage {
-    iiifLink: { open: boolean };
+    iiifLink: { open: boolean; anchor?: EditorAnchor };
   }
 }
 /** Inserts ordinary labelled links, or notebook links when its node is installed. */
 export const IIIFLink = Extension.create<
   { browserProps?: IIIFBrowserProps },
-  { open: boolean }
+  { open: boolean; anchor?: EditorAnchor }
 >({
   name: "iiifLink",
   addOptions: () => ({}),
@@ -42,13 +46,19 @@ export const IIIFLink = Extension.create<
         ({ tr, dispatch }) => {
           if (!this.editor.isEditable) return false;
           if (dispatch) {
+            this.storage.anchor?.release();
+            this.storage.anchor = captureEditorAnchor(
+              this.editor,
+              tr.selection.from,
+              tr.selection.to,
+            );
             this.storage.open = true;
             tr.setMeta("iiif-link-dialog", true);
           }
           return true;
         },
       insertIIIFLink:
-        (resource) =>
+        (resource, at) =>
         ({ commands }) => {
           if (
             !this.editor.isEditable ||
@@ -59,15 +69,16 @@ export const IIIFLink = Extension.create<
           const href = isNotebookUrl(resource.source)
             ? resource.source
             : `https://theseusviewer.org/?iiif-content=${encodeURIComponent(resource.source)}`;
-          return commands.insertContent(
-            this.editor.schema.nodes.notebookResource
-              ? resourceNode(resource.source, resource)
-              : {
-                  type: "text",
-                  text: resource.label,
-                  marks: [{ type: "link", attrs: { href } }],
-                },
-          );
+          const content = this.editor.schema.nodes.notebookResource
+            ? resourceNode(resource.source, resource)
+            : {
+                type: "text",
+                text: resource.label,
+                marks: [{ type: "link", attrs: { href } }],
+              };
+          return at
+            ? commands.insertContentAt(at, content)
+            : commands.insertContent(content);
         },
     };
   },
@@ -97,6 +108,8 @@ export function InsertIIIFLink({
     setBusy(false);
     if (editor && !editor.isDestroyed) {
       editor.storage.iiifLink.open = false;
+      editor.storage.iiifLink.anchor?.release();
+      editor.storage.iiifLink.anchor = undefined;
       editor.view.dispatch(editor.state.tr.setMeta("iiif-link-dialog", true));
     }
   };
@@ -124,6 +137,7 @@ export function InsertIIIFLink({
     mode: "link" | "image" | "crop";
   }) => {
     const token = ++request.current;
+    const anchor = editor.storage.iiifLink.anchor;
     setBusy(true);
     setError("");
     try {
@@ -134,9 +148,17 @@ export function InsertIIIFLink({
         !editor.isDestroyed &&
         editor.isEditable &&
         editor.storage.iiifLink.open &&
-        editor.chain().focus().insertIIIFLink(link).run()
-      )
+        editor.storage.iiifLink.anchor === anchor
+      ) {
+        const at = anchor?.resolve();
+        if (!at)
+          throw new Error(
+            "The insertion point changed. Reopen the link picker.",
+          );
+        if (!editor.chain().focus().insertIIIFLink(link, at).run())
+          throw new Error("Could not insert the link at this position.");
         close();
+      }
     } catch (reason) {
       if (token === request.current)
         setError(

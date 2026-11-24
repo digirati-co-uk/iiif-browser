@@ -1067,3 +1067,20 @@
     animation: none;
   }
 }
+
+.iiif-notebook__peer-cursor {
+  position: relative;
+  border-left: 2px solid var(--peer-color);
+  pointer-events: none;
+}
+.iiif-notebook__peer-cursor > span {
+  position: absolute;
+  bottom: 100%;
+  left: -2px;
+  z-index: 1;
+  padding: 1px 4px;
+  color: white;
+  background: var(--peer-color);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}

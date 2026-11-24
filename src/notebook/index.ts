@@ -50,3 +50,30 @@ export {
   type ThemeProviderProps,
 } from "../theme/context";
 export type { ThemeMode, ThemePreference } from "../theme/theme";
+
+export {
+  markNotebookRemoteTransaction,
+  isNotebookRemoteTransaction,
+  type NotebookCapabilities,
+  type NotebookCommands,
+  type NotebookEditorBinding,
+  type NotebookEditorEvents,
+  type NotebookSelection,
+  type NotebookSyncStatus,
+} from "./binding";
+export {
+  createNotebookStepBinding,
+  type NotebookStepBinding,
+  type NotebookStepBindingOptions,
+  type NotebookVersionedSelection,
+} from "./steps";
+export {
+  applyNotebookContentSnapshot,
+  getNotebookContentSnapshot,
+  type NotebookContentSnapshot,
+} from "./store";
+export {
+  captureEditorAnchor,
+  type EditorAnchor,
+} from "../tiptap/editor-anchor";
+export type { NotebookPeerSelection, NotebookPresence } from "./presence";
