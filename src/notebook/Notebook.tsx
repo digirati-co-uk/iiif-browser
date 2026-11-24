@@ -1,9 +1,11 @@
 import "./styles.css";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
-import { TextSelection } from "@tiptap/pm/state";
+import { Extension } from "@tiptap/core";
+import { Plugin, TextSelection } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +16,7 @@ import { IIIFImageDialog, IIIFSnippetDialog } from "../tiptap";
 import { InsertIIIFLink } from "../tiptap/link";
 import { ThemeProvider, useThemeAttributes } from "../theme/context";
 import type { ThemePreference } from "../theme/theme";
+import { NotebookErrorBoundary } from "./ErrorBoundary";
 import { NotebookResourceBrowser } from "./ResourceBrowser";
 import { PlusIcon } from "../icons/PlusIcon";
 import { SearchIcon } from "../icons/SearchIcon";
@@ -28,12 +31,27 @@ import {
 import { noteText, type NotebookResource } from "./resources";
 import {
   currentNote,
+  getNotebookContentSnapshot,
   getNotebook,
   notesForProject,
   projectKey,
   type NotebookNote,
   type NotebookStore,
 } from "./store";
+
+import {
+  isNotebookRemoteTransaction,
+  type NotebookCapabilities,
+  type NotebookCommands,
+  type NotebookEditorBinding,
+  type NotebookSyncStatus,
+} from "./binding";
+
+import {
+  notebookPresencePlugin,
+  setNotebookPresence,
+  type NotebookPresence,
+} from "./presence";
 
 export interface IIIFNotebookProps extends NotebookEditorOptions {
   /**
@@ -50,6 +68,14 @@ export interface IIIFNotebookProps extends NotebookEditorOptions {
   noteId?: string;
   onNoteChange?(noteId: string): void;
   readOnly?: boolean;
+  /** Hide note management and navigation for a host-controlled note. */
+  singleNote?: boolean;
+  /** Resolve the ready binding for this note. Null leaves the editor waiting. */
+  bindEditor?(note: NotebookNote): NotebookEditorBinding | null;
+  commands?: NotebookCommands;
+  capabilities?: NotebookCapabilities;
+  syncStatus?: NotebookSyncStatus;
+  presence?: NotebookPresence;
   className?: string;
   /** A bounded workspace; the note and sidebar scroll independently. */
   height?: CSSProperties["height"];
@@ -112,6 +138,12 @@ function NotebookWorkspace({
   defaultSidebarWidth = 240,
   defaultSidebarCollapsed = false,
   renderNoteActions,
+  singleNote = false,
+  bindEditor,
+  commands,
+  capabilities,
+  syncStatus,
+  presence,
   ...options
 }: Omit<IIIFNotebookProps, "theme" | "onThemeChange" | "accentColor">) {
   const themeAttributes = useThemeAttributes();
@@ -133,12 +165,48 @@ function NotebookWorkspace({
     state.setWorkspaceView(projectId, { sidebarWidth });
   const drag = useRef<{ x: number; width: number } | null>(null);
   const [recovery, setRecovery] = useState<NotebookNote | null>(null);
+  const [commandError, setCommandError] = useState("");
+  const writable =
+    !readOnly &&
+    !["loading", "incompatible", "deleted"].includes(syncStatus?.state ?? "");
+  const manageNotes =
+    writable &&
+    capabilities?.manageNotes !== false &&
+    (!bindEditor || !!commands);
+  const editContent = writable && capabilities?.editContent !== false;
+  const runActions = writable && capabilities?.runActions !== false;
   const notes = notesForProject(state, projectId);
   const note =
-    notes.find((note) => note.id === noteId) ?? currentNote(state, projectId);
+    notes.find((note) => note.id === noteId) ??
+    (singleNote && noteId ? undefined : currentNote(state, projectId));
+  const binding = note && bindEditor ? bindEditor(note) : null;
   const openNote = (id: string) => {
     state.openNote(id);
     onNoteChange?.(id);
+  };
+  const command = async (run: () => unknown | Promise<unknown>) => {
+    setCommandError("");
+    try {
+      await run();
+      return true;
+    } catch (error) {
+      setCommandError(
+        error instanceof Error ? error.message : "Notebook edit failed.",
+      );
+      return false;
+    }
+  };
+  const create = () => {
+    if (!manageNotes) return;
+    if (!commands) {
+      openNote(state.createNote(projectId).id);
+      setQuery("");
+      return;
+    }
+    void command(async () => {
+      openNote(await commands.createNote({ projectId }));
+      setQuery("");
+    });
   };
   const search = query.trim();
   const filtered = notes.filter((item) =>
@@ -148,12 +216,24 @@ function NotebookWorkspace({
   );
   useEffect(() => {
     setRecovery(null);
+    setCommandError("");
   }, [projectId, notebook]);
   const resize = (width: number) =>
     setSidebarWidth(Math.max(160, Math.min(400, width)));
   const exportNotebook = () => {
     const url = URL.createObjectURL(
-      new Blob([state.exportJSON()], { type: "application/json" }),
+      new Blob(
+        [
+          bindEditor || commands
+            ? JSON.stringify(
+                { ...getNotebookContentSnapshot(notebook), lastOpened: {} },
+                null,
+                2,
+              )
+            : state.exportJSON(),
+        ],
+        { type: "application/json" },
+      ),
     );
     const link = document.createElement("a");
     link.href = url;
@@ -178,7 +258,14 @@ function NotebookWorkspace({
         browserProps={options.browserProps}
       />
       {state.persistenceError && <p role="alert">{state.persistenceError}</p>}
-      {recovery && (
+      {commandError && <p role="alert">{commandError}</p>}
+      {syncStatus?.message && <p role="status">{syncStatus.message}</p>}
+      {syncStatus?.recoverDraft && (
+        <button type="button" onClick={syncStatus.recoverDraft}>
+          Export unsent changes
+        </button>
+      )}
+      {recovery && manageNotes && !commands && (
         <p role="status" className="iiif-notebook__notice">
           Note deleted.{" "}
           <button
@@ -196,7 +283,7 @@ function NotebookWorkspace({
         </p>
       )}
       <div className="iiif-notebook__workspace">
-        {!collapsed && (
+        {!singleNote && !collapsed && (
           <>
             <aside
               className="iiif-notebook__sidebar"
@@ -213,16 +300,13 @@ function NotebookWorkspace({
                   <NotebookIcon name="sidebar" />
                 </button>
                 <span className="iiif-notebook__spacer" />
-                {!readOnly && (
+                {manageNotes && (
                   <button
                     type="button"
                     className="iiif-notebook__icon"
                     aria-label="New note"
                     title="New note"
-                    onClick={() => {
-                      openNote(state.createNote(projectId).id);
-                      setQuery("");
-                    }}
+                    onClick={create}
                   >
                     <PlusIcon aria-hidden="true" />
                   </button>
@@ -306,7 +390,7 @@ function NotebookWorkspace({
                           {renderNoteActions({
                             note: item,
                             notebook,
-                            readOnly,
+                            readOnly: !runActions || !editContent,
                           })}
                         </div>
                       )}
@@ -362,69 +446,102 @@ function NotebookWorkspace({
           </>
         )}
         <main className="iiif-notebook__main">
-          <div className="iiif-notebook__title-row">
-            {collapsed && (
-              <button
-                type="button"
-                className="iiif-notebook__icon"
-                aria-label="Open sidebar"
-                title="Open sidebar"
-                onClick={() => setCollapsed(false)}
-              >
-                <NotebookIcon name="sidebar" />
-              </button>
-            )}
-            {note && (
-              <>
-                <input
-                  aria-label="Note title"
-                  value={note.title}
-                  readOnly={readOnly}
-                  placeholder="Untitled note"
-                  onChange={(event) =>
-                    state.updateNote(note.id, { title: event.target.value })
-                  }
-                />
-                {!readOnly && (
-                  <button
-                    type="button"
-                    className="iiif-notebook__icon"
-                    aria-label="Delete note"
-                    title="Delete note"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          `Delete “${note.title || "Untitled note"}”?`,
-                        )
-                      ) {
-                        setRecovery(note);
-                        state.deleteNote(note.id);
-                      }
-                    }}
-                  >
-                    <DeleteForeverIcon aria-hidden="true" />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-          {note ? (
-            <NoteEditor
-              key={`${note.id}:${projectId ?? ""}`}
-              {...options}
-              onOpenResource={onOpenResource}
-              notebook={notebook}
-              note={note}
-              readOnly={readOnly}
-            />
-          ) : (
-            <div className="iiif-notebook__empty">
-              <p>No note selected.</p>
-              {!readOnly && (
+          {!singleNote && (
+            <div className="iiif-notebook__title-row">
+              {collapsed && (
                 <button
                   type="button"
-                  onClick={() => state.createNote(projectId)}
+                  className="iiif-notebook__icon"
+                  aria-label="Open sidebar"
+                  title="Open sidebar"
+                  onClick={() => setCollapsed(false)}
                 >
+                  <NotebookIcon name="sidebar" />
+                </button>
+              )}
+              {note && (
+                <>
+                  {commands ? (
+                    <CollaborativeTitle
+                      key={note.id}
+                      title={note.title}
+                      readOnly={!manageNotes}
+                      onCommit={(title) =>
+                        command(() => commands.renameNote(note.id, title))
+                      }
+                    />
+                  ) : (
+                    <input
+                      aria-label="Note title"
+                      value={note.title}
+                      readOnly={!manageNotes}
+                      placeholder="Untitled note"
+                      onChange={(event) =>
+                        state.updateNote(note.id, { title: event.target.value })
+                      }
+                    />
+                  )}
+                  {manageNotes && (
+                    <button
+                      type="button"
+                      className="iiif-notebook__icon"
+                      aria-label="Delete note"
+                      title="Delete note"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Delete “${note.title || "Untitled note"}”?`,
+                          )
+                        ) {
+                          if (commands)
+                            void command(() => commands.deleteNote(note.id));
+                          else {
+                            setRecovery(note);
+                            state.deleteNote(note.id);
+                          }
+                        }
+                      }}
+                    >
+                      <DeleteForeverIcon aria-hidden="true" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {note && (!bindEditor || binding) ? (
+            <NotebookErrorBoundary
+              key={JSON.stringify([note.id, projectId, binding?.key])}
+              fallback={(error) => (
+                <p role="alert">
+                  {error instanceof Error
+                    ? error.message
+                    : "Could not open this note."}
+                </p>
+              )}
+            >
+              <NoteEditor
+                binding={binding}
+                peers={
+                  presence?.noteId === note.id ? presence.peers : undefined
+                }
+                runActions={runActions}
+                {...options}
+                onOpenResource={onOpenResource}
+                notebook={notebook}
+                note={note}
+                readOnly={!editContent}
+              />
+            </NotebookErrorBoundary>
+          ) : (
+            <div className="iiif-notebook__empty">
+              <p>
+                {note && bindEditor
+                  ? syncStatus?.message || "Loading note…"
+                  : "No note selected."}
+              </p>
+              {!note && manageNotes && !singleNote && (
+                <button type="button" onClick={create}>
                   Create a note
                 </button>
               )}
@@ -435,16 +552,79 @@ function NotebookWorkspace({
     </section>
   );
 }
+function CollaborativeTitle({
+  title,
+  readOnly,
+  onCommit,
+}: {
+  title: string;
+  readOnly: boolean;
+  onCommit(title: string): Promise<boolean>;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <input
+      aria-label="Note title"
+      value={draft ?? title}
+      readOnly={readOnly}
+      placeholder="Untitled note"
+      onChange={(event) => setDraft(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+      }}
+      onBlur={() => {
+        if (readOnly || draft === null || draft === title) {
+          setDraft(null);
+          return;
+        }
+        void onCommit(draft).then((accepted) => {
+          if (accepted) setDraft((value) => (value === draft ? null : value));
+        });
+      }}
+    />
+  );
+}
+
 function NoteEditor({
   note,
   notebook,
   readOnly,
+  binding,
+  peers,
+  runActions,
   ...options
 }: NotebookEditorOptions & {
   note: NotebookNote;
   notebook: NotebookStore;
   readOnly: boolean;
+  binding: NotebookEditorBinding | null;
+  peers?: NotebookPresence["peers"];
+  runActions: boolean;
 }) {
+  const activeBinding = useRef(binding);
+  activeBinding.current = binding;
+  const editable = useRef(!readOnly);
+  editable.current = !readOnly;
+  const [configuration] = useState(() => binding?.createEditor());
+  const [permissions] = useState(() =>
+    Extension.create({
+      name: "notebookEditPermissions",
+      addProseMirrorPlugins() {
+        return [
+          notebookPresencePlugin(),
+          new Plugin({
+            filterTransaction(transaction) {
+              return (
+                !transaction.docChanged ||
+                editable.current ||
+                isNotebookRemoteTransaction(transaction)
+              );
+            },
+          }),
+        ];
+      },
+    }),
+  );
   const savedView = useRef(notebook.getState().noteViews[note.id]);
   const viewport = useRef<HTMLDivElement>(null);
   const position = useRef({
@@ -457,10 +637,16 @@ function NoteEditor({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ link: { openOnClick: false } }),
+      StarterKit.configure({
+        link: { openOnClick: false },
+        undoRedo: configuration?.undoRedo,
+        trailingNode: binding ? false : undefined,
+      }),
       ...notebookExtensions(options),
+      ...(configuration?.extensions ?? []),
+      ...(binding ? [permissions] : []),
     ],
-    content: note.content,
+    content: binding ? configuration?.content : note.content,
     editable: !readOnly,
     editorProps: {
       attributes: {
@@ -478,15 +664,49 @@ function NoteEditor({
           head: editor.state.selection.head,
         };
         changedView.current = true;
+        const { anchor, head } = editor.state.selection;
+        activeBinding.current?.onSelectionChange?.({ anchor, head });
       }
     },
+    onBlur: () => activeBinding.current?.onSelectionChange?.(null),
+    onFocus: ({ editor }) => {
+      const { anchor, head } = editor.state.selection;
+      activeBinding.current?.onSelectionChange?.({ anchor, head });
+    },
+    onTransaction: ({ editor, transaction, appendedTransactions }) =>
+      activeBinding.current?.onTransaction?.({
+        editor,
+        transaction,
+        appendedTransactions,
+      }),
     onUpdate: ({ editor }) => {
+      if (activeBinding.current) return;
       ownContent.current = editor.getJSON();
       notebook
         .getState()
         .updateNote(latest.current.id, { content: ownContent.current });
     },
   });
+  useLayoutEffect(() => {
+    if (!editor || !binding) return;
+    const detach = binding.attach?.(editor);
+    return () => {
+      binding.onSelectionChange?.(null);
+      detach?.();
+    };
+  }, [editor, binding]);
+  useEffect(() => {
+    if (!editor || !binding) return;
+    let current = true;
+    const doc = editor.state.doc;
+    queueMicrotask(() => {
+      if (current && !editor.isDestroyed && editor.state.doc === doc)
+        setNotebookPresence(editor, peers ?? []);
+    });
+    return () => {
+      current = false;
+    };
+  }, [editor, binding, peers]);
   useEffect(() => {
     if (!editor) return;
     const frame = requestAnimationFrame(() => {
@@ -522,7 +742,7 @@ function NoteEditor({
       editor.setEditable(!readOnly, false);
   }, [editor, readOnly]);
   useEffect(() => {
-    if (!editor || note.content === ownContent.current) return;
+    if (!editor || binding || note.content === ownContent.current) return;
     let active = true;
     // React node views flush synchronously; apply outside the React effect.
     queueMicrotask(() => {
@@ -539,7 +759,7 @@ function NoteEditor({
     return () => {
       active = false;
     };
-  }, [editor, notebook, note.id, note.content]);
+  }, [editor, binding, notebook, note.id, note.content]);
   useEditorState({ editor, selector: ({ editor }) => editor?.state });
   const tools = [
     [
@@ -574,7 +794,15 @@ function NoteEditor({
     ],
   ] as const;
   return (
-    <NotebookEditorContext.Provider value={{ ...options, notebook, note }}>
+    <NotebookEditorContext.Provider
+      value={{
+        ...options,
+        notebook,
+        note,
+        live: !!binding,
+        canRunActions: runActions,
+      }}
+    >
       {editor && !readOnly && (
         <>
           <IIIFImageDialog editor={editor} />

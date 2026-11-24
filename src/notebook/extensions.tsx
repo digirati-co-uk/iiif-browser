@@ -1,13 +1,10 @@
 import { useBrowserI18n } from "../i18n";
 import {
   Extension,
-  Node,
-  mergeAttributes,
   type Editor,
   type Extensions,
   type JSONContent,
 } from "@tiptap/core";
-import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Plugin } from "@tiptap/pm/state";
 import { closeHistory } from "@tiptap/pm/history";
 import {
@@ -45,7 +42,18 @@ import {
   type NotebookResource,
 } from "./resources";
 import type { NotebookNote, NotebookStore } from "./store";
+import { isNotebookRemoteTransaction } from "./binding";
 import { ThemedPopover } from "../theme/Themed";
+
+import {
+  NotebookCropNode,
+  NotebookPlainLink,
+  NotebookResourceBlockNode,
+  NotebookResourceNode,
+  NotebookTextAlign,
+  notebookTaskExtensions,
+  resourceLinkText,
+} from "./nodes";
 
 export interface NotebookActionContext {
   resource: NotebookResource;
@@ -82,9 +90,16 @@ export interface NotebookEditorOptions {
     signal: AbortSignal,
   ): Promise<NotebookResource | null>;
   extensions?: Extensions;
+  /** Disable resolving resources displayed by a bound editor. */
+  resolveSharedPreviews?: boolean;
 }
 export const NotebookEditorContext = createContext<
-  | (NotebookEditorOptions & { notebook: NotebookStore; note: NotebookNote })
+  | (NotebookEditorOptions & {
+      notebook: NotebookStore;
+      note: NotebookNote;
+      live?: boolean;
+      canRunActions?: boolean;
+    })
   | null
 >(null);
 
@@ -98,6 +113,7 @@ export function setNotebookTaskChecked(
     !editor.isEditable ||
     editor.isDestroyed ||
     position === undefined ||
+    position < 0 ||
     position > editor.state.doc.content.size
   )
     return false;
@@ -105,137 +121,27 @@ export function setNotebookTaskChecked(
   for (let depth = resolved.depth; depth > 0; depth--) {
     const node = resolved.node(depth);
     if (node.type.name === "taskItem") {
+      if (node.attrs.checked === checked) return true;
+      const previous = editor.state;
       editor.view.dispatch(
-        editor.state.tr.setNodeMarkup(resolved.before(depth), undefined, {
-          ...node.attrs,
+        previous.tr.setNodeAttribute(
+          resolved.before(depth),
+          "checked",
           checked,
-        }),
+        ),
       );
-      return true;
+      return editor.state !== previous;
     }
   }
   return false;
 }
-/** Saved attributes are untrusted JSON; a non-string label must not break rendering. */
-function resourceLinkText(attrs: Record<string, any>): string {
-  return (
-    text(attrs.label) ??
-    text(attrs.resource?.label) ??
-    text(attrs.href) ??
-    "Link"
-  );
-}
-export const NotebookResourceLink = Node.create({
-  name: "notebookResource",
-  group: "inline",
-  inline: true,
-  atom: true,
-  selectable: true,
-  addAttributes() {
-    return {
-      href: { default: "" },
-      label: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-link-label"),
-        renderHTML: (attrs) =>
-          typeof attrs.label === "string"
-            ? { "data-link-label": attrs.label }
-            : {},
-      },
-      loadOnPaste: {
-        default: false,
-        parseHTML: (element) => element.hasAttribute("data-load-on-paste"),
-        renderHTML: (attrs) =>
-          attrs.loadOnPaste ? { "data-load-on-paste": "" } : {},
-      },
-      metadataLoaded: {
-        default: false,
-        parseHTML: (element) => element.hasAttribute("data-metadata-loaded"),
-        renderHTML: (attrs) =>
-          attrs.metadataLoaded ? { "data-metadata-loaded": "" } : {},
-      },
-      richContent: {
-        default: null,
-        parseHTML: (element) => {
-          try {
-            return JSON.parse(
-              element.getAttribute("data-rich-content") || "null",
-            );
-          } catch {
-            return null;
-          }
-        },
-        renderHTML: (attrs) =>
-          attrs.richContent
-            ? { "data-rich-content": JSON.stringify(attrs.richContent) }
-            : {},
-      },
-      resource: {
-        default: null,
-        parseHTML: (element) => {
-          try {
-            return sanitizeNotebookResource(
-              JSON.parse(element.getAttribute("data-resource") || "null"),
-            );
-          } catch {
-            return null;
-          }
-        },
-        renderHTML: (attrs) => ({
-          "data-resource": JSON.stringify(attrs.resource),
-        }),
-      },
-    };
-  },
-  // Match before StarterKit’s ordinary link mark without changing schema ordering.
-  parseHTML: () => [{ tag: "a[data-notebook-resource]", priority: 1100 }],
-  renderHTML({ node, HTMLAttributes }) {
-    return [
-      "a",
-      mergeAttributes(HTMLAttributes, {
-        "data-notebook-resource": "true",
-        href: isNotebookUrl(node.attrs.href) ? node.attrs.href : undefined,
-      }),
-      resourceLinkText(node.attrs),
-    ];
-  },
-  renderText: ({ node }) => resourceLinkText(node.attrs),
+export const NotebookResourceLink = NotebookResourceNode.extend({
   addNodeView: () => ReactNodeViewRenderer(ResourceLinkView),
 });
-/** Rich resources contain the existing editable image/viewer nodes. */
-export const NotebookResourceBlock = NotebookResourceLink.extend({
-  name: "notebookResourceBlock",
-  group: "block",
-  inline: false,
-  atom: false,
-  content: "(iiifImage | iiifSnippet | notebookCrop)+",
-  parseHTML: () => [{ tag: "div[data-notebook-resource]" }],
-  renderHTML: ({ HTMLAttributes }) => [
-    "div",
-    mergeAttributes(HTMLAttributes, { "data-notebook-resource": "true" }),
-    0,
-  ],
+export const NotebookResourceBlock = NotebookResourceBlockNode.extend({
+  addNodeView: () => ReactNodeViewRenderer(ResourceLinkView),
 });
-const NotebookCrop = Node.create({
-  name: "notebookCrop",
-  group: "block",
-  atom: true,
-  addAttributes: () => ({
-    src: { default: "" },
-    alt: { default: "" },
-    xywh: { default: "" },
-  }),
-  parseHTML: () => [
-    {
-      tag: "img[data-notebook-crop]",
-      getAttrs: (element) =>
-        isNotebookUrl(element.getAttribute("src")) ? null : false,
-    },
-  ],
-  renderHTML: ({ HTMLAttributes }) => [
-    "img",
-    mergeAttributes(HTMLAttributes, { "data-notebook-crop": "true" }),
-  ],
+const NotebookCrop = NotebookCropNode.extend({
   addNodeView: () => ReactNodeViewRenderer(CropView),
 });
 function CropView({ node, editor, getPos }: NodeViewProps) {
@@ -388,44 +294,6 @@ export function setNotebookResourceView(
     )
     .run();
 }
-const NotebookTextAlign = Extension.create({
-  name: "notebookTextAlign",
-  addGlobalAttributes: () => [
-    {
-      types: ["heading", "paragraph"],
-      attributes: {
-        textAlign: {
-          default: null,
-          parseHTML: (element) =>
-            ["left", "center", "right"].includes(element.style.textAlign)
-              ? element.style.textAlign
-              : null,
-          renderHTML: (attrs) =>
-            ["left", "center", "right"].includes(attrs.textAlign)
-              ? { style: `text-align: ${attrs.textAlign}` }
-              : {},
-        },
-      },
-    },
-  ],
-});
-/** Remembers that a link was checked and is not a IIIF resource. */
-const NotebookPlainLink = Extension.create({
-  name: "notebookPlainLink",
-  addGlobalAttributes: () => [
-    {
-      types: ["link"],
-      attributes: {
-        notebookPlain: {
-          default: false,
-          parseHTML: (element) => element.hasAttribute("data-notebook-plain"),
-          renderHTML: (attrs) =>
-            attrs.notebookPlain ? { "data-notebook-plain": "" } : {},
-        },
-      },
-    },
-  ],
-});
 export const NotebookPaste = Extension.create({
   name: "notebookPaste",
   priority: 120,
@@ -435,6 +303,7 @@ export const NotebookPaste = Extension.create({
         appendTransaction: (transactions, _old, state) => {
           if (
             !transactions.some((transaction) => transaction.docChanged) ||
+            transactions.some(isNotebookRemoteTransaction) ||
             !this.editor.isEditable
           )
             return null;
@@ -594,6 +463,8 @@ function ResourceLinkContent({
 }: NodeViewProps) {
   const { t } = useBrowserI18n();
   const context = useContext(NotebookEditorContext);
+  const canRunActions = useRef(context?.canRunActions !== false);
+  canRunActions.current = context?.canRunActions !== false;
   const supplied = useMemo(
     () => sanitizeNotebookResource(node.attrs.resource),
     [node.attrs.resource],
@@ -606,8 +477,9 @@ function ResourceLinkContent({
   // Set once a link has been checked and is definitely not a IIIF resource.
   const [plain, setPlain] = useState(false);
   const [requested, setRequested] = useState(
-    Boolean(node.attrs.loadOnPaste) ||
-      node.type.name === "notebookResourceBlock",
+    !context?.live &&
+      (Boolean(node.attrs.loadOnPaste) ||
+        node.type.name === "notebookResourceBlock"),
   );
   const [busy, setBusy] = useState<string | null>(null);
   const chip = useRef<HTMLSpanElement>(null);
@@ -644,6 +516,7 @@ function ResourceLinkContent({
     const requestKey = `${retry}:${href}`;
     if (
       !requested ||
+      (context?.live && context.resolveSharedPreviews === false) ||
       (!isNotebookUrl(href) && supplied?.type !== "ContentState") ||
       loaded.current === requestKey ||
       plain ||
@@ -658,10 +531,12 @@ function ResourceLinkContent({
     setLoading(true);
     setError("");
     const options = {
-      ...history,
-      vault: context?.browserProps?.vault,
+      ...(context?.live ? {} : history),
+      vault: context?.live ? undefined : context?.browserProps?.vault,
       requestInitOptions: {
-        ...history?.requestInitOptions,
+        ...(context?.live
+          ? { credentials: "omit" as const }
+          : history?.requestInitOptions),
         signal: controller.signal,
       },
     };
@@ -676,19 +551,7 @@ function ResourceLinkContent({
     void request
       .then((value) => sanitizeNotebookResource(value))
       .then((value) =>
-        value
-          ? enrichNotebookCrops(
-              value,
-              {
-                ...history,
-                requestInitOptions: {
-                  ...history?.requestInitOptions,
-                  signal: controller.signal,
-                },
-              },
-              context?.browserProps?.vault,
-            )
-          : null,
+        value ? enrichNotebookCrops(value, options, options.vault) : null,
       )
       .then((value) =>
         value ? enrichNotebookCollection(value, resolveLink) : null,
@@ -701,10 +564,11 @@ function ResourceLinkContent({
         if (!value) {
           // Not IIIF (a web page, a document, some other JSON): an ordinary link.
           setPlain(true);
-          demoteNotebookResourceLink(editor, getPos(), href);
+          if (!context?.live)
+            demoteNotebookResourceLink(editor, getPos(), href);
           return;
         }
-        if (editor.isEditable && !editor.isDestroyed) {
+        if (!context?.live && editor.isEditable && !editor.isDestroyed) {
           const position = getPos();
           const current =
             position === undefined ? null : editor.state.doc.nodeAt(position);
@@ -743,7 +607,8 @@ function ResourceLinkContent({
           // HTTP errors) were never confirmed as IIIF, so keep them ordinary.
           loaded.current = requestKey;
           setPlain(true);
-          demoteNotebookResourceLink(editor, getPos(), href);
+          if (!context?.live)
+            demoteNotebookResourceLink(editor, getPos(), href);
           return;
         }
         setError(
@@ -761,7 +626,17 @@ function ResourceLinkContent({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [href, retry, requested, resolve, history, editor, plain]);
+  }, [
+    href,
+    retry,
+    requested,
+    resolve,
+    history,
+    editor,
+    plain,
+    context?.live,
+    context?.resolveSharedPreviews,
+  ]);
 
   const hover = useHoverIntent({
     isOpen: open,
@@ -813,14 +688,28 @@ function ResourceLinkContent({
           readOnly: !state.editable,
           isTask: Boolean(task),
           checked: task?.attrs.checked ?? false,
-          setChecked: (checked = true) =>
-            mounted.current &&
-            setNotebookTaskChecked(editor, getPos(), checked),
+          setChecked: (checked = true) => {
+            if (
+              !mounted.current ||
+              !canRunActions.current ||
+              editor.isDestroyed
+            )
+              return false;
+            const position = getPos();
+            if (
+              position === undefined ||
+              position > editor.state.doc.content.size ||
+              editor.state.doc.nodeAt(position)?.attrs.href !== href
+            )
+              return false;
+            return setNotebookTaskChecked(editor, position, checked);
+          },
           open: () => openResource(),
         }
       : null;
   const actions = (location: NotebookActionContext["location"]) => {
     const ctx = actionContext(location);
+    if (context?.canRunActions === false) return null;
     return (
       ctx && (
         <span className="iiif-notebook__actions">
@@ -1049,26 +938,7 @@ export function notebookExtensions(
   options: NotebookEditorOptions = {},
 ): Extensions {
   return [
-    TaskList,
-    TaskItem.configure({
-      nested: true,
-      HTMLAttributes: { "data-type": "taskItem" },
-      a11y: {
-        checkboxLabel: (node) => {
-          const parts: string[] = [];
-          node.descendants((child) => {
-            if (child.isText) parts.push(child.text || "");
-            if (
-              ["notebookResource", "notebookResourceBlock"].includes(
-                child.type.name,
-              )
-            )
-              parts.push(resourceLinkText(child.attrs));
-          });
-          return `Task: ${parts.join(" ") || "Untitled task"}`;
-        },
-      },
-    }),
+    ...notebookTaskExtensions(),
     NotebookResourceLink,
     NotebookResourceBlock,
     NotebookCrop,

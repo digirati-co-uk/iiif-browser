@@ -2,8 +2,8 @@ import type { JSONContent } from "@tiptap/core";
 import { createStore } from "zustand/vanilla";
 import {
   noteResources,
+  notebookResourceContent,
   noteText,
-  resourceNode,
   type NotebookResource,
 } from "./resources";
 
@@ -129,6 +129,8 @@ function validSnapshot(value: any): value is NotebookSnapshot {
     Object.values(value.lastOpened).every((id) => typeof id === "string")
   );
 }
+const applyingProjection = new WeakSet<object>();
+
 export function createNotebook(options: NotebookOptions = {}) {
   const key =
     options.storageKey === false
@@ -245,18 +247,7 @@ export function createNotebook(options: NotebookOptions = {}) {
       if (noteId && !note)
         throw new Error("The destination note is not in this project.");
       if (!note) note = state.createNote(projectId);
-      const image = resource.image || resource.thumbnail;
-      const content: JSONContent[] = [
-        {
-          type: "paragraph",
-          content: [resourceNode(resource.source, resource)],
-        },
-      ];
-      if (asImage && image)
-        content.push({
-          type: "iiifImage",
-          attrs: { src: image, alt: resource.label, width: 480 },
-        });
+      const content = notebookResourceContent(resource, asImage);
       state.updateNote(note.id, {
         content: {
           type: "doc",
@@ -276,6 +267,7 @@ export function createNotebook(options: NotebookOptions = {}) {
     },
   }));
   store.subscribe((state, previous) => {
+    if (applyingProjection.has(store)) return;
     if (
       state.notes === previous.notes &&
       state.lastOpened === previous.lastOpened &&
@@ -343,4 +335,45 @@ export function searchNotebook(
       )
       .map((resource) => ({ note, resource })),
   );
+}
+
+export type NotebookContentSnapshot = Pick<
+  NotebookSnapshot,
+  "version" | "notes"
+>;
+
+export function getNotebookContentSnapshot(
+  store: NotebookStore,
+): NotebookContentSnapshot {
+  const { version, notes } = store.getState();
+  return { version, notes };
+}
+
+/** Update the materialized notebook while preserving surviving local view preferences. */
+export function applyNotebookContentSnapshot(
+  store: NotebookStore,
+  snapshot: NotebookContentSnapshot,
+): void {
+  if (!validSnapshot({ ...snapshot, lastOpened: {} }))
+    throw new TypeError("Unsupported notebook data");
+  const notes = new Map(snapshot.notes.map((note) => [note.id, note]));
+  if (notes.size !== snapshot.notes.length)
+    throw new TypeError("Duplicate notebook note IDs.");
+  applyingProjection.add(store);
+  try {
+    store.setState((state) => ({
+      notes: snapshot.notes,
+      lastOpened: Object.fromEntries(
+        Object.entries(state.lastOpened).filter(([project, id]) => {
+          const note = notes.get(id);
+          return note && projectKey(note.projectId) === project;
+        }),
+      ),
+      noteViews: Object.fromEntries(
+        Object.entries(state.noteViews).filter(([id]) => notes.has(id)),
+      ),
+    }));
+  } finally {
+    applyingProjection.delete(store);
+  }
 }

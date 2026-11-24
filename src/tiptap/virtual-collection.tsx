@@ -1,4 +1,4 @@
-import { type Editor, mergeAttributes, Node } from "@tiptap/core";
+import { type Editor, mergeAttributes } from "@tiptap/core";
 import {
   type NodeViewProps,
   NodeViewWrapper,
@@ -9,7 +9,6 @@ import type { ComponentProps } from "react";
 import {
   IIIFVirtualCollection as CollectionView,
   type IIIFVirtualCollectionAttributes,
-  type IIIFVirtualCollectionOptions,
   parseVirtualCollectionItems,
 } from "../editor/virtual-collection";
 import { IIIFPluginLogo } from "../icons/IIIFPluginLogos";
@@ -18,6 +17,8 @@ export type {
   IIIFVirtualCollectionAttributes,
   IIIFVirtualCollectionOptions,
 } from "../editor/virtual-collection";
+
+import { IIIFVirtualCollectionNode } from "./nodes";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -29,39 +30,7 @@ declare module "@tiptap/core" {
   }
 }
 
-export const IIIFVirtualCollection = Node.create<IIIFVirtualCollectionOptions>({
-  name: "iiifVirtualCollection",
-  group: "block",
-  atom: true,
-  draggable: true,
-  addOptions: () => ({}),
-  addAttributes() {
-    const defaults = {
-      title: "Untitled collection",
-      items: "[]",
-      width: this.options.defaultSize?.width ?? 640,
-      height: this.options.defaultSize?.height ?? 420,
-    };
-    return Object.fromEntries(
-      Object.entries(defaults).map(([name, value]) => [
-        name,
-        {
-          default: value,
-          parseHTML: (element: HTMLElement) => {
-            const attribute = element.getAttribute(`data-${name}`);
-            return typeof value === "number"
-              ? Number(attribute) > 0
-                ? Number(attribute)
-                : value
-              : (attribute ?? value);
-          },
-          renderHTML: (attributes: Record<string, unknown>) => ({
-            [`data-${name}`]: attributes[name],
-          }),
-        },
-      ]),
-    );
-  },
+export const IIIFVirtualCollection = IIIFVirtualCollectionNode.extend({
   parseHTML() {
     return [
       {
