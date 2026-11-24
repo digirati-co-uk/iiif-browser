@@ -84,6 +84,7 @@ export type IIIFSelectedResource = {
     annotationId: string;
     choice?: true;
   };
+  imageRotation?: number;
   rotation?: number;
 };
 

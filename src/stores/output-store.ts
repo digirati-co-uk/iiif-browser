@@ -13,6 +13,7 @@ import {
   canvasToImageSelector,
   defaultSelectedPainting,
   findSelectedPainting,
+  paintingImageRotation,
   type SelectedPainting,
 } from "../utilities/painting-selection";
 
@@ -29,6 +30,8 @@ export type SelectedItem = {
   };
   selector?: BoxSelector;
   imageSelector?: BoxSelector;
+  /** Final Image API angle, including any rotation baked into the selected painting. */
+  imageRotation?: number;
   selectedPainting?: SelectedPainting;
   rotation?: number;
 };
@@ -307,7 +310,32 @@ export function createOutputStore(options: OutputStoreOptions) {
     availableOutputs: output,
 
     async runTargetAction(outputTarget: OutputTarget) {
-      const resources = get().selectedItems;
+      const resources =
+        outputTarget.format.type === "custom"
+          ? get().selectedItems.map((item) => {
+              if (item.type !== "Canvas") return item;
+              const canvas = vault.get<any>(item);
+              const painting =
+                canvas &&
+                findSelectedPainting(vault, canvas, item.selectedPainting);
+              if (!painting) return item;
+              const imageRotation = paintingImageRotation(
+                painting,
+                item.rotation,
+              );
+              return {
+                ...item,
+                imageSelector: canvasToImageSelector(
+                  canvas,
+                  painting,
+                  item.selector,
+                ),
+                ...(imageRotation !== (item.rotation ?? 0)
+                  ? { imageRotation }
+                  : {}),
+              };
+            })
+          : get().selectedItems;
       if (!isOutputSupportedForSelection(outputTarget, resources)) {
         return;
       }

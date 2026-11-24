@@ -6,6 +6,7 @@ import type { SelectedItem } from "../stores/output-store";
 import {
   canvasToImageSelector,
   findSelectedPainting,
+  paintingImageRotation,
 } from "../utilities/painting-selection";
 import { isNotebookUrl, type NotebookResource } from "./resources";
 
@@ -124,7 +125,9 @@ export async function notebookSelection(
       },
       {
         width: Math.max(1, Math.min(640, Math.round(region.width))),
-        rotation: resource.rotation,
+        rotation: painting
+          ? paintingImageRotation(painting, resource.rotation)
+          : resource.rotation,
       },
     ),
   );

@@ -946,6 +946,7 @@ function BrowserDialog({
                                     editor.view.dom,
                                   ),
                                   rotation:
+                                    resource.imageRotation ??
                                     resource.rotation ??
                                     options.image?.rotation,
                                 },

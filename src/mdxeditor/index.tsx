@@ -310,7 +310,8 @@ function IIIFBrowserDialog() {
         setDraft({
           request: createIIIFRequest(service.id, service.version, region, {
             ...initialEditorImageSize(options, activeEditor?.getRootElement()),
-            rotation: resource.rotation ?? options.rotation,
+            rotation:
+              resource.imageRotation ?? resource.rotation ?? options.rotation,
             quality: options.quality,
             format: options.format,
           }),
